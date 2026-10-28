@@ -10,7 +10,8 @@
     "migrate:dev": "prisma migrate dev",
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
-    "verify": "tsx src/verify-db.ts"
+    "verify": "tsx src/verify-db.ts",
+    "test:approval": "tsx ../../scripts/test-approval-flow.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1"

@@ -34,6 +34,12 @@ export default function ContentStudioPage() {
   const [activeTab, setActiveTab] = useState<"instagram" | "facebook" | "linkedin" | "x">("instagram");
   const [copied, setCopied] = useState(false);
   const [approvalSent, setApprovalSent] = useState(false);
+  const [sendingApproval, setSendingApproval] = useState(false);
+  const [approvalData, setApprovalData] = useState<{
+    approvalUrl: string;
+    whatsAppUrl: string;
+    emailSent: boolean;
+  } | null>(null);
 
   // Speech Recognition State
   const [isListening, setIsListening] = useState(false);
@@ -194,6 +200,40 @@ export default function ContentStudioPage() {
       alert("Failed to connect to voice worker");
     } finally {
       setGeneratingVoice(false);
+    }
+  };
+
+  const handleSendApproval = async () => {
+    if (!generated) return;
+    setSendingApproval(true);
+    setApprovalSent(false);
+    try {
+      const res = await fetch("/api/content/send-approval", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: generated.headline,
+          brief,
+          posterUrl: generated.posterUrl,
+          audioUrl: audioUrl || undefined,
+          instagram: generated.instagram,
+          facebook: generated.facebook,
+          linkedin: generated.linkedin,
+          x: generated.x,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setApprovalData(data);
+        setApprovalSent(true);
+      } else {
+        alert(data.error || "Failed to dispatch approval");
+      }
+    } catch (err: any) {
+      alert("Error sending approval: " + (err?.message || "Network issue"));
+    } finally {
+      setSendingApproval(false);
     }
   };
 
@@ -548,18 +588,55 @@ export default function ContentStudioPage() {
                 )}
 
                 {/* Mobile Magic-Link Approval Dispatcher */}
-                <div className="pt-2">
-                  <button
-                    onClick={() => setApprovalSent(true)}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-semibold text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20 active:scale-95"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Send for 1-Tap Mobile Phone Approval</span>
-                  </button>
-                  {approvalSent && (
-                    <p className="text-xs text-emerald-400 text-center mt-2 font-medium">
-                      ✓ Approval link dispatched to sb.abcd321@gmail.com & WhatsApp +91 8167685731!
-                    </p>
+                <div className="pt-2 space-y-3">
+                  {!approvalData ? (
+                    <button
+                      onClick={handleSendApproval}
+                      disabled={sendingApproval}
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-semibold text-xs sm:text-sm transition-all shadow-md shadow-emerald-500/20 active:scale-95 disabled:opacity-50"
+                    >
+                      {sendingApproval ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Generating Secure Magic Link...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span>Send for 1-Tap Mobile Phone Approval</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-zinc-950 border border-emerald-500/30 space-y-3 animate-in fade-in">
+                      <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+                        <Check className="w-4 h-4" />
+                        <span>Approval Magic Link Generated!</span>
+                      </div>
+                      <p className="text-[11px] text-zinc-400 leading-relaxed">
+                        Dispatched to <strong>sb.abcd321@gmail.com</strong>. You can also send the magic link directly to the business owner via WhatsApp:
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        <a
+                          href={approvalData.whatsAppUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-all active:scale-95"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span>Send via WhatsApp</span>
+                        </a>
+                        <a
+                          href={approvalData.approvalUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-xs transition-all active:scale-95"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 text-[#00F0FF]" />
+                          <span>Open Review Page</span>
+                        </a>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

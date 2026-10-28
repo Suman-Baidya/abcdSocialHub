@@ -1,0 +1,191 @@
+import { AuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import bcrypt from "bcryptjs";
+import { prisma } from "@abcd/db";
+
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "suman.baidya.pro@gmail.com")
+  .split(",")
+  .map((e) => e.trim().toLowerCase());
+
+export const authOptions: AuthOptions = {
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  pages: {
+    signIn: "/login",
+    signOut: "/login",
+    error: "/login",
+  },
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    }),
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Please enter your email and password");
+        }
+
+        const email = credentials.email.toLowerCase().trim();
+        const user = await prisma.user.findUnique({
+          where: { email },
+        });
+
+        if (!user || !user.passwordHash) {
+          throw new Error("No account found with this email. Please sign up.");
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+        if (!isValid) {
+          throw new Error("Invalid password. Please try again.");
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+        };
+      },
+    }),
+  ],
+  callbacks: {
+    async signIn({ user, account }) {
+      if (!user.email) return false;
+      const email = user.email.toLowerCase().trim();
+      const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(email);
+
+      // Upsert User record in database
+      let dbUser = await prisma.user.findUnique({
+        where: { email },
+        include: {
+          memberships: {
+            include: {
+              organization: {
+                include: { workspaces: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!dbUser) {
+        dbUser = await prisma.user.create({
+          data: {
+            email,
+            name: user.name ?? email.split("@")[0],
+            image: user.image,
+          },
+          include: {
+            memberships: {
+              include: {
+                organization: {
+                  include: { workspaces: true },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // Auto-provision initial Organization and Workspace if none exist
+      if (!dbUser.memberships || dbUser.memberships.length === 0) {
+        const orgSlug = `org-${dbUser.id.slice(-6)}-${Date.now().toString(36)}`;
+        const org = await prisma.organization.create({
+          data: {
+            name: `${dbUser.name || "Default"}'s Business`,
+            slug: orgSlug,
+            workspaces: {
+              create: {
+                name: "Primary Brand",
+                brandKit: {
+                  create: {
+                    businessName: dbUser.name || "ABCD Social Hub",
+                    phoneNumber: "+91 8944899747",
+                    addressBanner: "WhatsApp: +91 8167685731 • Email: sb.abcd321@gmail.com",
+                    primaryColor: "#00F0FF",
+                  },
+                },
+              },
+            },
+            memberships: {
+              create: {
+                userId: dbUser.id,
+                role: isSuperAdmin ? "SUPER_ADMIN" : "OWNER",
+              },
+            },
+          },
+        });
+      }
+
+      return true;
+    },
+
+    async jwt({ token, user, trigger, session }) {
+      if (user?.email) {
+        token.email = user.email.toLowerCase().trim();
+      }
+
+      // Allow client-side active workspace switching
+      if (trigger === "update" && session?.activeWorkspaceId) {
+        token.workspaceId = session.activeWorkspaceId;
+        token.workspaceName = session.activeWorkspaceName;
+        return token;
+      }
+
+      if (token.email) {
+        const email = token.email as string;
+        const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(email);
+
+        const dbUser = await prisma.user.findUnique({
+          where: { email },
+          include: {
+            memberships: {
+              include: {
+                organization: {
+                  include: { workspaces: true },
+                },
+              },
+            },
+          },
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.isSuperAdmin = isSuperAdmin;
+
+          const primaryMembership = dbUser.memberships[0];
+          token.role = isSuperAdmin ? "SUPER_ADMIN" : primaryMembership?.role || "OWNER";
+          token.organizationId = primaryMembership?.organizationId;
+
+          const primaryWorkspace = primaryMembership?.organization?.workspaces[0];
+          token.workspaceId = token.workspaceId || primaryWorkspace?.id;
+          token.workspaceName = token.workspaceName || primaryWorkspace?.name || "Primary Brand";
+        }
+      }
+
+      return token;
+    },
+
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).id = token.id;
+        (session.user as any).role = token.role;
+        (session.user as any).workspaceId = token.workspaceId;
+        (session.user as any).workspaceName = token.workspaceName;
+        (session.user as any).organizationId = token.organizationId;
+        (session.user as any).isSuperAdmin = token.isSuperAdmin;
+      }
+      return session;
+    },
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+};

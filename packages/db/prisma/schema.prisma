@@ -1,0 +1,275 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// 1. AUTHENTICATION & USERS
+// ==========================================
+
+model User {
+  id            String       @id @default(cuid())
+  name          String?
+  email         String?      @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  passwordHash  String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  memberships   Membership[]
+  auditLogs     AuditLog[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
+// ==========================================
+// 2. MULTI-TENANT ORGANIZATIONS & WORKSPACES
+// ==========================================
+
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  workspaces  Workspace[]
+  memberships Membership[]
+  subscription Subscription?
+}
+
+enum Role {
+  SUPER_ADMIN
+  OWNER
+  STAFF
+  CREATOR
+  GUEST
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role         @default(OWNER)
+  createdAt      DateTime     @default(now())
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+model Workspace {
+  id             String         @id @default(cuid())
+  name           String
+  organizationId String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  brandKit       BrandKit?
+  socialAccounts SocialAccount[]
+  contentItems   ContentItem[]
+  usageLedger    UsageLedger[]
+  auditLogs      AuditLog[]
+
+  @@index([organizationId])
+}
+
+// ==========================================
+// 3. BRAND IDENTITY & REGIONAL POSTER KIT
+// ==========================================
+
+model BrandKit {
+  id             String    @id @default(cuid())
+  workspaceId    String    @unique
+  businessName   String
+  tagline        String?
+  logoUrl        String?
+  phoneNumber    String
+  addressBanner  String
+  primaryColor   String    @default("#00F0FF")
+  secondaryColor String    @default("#0A0D14")
+  defaultLanguage String   @default("bengali") // "bengali" | "english"
+  forbiddenWords String[]  @default([])
+  updatedAt      DateTime  @updatedAt
+
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// 4. SOCIAL CONNECTIONS & SECURE TOKENS
+// ==========================================
+
+enum Platform {
+  FACEBOOK_PAGE
+  INSTAGRAM_BUSINESS
+  LINKEDIN
+  X_TWITTER
+  YOUTUBE
+}
+
+model SocialAccount {
+  id             String    @id @default(cuid())
+  workspaceId    String
+  platform       Platform
+  platformAccountId String
+  accountName    String
+  encryptedToken String    // AES-256-GCM encrypted
+  tokenExpiresAt DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  publishJobs    PublishJob[]
+
+  @@unique([workspaceId, platform, platformAccountId])
+  @@index([workspaceId])
+}
+
+// ==========================================
+// 5. CONTENT DRAFTS, POSTERS & APPROVALS
+// ==========================================
+
+enum PostStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+model ContentItem {
+  id             String         @id @default(cuid())
+  workspaceId    String
+  title          String
+  rawBrief       String
+  status         PostStatus     @default(DRAFT)
+  scheduledFor   DateTime?
+  approvalToken  String?        @unique // SHA-256 hash for mobile magic-link
+  tokenExpiresAt DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  variants       ContentVariant[]
+  publishJobs    PublishJob[]
+
+  @@index([workspaceId, status])
+  @@index([approvalToken])
+}
+
+model ContentVariant {
+  id             String      @id @default(cuid())
+  contentItemId  String
+  platform       Platform
+  caption        String
+  hashtags       String[]    @default([])
+  mediaUrl       String?     // Cloudinary or Cloudflare R2 URL
+  mediaType      String      @default("IMAGE") // IMAGE, VIDEO, CAROUSEL
+  turnitoutClean Boolean     @default(true)
+
+  contentItem    ContentItem @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+
+  @@index([contentItemId])
+}
+
+// ==========================================
+// 6. PUBLISHING QUEUE & RETRY ATTEMPTS
+// ==========================================
+
+model PublishJob {
+  id              String         @id @default(cuid())
+  contentItemId   String
+  socialAccountId String
+  scheduledTime   DateTime
+  status          PostStatus     @default(SCHEDULED)
+  containerId     String?        // For Instagram 2-step media container flow
+  platformPostId  String?
+  lastError       String?
+  attemptsCount   Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  contentItem     ContentItem    @relation(fields: [contentItemId], references: [id], onDelete: Cascade)
+  socialAccount   SocialAccount  @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledTime])
+}
+
+// ==========================================
+// 7. APPEND-ONLY CREDITS LEDGER & BILLING
+// ==========================================
+
+model UsageLedger {
+  id          String    @id @default(cuid())
+  workspaceId String
+  actionType  String    // e.g. "POSTER_RENDER", "TEXT_GENERATE", "VIDEO_SHORT"
+  creditsUsed Int
+  metadata    Json?
+  createdAt   DateTime  @default(now())
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, createdAt])
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  organizationId      String             @unique
+  planId              String             @default("starter")
+  status              SubscriptionStatus @default(TRIALING)
+  razorpaySubId       String?
+  currentPeriodEnd    DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+// ==========================================
+// 8. AUDIT LOGGING
+// ==========================================
+
+model AuditLog {
+  id          String     @id @default(cuid())
+  userId      String?
+  workspaceId String?
+  action      String
+  details     Json?
+  ipAddress   String?
+  createdAt   DateTime   @default(now())
+
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([userId])
+}

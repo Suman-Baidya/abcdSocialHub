@@ -1,0 +1,62 @@
+/**
+ * ABCD Social Hub — Canonical Design Tokens
+ * Source of truth for styling. Do not write hardcoded hex colors or arbitrary pixel values.
+ */
+
+:root {
+  --background: 220 25% 98%;
+  --foreground: 224 71% 4%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 71% 4%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71% 4%;
+  --primary: 187 100% 42%;
+  --primary-foreground: 224 71% 4%;
+  --secondary: 220 14% 96%;
+  --secondary-foreground: 220 9% 46%;
+  --muted: 220 14% 96%;
+  --muted-foreground: 220 9% 46%;
+  --accent: 220 14% 96%;
+  --accent-foreground: 224 71% 4%;
+  
+  /* Fixed Status Tokens */
+  --status-success: 142 71% 45%;
+  --status-info: 199 89% 48%;
+  --status-warning: 38 92% 50%;
+  --status-destructive: 0 84% 60%;
+  --status-muted: 220 9% 46%;
+
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 187 100% 42%;
+  --radius: 0.5rem;
+}
+
+.dark {
+  /* Deep Dark Glassmorphism */
+  --background: 222 35% 6%;         /* #0A0D14 */
+  --foreground: 210 40% 98%;
+  --card: 223 30% 10%;              /* #121722 */
+  --card-foreground: 210 40% 98%;
+  --popover: 223 30% 10%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 184 100% 50%;          /* #00F0FF Vibrant Cyan */
+  --primary-foreground: 222 47% 11%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+  
+  /* Status Tokens */
+  --status-success: 142 71% 45%;    /* Published */
+  --status-info: 199 89% 48%;       /* Scheduled */
+  --status-warning: 38 92% 50%;     /* In review window / Held */
+  --status-destructive: 0 84% 60%;  /* Failed / Needs reconnect */
+  --status-muted: 215 20% 65%;      /* Paused */
+
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 184 100% 50%;
+}

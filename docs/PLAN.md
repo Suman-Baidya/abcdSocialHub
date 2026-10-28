@@ -98,59 +98,19 @@ graph TD
 
 ---
 
-## 5. Phased Implementation Roadmap
+## 5. Phased Implementation Roadmap & Live Status
 
-### Phase 1: Workspace Scaffolding & Monorepo Foundation
-- Initialize root `package.json`, pnpm workspaces, and `.gitignore`.
-- Set up production `docker-compose.yml` for Dokploy (Web, Python Worker, Postgres).
-- Create `.env.example` with strict Zod validation schema.
+| Phase | System Module | Status | Verification & Deliverables |
+|---|---|:---:|---|
+| **Phase 0** | Workspace Scaffolding & Monorepo Foundation | ✅ **COMPLETED** | pnpm workspaces (`@abcd/web`, `@abcd/db`, `@abcd/ui`, `@abcd/integrations`), `tokens.css`, `docker-compose.yml`, `.env.example`. |
+| **Phase 1** | Database Layer & Tenancy Model (`packages/db`) | ✅ **COMPLETED** | Neon Serverless PostgreSQL 16 (`ep-late-cake-ao3sl5vr`), Prisma Client, strict `createTenantRepository(workspaceId)`, append-only `UsageLedger`, tenant isolation tests. |
+| **Phase 2** | Authentication, RBAC & Dashboard Shell (`apps/web`) | ✅ **COMPLETED** | NextAuth (Credentials + Google OAuth), `WorkspaceSwitcher`, mobile bottom navigation dock, 4 standard UI states, role-gating (SUPER_ADMIN, OWNER, STAFF, CREATOR). |
+| **Phase 3** | Python Worker & Bengali Poster Studio (`apps/python-worker`) | ✅ **COMPLETED** | FastAPI on port 8000, 1080×1080 Pillow poster rendering with Bengali/English typography, Edge-TTS neural voiceovers (`bn-IN-TanishaaNeural`, `en-IN-NeerjaNeural`), direct Cloudinary CDN upload. |
+| **Phase 4** | Content Studio & Multi-Channel Copywriter | ✅ **COMPLETED** | 3-tier AI failover (Groq, NVIDIA NIM, OpenRouter), Turnitout anti-slop scrubber, Web Speech API Bengali/English voice assistant ("Tap & Speak Your Offer"), live poster preview. |
+| **Phase 5** | Mobile Magic-Link Approval Engine (`/approve/[token]`) | ✅ **COMPLETED** | SHA-256 single-use cryptographic tokens (72h expiry), zero-login mobile web view for 360px screens with 50px tap targets, 1-tap Approve & Schedule, test script passed. |
+| **Phase 6** | `pg-boss` Publishing Queue & Meta Social Integration | ✅ **COMPLETED** | `packages/integrations` with AES-256-GCM token encryption, official 2-step Instagram media container flow (`containerId` stored before publish), atomic `SKIP LOCKED` worker queue, `/calendar` & `/social` UI views. |
+| **Phase 7** | India Billing & Subscriptions (`/billing`) | ✅ **COMPLETED** | Razorpay checkout + HMAC-SHA256 signature verification, Starter (₹499) & Growth (₹999) plans, direct Sovereign UPI QR modal, live authenticated test keys (`rzp_test_TtPaVvCeFmoKOR`), append-only credit ledger. |
+| **Phase 8** | Founder Marketing Cockpit (`/admin/marketing`) | ✅ **COMPLETED** | Super Admin route guard (`suman.baidya.pro@gmail.com`), zero-cost OpenStreetMap B2B lead generation (`harvey`), build-in-public storyteller (`brag`), live unit economics margin tracker (`Wally`). |
+| **Phase 9** | Security Auditing, Tenant Isolation Tests & Error Hardening | ⏳ **UP NEXT** | Multi-tenant isolation test suite, token encryption leak tests, rate-limiting, CSRF hardening. |
+| **Phase 10** | Dokploy Single-VPS Production Deployment | 📋 Planned | Docker container assembly, Traefik SSL certificate provisioning, Cloudflare R2 automated daily database snapshot backup cron. |
 
-### Phase 2: Database Layer & Tenancy Model (`packages/db`)
-- Implement `schema.prisma` with models: `Organization`, `Workspace`, `User`, `Membership`, `BrandKit`, `ContentItem`, `ContentVariant`, `PublishJob`, `UsageLedger`, `AuditLog`.
-- Create tenant-scoped repository wrapper enforcing `workspaceId` injection.
-- Configure `pg-boss` queue tables inside PostgreSQL.
-
-### Phase 3: Core UI & Glassmorphism Design System (`apps/web`)
-- Setup Next.js 15 App Router with Tailwind CSS and Radix UI primitives.
-- Implement design tokens in `tokens.css` (Dark theme: `#0A0D14` background, cyan accent `#00F0FF`).
-- Build reusable building blocks: `AppShell`, `PageHeader`, `DataTable`, `StatCard`, `EmptyState`, `ErrorState`, `LoadingSkeleton`.
-- Build the marketing landing page integrating `openhero` WebGL shader heroes.
-
-### Phase 4: Python Heavy Media Worker (`apps/python-worker`)
-- Setup FastAPI service with Dockerfile bundling GNU Cairo, Pango, and FFmpeg.
-- Install native Indic fonts: `Noto Sans Bengali`, `Hind Siliguri`, `Tiro Bangla`.
-- Implement `tasks/poster_render.py` for 1080×1080 branded poster synthesis.
-- Implement `tasks/humanizer.py` with `Turnitout` anti-slop lexicon scrubbing.
-- Implement `tasks/normalizer.py` with `KnifeLemon/Filee` for format normalization.
-
-### Phase 5: Content Studio & 4-Platform Copywriter
-- Multi-model content composer supporting brand tone, language (English/Bengali), and promotional briefs.
-- Incorporate `Jakeschincariol` copywriting skills for Instagram, Facebook, LinkedIn, and X.
-- Enforce append-only credits ledger (reserve, commit, refund).
-
-### Phase 6: Mobile Magic-Link Approval Engine
-- Dedicated mobile-first route `/approve/[token]` optimized for 360px smartphone screens.
-- Displays live poster preview, channel variants, and scheduled publish time.
-- Single-tap "Approve" and "Request Changes" actions with zero login friction.
-
-### Phase 7: pg-boss Publishing Queue & Meta Graph API
-- Implement `packages/integrations/meta` for official Facebook Page and Instagram Professional publishing.
-- Support Instagram two-step container flow: store container ID before publish call.
-- Bounded exponential backoff with jitter and clear user-facing error reasons.
-
-### Phase 8: India Billing & Subscriptions
-- Razorpay Subscriptions integration with UPI Autopay and card billing.
-- Webhook signature verification and idempotency keys.
-- YouPI-PG sovereign 0% UPI QR alternative for direct payments.
-
-### Phase 9: Super Admin Founder Marketing Cockpit (`/admin/marketing`)
-- 1-Click Code-to-Launch video teaser generator (`latent-spaces/brag`).
-- Build-in-public Git commit changelog & thread writer.
-- In-browser 3D interactive screencasts (`CristianOlivera1/openvid`).
-- Sovereign local B2B prospecting tool (`ethanplusai/harvey`).
-- Unit economics margin ledger (`polius/Wally`).
-
-### Phase 10: Dokploy Single-VPS Production Deployment
-- Connect Git repository to Dokploy Compose service.
-- Verify container healthchecks and Traefik SSL routing.
-- Set up daily automated database backup cron to Cloudflare R2.

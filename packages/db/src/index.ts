@@ -134,6 +134,45 @@ export function createTenantRepository(workspaceId: string) {
 
       return records.reduce((sum, item) => sum + item.creditsUsed, 0);
     },
+
+    getRecentUsage: (limit = 20) =>
+      prisma.usageLedger.findMany({
+        where: { workspaceId },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+      }),
+
+    getSubscription: async () => {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { organizationId: true },
+      });
+      if (!workspace) return null;
+      return prisma.subscription.findUnique({
+        where: { organizationId: workspace.organizationId },
+      });
+    },
+
+    upsertSubscription: async (data: {
+      planId: string;
+      status: any;
+      razorpaySubId?: string | null;
+      currentPeriodEnd?: Date | null;
+    }) => {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { organizationId: true },
+      });
+      if (!workspace) throw new Error("Workspace not found");
+      return prisma.subscription.upsert({
+        where: { organizationId: workspace.organizationId },
+        update: data,
+        create: {
+          ...data,
+          organizationId: workspace.organizationId,
+        },
+      });
+    },
   };
 }
 

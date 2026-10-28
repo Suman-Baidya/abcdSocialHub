@@ -18,7 +18,10 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@abcd/integrations": ["../../packages/integrations/src/index.ts"],
+      "@abcd/db": ["../../packages/db/src/index.ts"],
+      "@abcd/ui": ["../../packages/ui/src/index.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

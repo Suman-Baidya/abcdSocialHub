@@ -26,6 +26,9 @@ importers:
       '@abcd/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@abcd/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
       '@abcd/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -115,6 +118,19 @@ importers:
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/integrations:
+    dependencies:
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^20.17.0
+        version: 20.19.43
       typescript:
         specifier: ^5.6.3
         version: 5.9.3

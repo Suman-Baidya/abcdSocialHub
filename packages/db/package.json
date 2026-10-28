@@ -11,7 +11,8 @@
     "studio": "prisma studio",
     "typecheck": "tsc --noEmit",
     "verify": "tsx src/verify-db.ts",
-    "test:approval": "tsx ../../scripts/test-approval-flow.ts"
+    "test:approval": "tsx ../../scripts/test-approval-flow.ts",
+    "test:publish": "tsx ../../scripts/test-publishing-queue.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1"

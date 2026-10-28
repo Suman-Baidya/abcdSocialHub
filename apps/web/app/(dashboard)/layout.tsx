@@ -18,6 +18,7 @@ import {
   Rocket,
   Menu,
   X,
+  Share2,
 } from "lucide-react";
 import { WorkspaceSwitcher } from "@/components/dashboard/WorkspaceSwitcher";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
@@ -36,6 +37,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navigation = [
     { name: "Autopilot Report", href: "/dashboard", icon: LayoutDashboard },
     { name: "Content Studio", href: "/content", icon: ImageIcon },
+    { name: "Social Channels", href: "/social", icon: Share2 },
     { name: "Brand Identity Kit", href: "/brand", icon: Palette },
     { name: "Publishing Queue", href: "/calendar", icon: Calendar },
     { name: "WhatsApp Leads", href: "/leads", icon: MessageSquare },

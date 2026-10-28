@@ -25,35 +25,28 @@
 
 ---
 
-## 🚀 Tomorrow's Starting Point: Phase 1 (Step-by-Step)
+## 🚀 Tomorrow's Starting Point: User Dashboard Upgrades & UX Polish
 
-When you return tomorrow, here is the exact step-by-step roadmap:
+When you return tomorrow, here is the focus roadmap for upgrading the user dashboard (`/dashboard`):
 
-### Step 1.1: Install Dependencies
-Open your terminal in the project root (`Beta Projects/`) and run:
-```bash
-pnpm install
-```
-*What this does:* Installs dependencies for `@abcd/web`, `@abcd/db`, and `@abcd/ui`.
+### 1. Autopilot Report Upgrades (`/dashboard`)
+- **Daily Executive Summary**: "What AI Did Today", "What's Scheduled Next", "Requires Your Approval".
+- **Quick Action Bar**: "1-Tap Offer Generator", "Record Voice Memo Brief", "Instant WhatsApp Blast".
+- **Live Social Health & Metrics**:
+  - Connected channels status (FB, IG, LinkedIn, X).
+  - Reach, engagement, and click stats.
+  - Active brand kit switcher with live preview badge.
+- **Recent Post Stream**:
+  - Visual grid of recently generated creatives with status tags (Published, Scheduled, In Review).
+  - 1-click re-share or send magic approval link.
 
-### Step 1.2: Generate Prisma Client
-```bash
-pnpm --filter @abcd/db generate
-```
-*What this does:* Compiles your multi-tenant database models (`User`, `Workspace`, `BrandKit`, `ContentItem`, `PublishJob`, `UsageLedger`) into fully typed TypeScript clients.
+### 2. Credit Usage & Quota Widget
+- Live interactive credits remaining ring/bar connected to the newly verified Razorpay ledger.
+- Direct "Top-Up" quick modal trigger.
 
-### Step 1.3: Start Local PostgreSQL Database
-Run Docker Compose in the background:
-```bash
-docker compose up -d postgres
-```
-*What this does:* Spins up the containerized PostgreSQL 16 database with persistent storage.
-
-### Step 1.4: Push Schema & Test Tenant Isolation
-```bash
-pnpm --filter @abcd/db push
-```
-*What this does:* Automatically applies all tables, relations, and indexes without writing manual SQL.
+### 3. Mobile Navigation & Dock Polish
+- Ensure 360px viewport perfection for small smartphone screens.
+- Haptic-feel micro-interactions and smooth transitions.
 
 ---
 

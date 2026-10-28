@@ -14,13 +14,13 @@
 | **Phase 0** | Monorepo scaffolding, Dokploy `docker-compose.yml`, `Product_Blueprint.md`, `tokens.css`, `schema.prisma`, Next.js landing page, FastAPI worker foundation | ✅ **COMPLETED** |
 | **Phase 1** | Database & Tenancy Layer (Prisma Client generation & Tenant Repository verification) | ✅ **COMPLETED** |
 | **Phase 2** | Authentication, RBAC & Glassmorphism Dashboard Shell | ✅ **COMPLETED** |
-| **Phase 3** | Python Worker & Bengali / English Poster Studio (Cairo/Pango engine) | ⏳ **UP NEXT** |
-| **Phase 4** | Content Studio & 4-Platform Copywriter (Jakeschincariol + Turnitout anti-slop) | 📋 Planned |
-| **Phase 5** | Mobile Magic-Link Approval Engine (`/approve/[token]` phone UX) | 📋 Planned |
-| **Phase 6** | `pg-boss` Publishing Queue & Meta Graph API (Facebook Pages & Instagram) | 📋 Planned |
-| **Phase 7** | India Billing & Subscriptions (Razorpay UPI Autopay / YouPI-PG) | 📋 Planned |
-| **Phase 8** | Founder Marketing Cockpit (`/admin/marketing`: `brag`, `openvid`, `harvey`, `Wally`) | 📋 Planned |
-| **Phase 9** | Security Auditing, Tenant Isolation Tests & Error Recovery Hardening | 📋 Planned |
+| **Phase 3** | Python Worker & Bengali / English Poster Studio (Pillow, Edge-TTS, Cloudinary) | ✅ **COMPLETED** |
+| **Phase 4** | Content Studio & 4-Platform Copywriter (Jakeschincariol + Turnitout anti-slop) | ✅ **COMPLETED** |
+| **Phase 5** | Mobile Magic-Link Approval Engine (`/approve/[token]` phone UX) | ✅ **COMPLETED** |
+| **Phase 6** | `pg-boss` Publishing Queue & Meta Graph API (Facebook Pages & Instagram) | ✅ **COMPLETED** |
+| **Phase 7** | India Billing & Subscriptions (Razorpay UPI Autopay / Sovereign UPI QR) | ✅ **COMPLETED** |
+| **Phase 8** | Founder Marketing Cockpit (`/admin/marketing`: `brag`, `harvey`, `Wally`) | ✅ **COMPLETED** |
+| **Phase 9** | Security Auditing, Tenant Isolation Tests & Error Recovery Hardening | ⏳ **UP NEXT** |
 | **Phase 10** | Dokploy Single-VPS Production Deployment & Automated R2 Backup Cron | 📋 Planned |
 
 ---

@@ -1,14 +1,16 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback } from "react";
 import {
   CheckCircle2,
   AlertCircle,
   AlertTriangle,
   Info,
   X,
-  Sparkles,
 } from "lucide-react";
+
+export { CustomModal } from "./CustomModal";
+export { CustomAlert } from "./CustomAlert";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
@@ -44,7 +46,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       const id = `${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       const newToast: ToastItem = { id, type, title, description, duration };
 
-      setToasts((prev) => [...prev.slice(-4), newToast]); // Keep maximum 5 on screen
+      setToasts((prev) => [...prev.slice(-4), newToast]);
 
       setTimeout(() => {
         removeToast(id);
@@ -119,129 +121,4 @@ export function useToast() {
     throw new Error("useToast must be used within a ToastProvider");
   }
   return context;
-}
-
-/**
- * Custom Alert Banner component for inline warnings/info
- */
-export function CustomAlert({
-  type = "info",
-  title,
-  children,
-  action,
-}: {
-  type?: ToastType;
-  title?: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-}) {
-  const styles = {
-    success: "bg-emerald-500/10 border-emerald-500/25 text-emerald-300",
-    error: "bg-rose-500/10 border-rose-500/25 text-rose-300",
-    warning: "bg-amber-500/10 border-amber-500/25 text-amber-300",
-    info: "bg-[#00F0FF]/10 border-[#00F0FF]/25 text-[#00F0FF]",
-  };
-
-  const icons = {
-    success: <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />,
-    error: <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />,
-    warning: <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />,
-    info: <Info className="w-4 h-4 text-[#00F0FF] shrink-0" />,
-  };
-
-  return (
-    <div className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${styles[type]}`}>
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5">{icons[type]}</div>
-        <div className="space-y-0.5 text-xs">
-          {title && <h5 className="font-semibold text-zinc-100">{title}</h5>}
-          <div className="text-zinc-300 leading-relaxed">{children}</div>
-        </div>
-      </div>
-      {action && <div className="shrink-0">{action}</div>}
-    </div>
-  );
-}
-
-/**
- * Custom Confirmation Popup Dialog
- */
-export function CustomModal({
-  isOpen,
-  onClose,
-  title,
-  description,
-  children,
-  confirmText = "Confirm",
-  onConfirm,
-  isDestructive = false,
-  isLoading = false,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  description?: string;
-  children?: React.ReactNode;
-  confirmText?: string;
-  onConfirm?: () => void;
-  isDestructive?: boolean;
-  isLoading?: boolean;
-}) {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    if (isOpen) window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="w-full max-w-md rounded-2xl bg-[#111722] border border-white/[0.1] shadow-2xl p-6 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
-          <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg hover:bg-white/[0.06] text-zinc-400 hover:text-zinc-200"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {description && (
-          <p className="text-xs text-zinc-400 leading-relaxed">{description}</p>
-        )}
-
-        {children}
-
-        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/[0.08]">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isLoading}
-            className="px-3.5 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-200"
-          >
-            Cancel
-          </button>
-
-          {onConfirm && (
-            <button
-              type="button"
-              onClick={onConfirm}
-              disabled={isLoading}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 ${
-                isDestructive
-                  ? "bg-rose-500 hover:bg-rose-600 text-white"
-                  : "bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14]"
-              }`}
-            >
-              {isLoading ? "Processing..." : confirmText}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 }

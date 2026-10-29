@@ -21,14 +21,15 @@
 | **Phase 6** | `pg-boss` Publishing Queue & Meta Graph API (AES-256 tokens, 2-step Instagram containers) | ✅ **COMPLETED** | `test:publish` passed |
 | **Phase 7** | India Billing & Subscriptions (`/billing`, Razorpay test checkout, sovereign UPI QR, append ledger) | ✅ **COMPLETED** | `test:billing` passed |
 | **Phase 8** | Founder Marketing Cockpit (`/admin/marketing`: OSM B2B prospector, code storyteller, margin ledger) | ✅ **COMPLETED** | Commit `18f8e28` |
+| **Phase 8.5** | User Dashboard Upgrades (`/dashboard`: Autopilot Briefing, Channel Health, Quota Ring, Feed) | ✅ **COMPLETED** | Verified via typecheck & test suites |
 | **Phase 9** | Security Auditing, Tenant Isolation Tests & Error Recovery Hardening | ⏳ **UP NEXT** | Ready for execution |
 | **Phase 10** | Dokploy Single-VPS Production Deployment & Automated Cloudflare R2 Backups | 📋 Planned | Planned |
 
 ---
 
-## 🚀 Tomorrow Morning's Priority: User Dashboard Upgrades (`/dashboard`)
+## 🚀 User Dashboard Upgrades (`/dashboard`) — COMPLETED ✅
 
-The user explicitly requested that tomorrow's first focus is **upgrading the User Dashboard (`/dashboard`)** to make it world-class, report-first, and highly actionable for Indian business owners and creators.
+The **User Dashboard (`/dashboard`)** has been upgraded to a world-class, report-first, and highly actionable control room for Indian business owners and creators.
 
 ### 📋 Detailed Dashboard Upgrade Blueprint
 

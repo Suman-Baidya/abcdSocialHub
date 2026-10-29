@@ -111,6 +111,6 @@ graph TD
 | **Phase 6** | `pg-boss` Publishing Queue & Meta Social Integration | ✅ **COMPLETED** | `packages/integrations` with AES-256-GCM token encryption, official 2-step Instagram media container flow (`containerId` stored before publish), atomic `SKIP LOCKED` worker queue, `/calendar` & `/social` UI views. |
 | **Phase 7** | India Billing & Subscriptions (`/billing`) | ✅ **COMPLETED** | Razorpay checkout + HMAC-SHA256 signature verification, Starter (₹499) & Growth (₹999) plans, direct Sovereign UPI QR modal, live authenticated test keys (`rzp_test_TtPaVvCeFmoKOR`), append-only credit ledger. |
 | **Phase 8** | Founder Marketing Cockpit (`/admin/marketing`) | ✅ **COMPLETED** | Super Admin route guard (`suman.baidya.pro@gmail.com`), zero-cost OpenStreetMap B2B lead generation (`harvey`), build-in-public storyteller (`brag`), live unit economics margin tracker (`Wally`). |
-| **Phase 9** | Security Auditing, Tenant Isolation Tests & Error Hardening | ⏳ **UP NEXT** | Multi-tenant isolation test suite, token encryption leak tests, rate-limiting, CSRF hardening. |
-| **Phase 10** | Dokploy Single-VPS Production Deployment | 📋 Planned | Docker container assembly, Traefik SSL certificate provisioning, Cloudflare R2 automated daily database snapshot backup cron. |
+| **Phase 9** | Security Auditing, Tenant Isolation Tests & Error Hardening | ✅ **COMPLETED** | Multi-tenant isolation test suite (21/21 passed), AES-256 token encryption, enterprise security headers, sliding-window rate limiting. |
+| **Phase 10** | Dokploy Single-VPS Production Deployment | ⏳ **UP NEXT** | Docker container assembly, Traefik SSL certificate provisioning, Cloudflare R2 automated daily database snapshot backup cron. |
 

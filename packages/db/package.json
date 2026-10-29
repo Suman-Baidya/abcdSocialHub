@@ -13,7 +13,8 @@
     "verify": "tsx src/verify-db.ts",
     "test:approval": "tsx ../../scripts/test-approval-flow.ts",
     "test:publish": "tsx ../../scripts/test-publishing-queue.ts",
-    "test:billing": "tsx ../../scripts/test-billing-flow.ts"
+    "test:billing": "tsx ../../scripts/test-billing-flow.ts",
+    "test:security": "tsx ../../scripts/test-tenant-isolation.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.21.1"

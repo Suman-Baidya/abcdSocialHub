@@ -242,9 +242,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 placeholder="Search campaigns, prompts, channels..."
                 className="w-full pl-9 pr-16 py-2 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#00F0FF]/50 transition-colors"
               />
-              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/[0.06] text-zinc-400 border border-white/[0.08]">
-                ⌘K
-              </span>
+              <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-sans bg-zinc-800 text-zinc-400 border border-zinc-700">
+                Ctrl K
+              </kbd>
             </div>
           </div>
 

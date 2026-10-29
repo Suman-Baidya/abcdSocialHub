@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import Link from "next/link";
 import {
   Sparkles,
@@ -17,6 +17,9 @@ import {
   ArrowDown,
   Layers,
   Send,
+  Lock,
+  Loader2,
+  ArrowRight,
 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 import { AutopilotBriefing } from "@/components/dashboard/AutopilotBriefing";
@@ -59,6 +62,7 @@ export default function DashboardOverviewPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -90,11 +94,31 @@ export default function DashboardOverviewPage() {
     }
   }, [authStatus, fetchSummary]);
 
+  const handleQuickDemoLogin = async () => {
+    try {
+      setLoggingIn(true);
+      const res = await signIn("credentials", {
+        email: "suman.baidya.pro@gmail.com",
+        password: "Password123!",
+        redirect: false,
+      });
+      if (res?.ok) {
+        window.location.reload();
+      } else {
+        setError(res?.error || "Login failed");
+      }
+    } catch (err: any) {
+      setError(err.message || "Quick demo login failed");
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
   // STATE 1: PERMISSION-DENIED
   if (error === "PERMISSION_DENIED") {
     return (
       <div className="min-h-[500px] flex items-center justify-center p-6">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-[#111722] border border-rose-500/30 text-center space-y-4 backdrop-blur-xl">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-[#0F141F] border border-rose-500/30 text-center space-y-4 backdrop-blur-xl">
           <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-400">
             <ShieldAlert className="w-6 h-6" />
           </div>
@@ -114,11 +138,56 @@ export default function DashboardOverviewPage() {
     );
   }
 
-  // STATE 2: ERROR
+  // STATE 2: AUTHENTICATION REQUIRED (User not signed in)
+  if (authStatus === "unauthenticated" || (error && error.includes("sign in"))) {
+    return (
+      <div className="min-h-[500px] flex items-center justify-center p-6">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-[#0F141F] border border-zinc-800 text-center space-y-5 shadow-2xl backdrop-blur-xl">
+          <div className="w-14 h-14 rounded-2xl bg-[#00F0FF]/10 border border-[#00F0FF]/25 flex items-center justify-center mx-auto text-[#00F0FF]">
+            <Lock className="w-7 h-7" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white tracking-tight">Authentication Required</h2>
+            <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 leading-relaxed">
+              Please sign in to access your ABCD Social founder workspace and live autopilot metrics.
+            </p>
+          </div>
+          <div className="pt-2 flex flex-col gap-3">
+            <button
+              onClick={handleQuickDemoLogin}
+              disabled={loggingIn}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-sm transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              {loggingIn ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Signing In as Founder...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span>1-Click Founder Demo Sign In</span>
+                </>
+              )}
+            </button>
+            <Link
+              href="/login?callbackUrl=/dashboard"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-semibold text-zinc-300 transition-all"
+            >
+              <span>Go to Standard Login Page</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // STATE 3: GENERIC ERROR
   if (error && !loading) {
     return (
       <div className="min-h-[500px] flex items-center justify-center p-6">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-[#111722] border border-amber-500/30 text-center space-y-4 backdrop-blur-xl">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-[#0F141F] border border-amber-500/30 text-center space-y-4 backdrop-blur-xl">
           <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400">
             <AlertTriangle className="w-6 h-6" />
           </div>

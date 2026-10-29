@@ -190,8 +190,9 @@ export function ApprovalClientView({ token, contentItem }: ApprovalProps) {
                 {contentItem.brand.businessName}
               </span>
               <p className="text-lg font-bold text-white my-auto">{contentItem.title}</p>
-              <div className="p-2.5 bg-[#00F0FF] text-[#0A0D14] rounded-xl text-xs font-bold">
-                📞 {contentItem.brand.phoneNumber}
+              <div className="p-2.5 bg-[#00F0FF] text-[#0A0D14] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+                <Phone className="w-3.5 h-3.5" />
+                <span>{contentItem.brand.phoneNumber}</span>
               </div>
             </div>
           )}

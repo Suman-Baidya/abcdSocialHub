@@ -14,6 +14,7 @@ import {
   Loader2,
   Image as ImageIcon,
 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 
 export default function BrandKitPage() {
   const [businessName, setBusinessName] = useState("ABCD Social Hub");
@@ -96,6 +97,8 @@ export default function BrandKitPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+      <PageBreadcrumb pageTitle="Brand Identity Kit" />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
@@ -332,8 +335,9 @@ export default function BrandKitPage() {
                 style={{ backgroundColor: primaryColor }}
               >
                 <div className="font-extrabold text-xs tracking-tight">{businessName}</div>
-                <div className="text-[10px] font-semibold mt-0.5 opacity-90 truncate">
-                  📞 {phoneNumber} • WhatsApp: {whatsappNumber}
+                <div className="text-[10px] font-semibold mt-0.5 opacity-90 truncate flex items-center justify-center gap-1">
+                  <Phone className="w-3 h-3 shrink-0" />
+                  <span>{phoneNumber} • WhatsApp: {whatsappNumber}</span>
                 </div>
                 <div className="text-[9px] opacity-80 truncate">{emailAddress}</div>
               </div>

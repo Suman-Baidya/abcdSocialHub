@@ -64,9 +64,9 @@ export async function POST(req: Request) {
 
     // Direct WhatsApp Click-to-Chat Link
     const waText = encodeURIComponent(
-      `👋 Namaskar! Please review and approve your new promotional post for ${
+      `Namaskar! Please review and approve your new promotional post for ${
         brandKit?.businessName || "ABCD Social"
-      }:\n\n🔗 Tap to Approve (1-Tap): ${approvalUrl}\n\nLink expires in 72 hours.`
+      }:\n\nTap to Approve: ${approvalUrl}\n\nLink expires in 72 hours.`
     );
     const whatsAppUrl = `https://wa.me/91${targetPhone}?text=${waText}`;
 
@@ -83,7 +83,7 @@ export async function POST(req: Request) {
           body: JSON.stringify({
             from: process.env.EMAIL_FROM || "ABCD Social <onboarding@resend.dev>",
             to: [targetEmail],
-            subject: `⚡ Post Approval Required: ${title} (${brandKit?.businessName || "ABCD Social"})`,
+            subject: `Action Required: Post Approval - ${title} (${brandKit?.businessName || "ABCD Social"})`,
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background-color: #0A0D14; color: #FFFFFF; border-radius: 16px;">
                 <h2 style="color: #00F0FF; margin-top: 0;">1-Tap Mobile Post Approval</h2>

@@ -12,8 +12,10 @@ import {
   Clock,
   Sparkles,
   CheckCircle2,
+  Crown,
 } from "lucide-react";
 import { useToast, CustomModal, CustomAlert } from "@/components/ui/ToastProvider";
+import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 
 interface TeamMember {
   id: string;
@@ -113,6 +115,8 @@ export default function TeamMembersPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+      <PageBreadcrumb pageTitle="Team & Permissions" />
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
@@ -167,7 +171,7 @@ export default function TeamMembersPage() {
                     <div className="font-semibold text-zinc-100 flex items-center gap-2">
                       <span>{member.name}</span>
                       {member.role === "OWNER" && (
-                        <span className="text-[10px] text-amber-400">👑</span>
+                        <Crown className="w-3.5 h-3.5 text-amber-400" />
                       )}
                     </div>
                   </td>

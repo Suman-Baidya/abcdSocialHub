@@ -21,7 +21,9 @@ import {
   ExternalLink,
   Play,
   RotateCcw,
+  Phone,
 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 
 export default function ContentStudioPage() {
   const [brief, setBrief] = useState(
@@ -245,6 +247,8 @@ export default function ContentStudioPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+      <PageBreadcrumb pageTitle="AI Content Studio" />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
@@ -577,8 +581,9 @@ export default function ContentStudioPage() {
 
                     <div className="rounded-xl p-3 text-center bg-[#00F0FF] text-[#0A0D14] shadow-lg relative z-10">
                       <div className="font-bold text-xs tracking-tight">ABCD Social Hub</div>
-                      <div className="text-[10px] font-semibold mt-0.5">
-                        📞 +91 8944899747 • WhatsApp: +91 8167685731
+                      <div className="text-[10px] font-semibold mt-0.5 flex items-center justify-center gap-1">
+                        <Phone className="w-3 h-3 shrink-0" />
+                        <span>+91 8944899747 • WhatsApp: +91 8167685731</span>
                       </div>
                       <div className="text-[9px] font-normal opacity-90 truncate">
                         sb.abcd321@gmail.com

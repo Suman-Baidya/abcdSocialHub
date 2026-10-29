@@ -17,7 +17,9 @@ import {
   Lock,
   Layers,
   ChevronRight,
+  X,
 } from "lucide-react";
+import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 
 interface BillingData {
   workspaceId: string;
@@ -307,7 +309,9 @@ export default function BillingPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 p-4 sm:p-6 pb-24">
+    <div className="max-w-6xl mx-auto space-y-8 p-4 sm:p-6 pb-24 animate-in fade-in duration-300">
+      <PageBreadcrumb pageTitle="Billing & Subscriptions" />
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -654,7 +658,7 @@ export default function BillingPage() {
                 onClick={() => setShowQrModal(null)}
                 className="text-zinc-400 hover:text-white p-1 rounded-lg"
               >
-                ✕
+                <X className="w-4 h-4" />
               </button>
             </div>
 

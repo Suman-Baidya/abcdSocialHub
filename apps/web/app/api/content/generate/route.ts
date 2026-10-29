@@ -165,7 +165,7 @@ Rules:
         body: JSON.stringify({
           headline: jsonContent.headline || brief.slice(0, 45),
           subheadline: brief.length > 45 ? brief.slice(0, 100) : "Special promotional offer. Contact us today for details.",
-          discount_tag: "⚡ LIMITED TIME OFFER",
+          discount_tag: "LIMITED TIME OFFER",
           business_name: businessName,
           phone_number: phoneNumber,
           address: brandKit?.addressBanner || "Kolkata, West Bengal",

@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useToast, CustomModal } from "@/components/ui/ToastProvider";
+import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 
 interface QueueItem {
   id: string;
@@ -168,6 +169,8 @@ export default function PublishingQueuePage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+      <PageBreadcrumb pageTitle="Publishing Queue" />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>

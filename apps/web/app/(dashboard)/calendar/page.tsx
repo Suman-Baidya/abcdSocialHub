@@ -169,29 +169,19 @@ export default function PublishingQueuePage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-      <PageBreadcrumb pageTitle="Publishing Queue" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2.5">
-            <CalendarIcon className="w-5 h-5 text-[#00F0FF]" />
-            <span>Publishing Queue & Calendar</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-            pg-boss automated job queue with atomic claiming and official Meta Graph API publishing.
-          </p>
-        </div>
-
+      <PageBreadcrumb
+        pageTitle="Publishing Queue & Calendar"
+        description="Automated job queue with atomic job claiming and official Meta Graph API publishing."
+      >
         <button
           onClick={loadQueue}
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-200 text-xs font-semibold transition-all self-start sm:self-auto active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-200 text-xs font-semibold transition-all active:scale-95"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
           <span>Refresh Queue</span>
         </button>
-      </div>
+      </PageBreadcrumb>
 
       {error && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs sm:text-sm flex items-center gap-3">

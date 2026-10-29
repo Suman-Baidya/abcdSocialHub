@@ -160,88 +160,99 @@ export default function DashboardOverviewPage() {
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
       {/* TailAdmin Standard Page Breadcrumb */}
-      <PageBreadcrumb pageTitle="Autopilot Report" parentTitle="Dashboard" parentHref="/dashboard" />
+      <PageBreadcrumb
+        pageTitle="Autopilot Overview"
+        description={`Real-time marketing intelligence and automated campaign operations for ${workspace.businessName}.`}
+      >
+        <Link
+          href="/content"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs font-semibold transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>New AI Post</span>
+        </Link>
+      </PageBreadcrumb>
 
       {/* 1. TailAdmin Standard 4-Metric Grid (EcommerceMetrics style) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
         {/* Metric Card 1: Published */}
-        <div className="rounded-2xl border border-zinc-800 bg-[#111722]/80 p-5 md:p-6 backdrop-blur-xl flex flex-col justify-between">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          </div>
-          <div className="mt-5 flex items-end justify-between">
-            <div>
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                Published Posts
-              </span>
-              <h4 className="mt-1.5 text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                {stats.publishedCount}
-              </h4>
+        <div className="rounded-2xl border border-zinc-800/80 bg-[#0F141F] p-6 transition-all hover:border-zinc-700/80 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <CheckCircle2 className="w-5 h-5" />
             </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <ArrowUp className="w-3 h-3" />
               <span>+12.4%</span>
             </div>
           </div>
+          <div className="mt-5">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+              Published Posts
+            </span>
+            <h4 className="mt-2 text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              {stats.publishedCount}
+            </h4>
+          </div>
         </div>
 
         {/* Metric Card 2: Queue */}
-        <div className="rounded-2xl border border-zinc-800 bg-[#111722]/80 p-5 md:p-6 backdrop-blur-xl flex flex-col justify-between">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/10 border border-sky-500/20">
-            <Clock className="w-5 h-5 text-sky-400" />
-          </div>
-          <div className="mt-5 flex items-end justify-between">
-            <div>
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                Scheduled Queue
-              </span>
-              <h4 className="mt-1.5 text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                {stats.scheduledCount}
-              </h4>
+        <div className="rounded-2xl border border-zinc-800/80 bg-[#0F141F] p-6 transition-all hover:border-zinc-700/80 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
+              <Clock className="w-5 h-5" />
             </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
               <span>IST Queue</span>
             </div>
+          </div>
+          <div className="mt-5">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+              Scheduled Queue
+            </span>
+            <h4 className="mt-2 text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              {stats.scheduledCount}
+            </h4>
           </div>
         </div>
 
         {/* Metric Card 3: Pending Review */}
-        <div className="rounded-2xl border border-zinc-800 bg-[#111722]/80 p-5 md:p-6 backdrop-blur-xl flex flex-col justify-between">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <AlertTriangle className="w-5 h-5 text-amber-400" />
-          </div>
-          <div className="mt-5 flex items-end justify-between">
-            <div>
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                Review Required
-              </span>
-              <h4 className="mt-1.5 text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                {stats.inReviewCount}
-              </h4>
+        <div className="rounded-2xl border border-zinc-800/80 bg-[#0F141F] p-6 transition-all hover:border-zinc-700/80 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+              <AlertTriangle className="w-5 h-5" />
             </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
               <span>Mobile Link</span>
             </div>
+          </div>
+          <div className="mt-5">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+              Review Required
+            </span>
+            <h4 className="mt-2 text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              {stats.inReviewCount}
+            </h4>
           </div>
         </div>
 
         {/* Metric Card 4: Credits Left */}
-        <div className="rounded-2xl border border-zinc-800 bg-[#111722]/80 p-5 md:p-6 backdrop-blur-xl flex flex-col justify-between">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#00F0FF]/10 border border-[#00F0FF]/20">
-            <Coins className="w-5 h-5 text-[#00F0FF]" />
-          </div>
-          <div className="mt-5 flex items-end justify-between">
-            <div>
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                Available Credits
-              </span>
-              <h4 className="mt-1.5 text-2xl sm:text-3xl font-bold text-[#00F0FF] tracking-tight">
-                {credits.remaining}
-              </h4>
+        <div className="rounded-2xl border border-zinc-800/80 bg-[#0F141F] p-6 transition-all hover:border-zinc-700/80 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF]">
+              <Coins className="w-5 h-5" />
             </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-white/[0.06] text-zinc-300 border border-white/[0.08]">
+            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/[0.06] text-zinc-300 border border-white/[0.08]">
               <span>{credits.planName}</span>
             </div>
+          </div>
+          <div className="mt-5">
+            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+              Available Credits
+            </span>
+            <h4 className="mt-2 text-2xl sm:text-3xl font-bold text-[#00F0FF] tracking-tight">
+              {credits.remaining}
+            </h4>
           </div>
         </div>
       </div>

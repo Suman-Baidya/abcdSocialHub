@@ -247,20 +247,10 @@ export default function ContentStudioPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-      <PageBreadcrumb pageTitle="AI Content Studio" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2.5">
-            <Sparkles className="w-5 h-5 text-[#00F0FF]" />
-            <span>AI Content Studio</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-            Voice-to-copy generator with Bengali/English 1080×1080 poster rendering and zero-cost audio reels.
-          </p>
-        </div>
-      </div>
+      <PageBreadcrumb
+        pageTitle="AI Content Studio"
+        description="Voice-to-copy generator with Bengali/English 1080×1080 poster rendering and zero-cost audio reels."
+      />
 
       {error && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs sm:text-sm flex items-center gap-3">

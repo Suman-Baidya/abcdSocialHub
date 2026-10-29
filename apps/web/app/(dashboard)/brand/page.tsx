@@ -97,24 +97,14 @@ export default function BrandKitPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-      <PageBreadcrumb pageTitle="Brand Identity Kit" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2.5">
-            <Palette className="w-5 h-5 text-[#00F0FF]" />
-            <span>Brand Identity Kit</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-            Configure your business contacts, colors, and typography for automated poster burning.
-          </p>
-        </div>
-
+      <PageBreadcrumb
+        pageTitle="Brand Identity Kit"
+        description="Configure your business contacts, colors, and typography for automated Pillow poster burning."
+      >
         <button
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-xs sm:text-sm transition-all shadow-md shadow-[#00F0FF]/20 disabled:opacity-50 active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-xs sm:text-sm transition-all shadow-md shadow-[#00F0FF]/20 disabled:opacity-50 active:scale-95 cursor-pointer"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -130,7 +120,7 @@ export default function BrandKitPage() {
             </>
           )}
         </button>
-      </div>
+      </PageBreadcrumb>
 
       {error && (
         <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs sm:text-sm flex items-center gap-3">

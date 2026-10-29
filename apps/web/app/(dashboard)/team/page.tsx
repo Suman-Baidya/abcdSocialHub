@@ -115,28 +115,18 @@ export default function TeamMembersPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-      <PageBreadcrumb pageTitle="Team & Permissions" />
-
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2.5">
-            <Users className="w-5 h-5 text-[#00F0FF]" />
-            <span>Team & Role Permissions</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-            Invite marketing designers, branch managers, and front-desk staff with strict role isolation.
-          </p>
-        </div>
-
+      <PageBreadcrumb
+        pageTitle="Team & Permissions"
+        description="Invite marketing designers, branch managers, and front-desk staff with strict role-based access control."
+      >
         <button
           onClick={() => setIsInviteModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
           <span>Invite Team Member</span>
         </button>
-      </div>
+      </PageBreadcrumb>
 
       {/* Role Permission Guidance Banner */}
       <CustomAlert

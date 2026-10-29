@@ -162,41 +162,26 @@ export default function WhatsAppLeadsPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-      <PageBreadcrumb pageTitle="WhatsApp Leads" />
+      <PageBreadcrumb
+        pageTitle="WhatsApp Leads"
+        description="Real-time customer inquiries captured directly from your Facebook & Instagram AI promo campaigns."
+      >
+        <button
+          onClick={handleExportCSV}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-semibold text-zinc-200 transition-all active:scale-95"
+        >
+          <Download className="w-3.5 h-3.5" />
+          <span>Export CSV</span>
+        </button>
 
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2.5">
-            <MessageSquare className="w-5 h-5 text-emerald-400" />
-            <span>WhatsApp Inbound Leads</span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Live Inbound
-            </span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-            Real-time customer inquiries captured from your Facebook & Instagram AI promo campaigns.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <button
-            onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-semibold text-zinc-200 transition-all active:scale-95"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
-          </button>
-
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs font-semibold transition-all shadow-md active:scale-95 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Inbound Lead</span>
-          </button>
-        </div>
-      </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs font-semibold transition-all shadow-md active:scale-95 cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Inbound Lead</span>
+        </button>
+      </PageBreadcrumb>
 
       {/* 4 Metrics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

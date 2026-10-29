@@ -224,7 +224,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col xl:ms-[280px] min-h-screen">
         {/* Sticky Top Header */}
-        <header className="sticky top-0 z-30 h-18 bg-[#0B0F19]/90 backdrop-blur-xl border-b border-zinc-800/80 px-4 sm:px-8 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-30 h-18 bg-[#0B0F19]/95 backdrop-blur-xl border-b border-zinc-800/80 px-6 sm:px-8 lg:px-10 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -249,7 +249,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           {/* Right Header Tray */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-4 shrink-0">
             {/* Active Workspace Switcher */}
             <WorkspaceSwitcher />
 
@@ -295,7 +295,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
 
         {/* Page Content Canvas */}
-        <main className="flex-1 p-5 sm:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-6 sm:p-8 lg:p-10 max-w-7xl w-full mx-auto space-y-8">
           {children}
         </main>
       </div>

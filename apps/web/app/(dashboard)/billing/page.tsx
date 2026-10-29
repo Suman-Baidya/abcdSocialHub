@@ -310,24 +310,10 @@ export default function BillingPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 p-4 sm:p-6 pb-24 animate-in fade-in duration-300">
-      <PageBreadcrumb pageTitle="Billing & Subscriptions" />
-
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-              Billing & Subscriptions
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/30">
-              India UPI & Cards
-            </span>
-          </div>
-          <p className="text-sm text-zinc-400 mt-1">
-            Manage your AI generation quotas, subscription tiers, and append-only usage credits.
-          </p>
-        </div>
-
+      <PageBreadcrumb
+        pageTitle="Billing & Subscriptions"
+        description="Manage your AI generation quotas, subscription tiers, and append-only usage credits with Indian UPI & Cards."
+      >
         <button
           onClick={() =>
             setShowQrModal({
@@ -336,12 +322,12 @@ export default function BillingPage() {
               credits: 50,
             })
           }
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#121722] hover:bg-zinc-800 border border-zinc-700/80 text-sm font-semibold text-zinc-200 transition-all shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#121722] hover:bg-zinc-800 border border-zinc-700/80 text-xs sm:text-sm font-semibold text-zinc-200 transition-all shadow-sm cursor-pointer"
         >
           <QrCode className="w-4 h-4 text-[#00F0FF]" />
-          Instant UPI QR Pay
+          <span>Instant UPI QR Pay</span>
         </button>
-      </div>
+      </PageBreadcrumb>
 
       {/* Success Notification Banner */}
       {actionSuccess && (

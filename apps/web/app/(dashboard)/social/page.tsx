@@ -137,28 +137,18 @@ export default function SocialAccountsPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-      <PageBreadcrumb pageTitle="Social Channels" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2.5">
-            <Share2 className="w-5 h-5 text-[#00F0FF]" />
-            <span>Social Account Connections</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-            Connect your official social media channels. Tokens are encrypted with AES-256-GCM.
-          </p>
-        </div>
-
+      <PageBreadcrumb
+        pageTitle="Social Accounts"
+        description="Connect your official social media channels. Tokens are encrypted with AES-256-GCM authenticated storage."
+      >
         <button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Connect Channel</span>
         </button>
-      </div>
+      </PageBreadcrumb>
 
       {/* Security Note */}
       <div className="p-4 rounded-2xl bg-zinc-900/60 border border-white/[0.06] flex items-center gap-3">

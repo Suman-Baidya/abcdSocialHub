@@ -9,13 +9,12 @@ import {
   Play,
   Loader2,
   RefreshCw,
-  Send,
-  ExternalLink,
+  Share2,
   Instagram,
   Facebook,
   Sparkles,
-  ChevronRight,
 } from "lucide-react";
+import { useToast, CustomModal } from "@/components/ui/ToastProvider";
 
 interface QueueItem {
   id: string;
@@ -31,9 +30,11 @@ interface QueueItem {
 }
 
 export default function PublishingQueuePage() {
+  const { toast } = useToast();
   const [items, setItems] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [confirmPublishItem, setConfirmPublishItem] = useState<QueueItem | null>(null);
   const [error, setError] = useState("");
   const [activeFilter, setActiveFilter] = useState<string>("ALL");
 
@@ -46,7 +47,7 @@ export default function PublishingQueuePage() {
         const data = await res.json();
         setItems(data.items || []);
       } else {
-        // Fallback to sample queue items if empty or endpoint not yet loaded
+        // Fallback sample items
         setItems([
           {
             id: "sample_1",
@@ -101,8 +102,12 @@ export default function PublishingQueuePage() {
     loadQueue();
   }, []);
 
-  const handlePublishNow = async (contentItemId: string) => {
+  const handleExecutePublish = async () => {
+    if (!confirmPublishItem) return;
+    const contentItemId = confirmPublishItem.id;
     setPublishingId(contentItemId);
+    setConfirmPublishItem(null);
+
     try {
       const res = await fetch("/api/publish", {
         method: "POST",
@@ -115,19 +120,30 @@ export default function PublishingQueuePage() {
 
       const data = await res.json();
       if (res.ok && data.success) {
-        alert(`✓ Successfully published to: ${data.publishedDestinations.join(", ")}`);
+        toast.success(
+          "Published Successfully!",
+          `Post dispatched to: ${data.publishedDestinations?.join(", ") || "Connected channels"}`
+        );
         // Update local item status
         setItems((prev) =>
           prev.map((item) => (item.id === contentItemId ? { ...item, status: "PUBLISHED" } : item))
         );
       } else {
-        alert(data.error || "Failed to publish item");
+        toast.error("Publishing Failed", data.error || "Could not publish post to social channels.");
       }
     } catch (err: any) {
-      alert("Error triggering publish: " + err.message);
+      toast.error("Network Error", err.message);
     } finally {
       setPublishingId(null);
     }
+  };
+
+  const handlePushWhatsAppReview = (item: QueueItem) => {
+    const text = encodeURIComponent(
+      `Namaste! Your scheduled promotion "${item.title}" is ready for mobile review. Tap to preview and approve: ${window.location.origin}/content`
+    );
+    window.open(`https://wa.me/?text=${text}`, "_blank");
+    toast.info("WhatsApp Opened", "Dispatching review link to client WhatsApp.");
   };
 
   const getStatusBadge = (st: string) => {
@@ -260,10 +276,20 @@ export default function PublishingQueuePage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-auto">
+                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                  {item.status === "IN_REVIEW" && (
+                    <button
+                      onClick={() => handlePushWhatsAppReview(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-all active:scale-95"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>WhatsApp Review</span>
+                    </button>
+                  )}
+
                   {item.status !== "PUBLISHED" && (
                     <button
-                      onClick={() => handlePublishNow(item.id)}
+                      onClick={() => setConfirmPublishItem(item)}
                       disabled={publishingId === item.id}
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 shadow-md shadow-emerald-500/20"
                     >
@@ -286,6 +312,17 @@ export default function PublishingQueuePage() {
           })}
         </div>
       )}
+
+      {/* Confirmation Modal Popup */}
+      <CustomModal
+        isOpen={!!confirmPublishItem}
+        onClose={() => setConfirmPublishItem(null)}
+        title="Confirm Instant Publishing"
+        description={`Are you sure you want to publish "${confirmPublishItem?.title}" immediately to connected Meta & Instagram channels?`}
+        confirmText="Publish to Live Channels"
+        onConfirm={handleExecutePublish}
+        isLoading={!!publishingId}
+      />
     </div>
   );
 }

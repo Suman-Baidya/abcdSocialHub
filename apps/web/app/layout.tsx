@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 };
 
 import { SessionProvider } from "@/components/providers/SessionProvider";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 
 export default function RootLayout({
   children,
@@ -20,7 +21,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} font-sans bg-background text-foreground min-h-screen antialiased`}>
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </SessionProvider>
       </body>
     </html>
   );

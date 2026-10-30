@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
 import {
   CreditCard,
@@ -64,6 +65,23 @@ export default function BillingPage() {
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState<null | { planName: string; price: number; credits: number }>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!showQrModal) return;
+    const origBody = document.body.style.overflow;
+    const origDoc = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = origBody;
+      document.documentElement.style.overflow = origDoc;
+    };
+  }, [showQrModal]);
 
   const user = session?.user as any;
   const isStaff = user?.role === "STAFF";
@@ -309,10 +327,11 @@ export default function BillingPage() {
   );
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 p-4 sm:p-6 pb-24 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       <PageBreadcrumb
-        pageTitle="Billing & Subscriptions"
-        description="Manage your AI generation quotas, subscription tiers, and append-only usage credits with Indian UPI & Cards."
+        pageTitle="Billing & Plans"
+        description="Manage subscription plans, quotas, and credit balances."
+        hideBreadcrumb={true}
       >
         <button
           onClick={() =>
@@ -345,32 +364,31 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Overview Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Overview Stat Cards (Compact & sleek) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-3.5">
         {/* Active Plan Card */}
-        <div className="p-6 rounded-2xl border border-zinc-800 bg-[#121722]/80 backdrop-blur-xl space-y-3 relative overflow-hidden">
-          <div className="absolute -top-12 -right-12 w-28 h-28 bg-[#00F0FF]/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-card shadow-sm space-y-2.5 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Active Tier
             </span>
             <span
-              className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+              className={`px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold uppercase tracking-wider ${
                 subscription.status === "ACTIVE"
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                  : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
+                  ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/30"
+                  : "bg-amber-500/10 text-amber-500 border border-amber-500/30"
               }`}
             >
               {subscription.status}
             </span>
           </div>
 
-          <div className="text-2xl font-bold text-white capitalize flex items-center gap-2">
+          <div className="text-xl sm:text-2xl font-bold text-foreground capitalize flex items-center gap-2">
             {plans[currentPlanKey]?.name || currentPlanKey}
-            {currentPlanKey === "growth" && <Zap className="w-5 h-5 text-amber-400 fill-amber-400" />}
+            {currentPlanKey === "growth" && <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />}
           </div>
 
-          <p className="text-xs text-zinc-400">
+          <p className="text-[11px] text-muted-foreground">
             {subscription.currentPeriodEnd
               ? `Renews on ${formatIST(subscription.currentPeriodEnd)}`
               : "Standard monthly cycle"}
@@ -378,33 +396,33 @@ export default function BillingPage() {
         </div>
 
         {/* Credit Quota Meter */}
-        <div className="p-6 rounded-2xl border border-zinc-800 bg-[#121722]/80 backdrop-blur-xl space-y-3 md:col-span-2">
+        <div className="p-3.5 sm:p-4 rounded-xl border border-border bg-card shadow-sm space-y-2.5 md:col-span-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Monthly Creative Credits
             </span>
-            <span className="text-sm font-bold text-zinc-200">
-              <span className="text-[#00F0FF] font-mono text-base">{credits.remaining}</span>{" "}
+            <span className="text-xs sm:text-sm font-bold text-foreground">
+              <span className="text-primary font-mono text-sm sm:text-base">{credits.remaining}</span>{" "}
               available / {credits.allocated} quota
             </span>
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full bg-zinc-800/80 rounded-full h-3 overflow-hidden p-0.5 border border-zinc-700/50">
+          <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden p-0.5 border border-border">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                usedPercent > 85 ? "bg-amber-500" : "bg-gradient-to-r from-[#00F0FF] to-blue-500"
+                usedPercent > 85 ? "bg-amber-500" : "bg-gradient-to-r from-primary to-blue-500"
               }`}
               style={{ width: `${Math.max(4, usedPercent)}%` }}
             />
           </div>
 
-          <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
             <span>{credits.usedThisMonth} used this month ({usedPercent}%)</span>
             <button
               onClick={() => handleCheckout("topup_50")}
               disabled={processingPlan === "topup_50"}
-              className="text-xs text-[#00F0FF] hover:underline font-semibold flex items-center gap-1"
+              className="text-[11px] text-primary hover:underline font-semibold flex items-center gap-1 cursor-pointer"
             >
               + Top-up 50 credits (₹299)
             </button>
@@ -413,64 +431,64 @@ export default function BillingPage() {
       </div>
 
       {/* Subscription Plans Selector */}
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         <div>
-          <h2 className="text-xl font-bold text-white">Choose Your Plan</h2>
-          <p className="text-xs sm:text-sm text-zinc-400">
+          <h2 className="text-base sm:text-lg font-bold text-foreground">Choose Your Plan</h2>
+          <p className="text-xs text-muted-foreground">
             Automated billing via UPI Autopay, Debit/Credit Cards, or sovereign QR checkout.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Starter Plan (₹499) */}
           <div
-            className={`p-6 sm:p-8 rounded-2xl border transition-all relative flex flex-col justify-between ${
+            className={`p-4 sm:p-5 rounded-xl border transition-all relative flex flex-col justify-between ${
               currentPlanKey === "starter"
-                ? "border-[#00F0FF]/50 bg-[#121722] shadow-lg shadow-[#00F0FF]/5 ring-1 ring-[#00F0FF]/30"
-                : "border-zinc-800 bg-[#121722]/50 hover:border-zinc-700"
+                ? "border-primary/50 bg-card shadow-md ring-1 ring-primary/30"
+                : "border-border bg-card hover:border-primary/30"
             }`}
           >
             {currentPlanKey === "starter" && (
-              <span className="absolute top-4 right-4 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/30">
+              <span className="absolute top-3.5 right-3.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/30">
                 CURRENT PLAN
               </span>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h3 className="text-lg font-bold text-white">Starter</h3>
-                <p className="text-xs text-zinc-400 mt-1">
+                <h3 className="text-base font-bold text-foreground">Starter</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Ideal for solo barbers, beauty parlours, dental clinics & small tutors.
                 </p>
               </div>
 
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl sm:text-4xl font-extrabold text-white">
+                <span className="text-2xl sm:text-3xl font-extrabold text-foreground">
                   {formatINR(plans.starter?.priceInRupees || 499)}
                 </span>
-                <span className="text-xs sm:text-sm text-zinc-400">/ month</span>
+                <span className="text-xs text-muted-foreground">/ month</span>
               </div>
 
-              <div className="h-px bg-zinc-800 my-4" />
+              <div className="h-px bg-border my-2.5" />
 
-              <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-300">
+              <ul className="space-y-2 text-xs text-muted-foreground">
                 {plans.starter?.features.map((feat, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5">
-                    <Check className="w-4 h-4 text-[#00F0FF] shrink-0 mt-0.5" />
-                    <span>{feat}</span>
+                  <li key={idx} className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-foreground">{feat}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="pt-8 space-y-2">
+            <div className="pt-5 space-y-1.5">
               <button
                 onClick={() => handleCheckout("starter")}
                 disabled={processingPlan === "starter" || currentPlanKey === "starter"}
-                className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   currentPlanKey === "starter"
-                    ? "bg-zinc-800/80 text-zinc-400 cursor-default"
-                    : "bg-[#00F0FF] hover:bg-[#00D0DF] text-[#0A0D14] shadow-md shadow-[#00F0FF]/20"
+                    ? "bg-muted text-muted-foreground cursor-default"
+                    : "bg-primary hover:opacity-90 text-primary-foreground shadow-sm"
                 }`}
               >
                 {processingPlan === "starter" ? (
@@ -485,7 +503,7 @@ export default function BillingPage() {
               <button
                 onClick={() => handleMockActivate("starter")}
                 disabled={processingPlan === "starter"}
-                className="w-full py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="w-full py-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 (Dev mode: 1-click test activate)
               </button>
@@ -494,61 +512,61 @@ export default function BillingPage() {
 
           {/* Growth Plan (₹999) */}
           <div
-            className={`p-6 sm:p-8 rounded-2xl border transition-all relative flex flex-col justify-between ${
+            className={`p-4 sm:p-5 rounded-xl border transition-all relative flex flex-col justify-between ${
               currentPlanKey === "growth"
-                ? "border-[#00F0FF]/50 bg-[#121722] shadow-lg shadow-[#00F0FF]/5 ring-1 ring-[#00F0FF]/30"
-                : "border-zinc-800 bg-[#121722]/50 hover:border-zinc-700"
+                ? "border-primary/50 bg-card shadow-md ring-1 ring-primary/30"
+                : "border-border bg-card hover:border-primary/30"
             }`}
           >
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            <div className="absolute top-3.5 right-3.5 flex items-center gap-1.5">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">
                 RECOMMENDED
               </span>
               {currentPlanKey === "growth" && (
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/30">
                   CURRENT
                 </span>
               )}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
                   Growth
-                  <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
                 </h3>
-                <p className="text-xs text-zinc-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   For growing retail outlets, multi-doctor polyclinics & local agencies.
                 </p>
               </div>
 
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl sm:text-4xl font-extrabold text-white">
+                <span className="text-2xl sm:text-3xl font-extrabold text-foreground">
                   {formatINR(plans.growth?.priceInRupees || 999)}
                 </span>
-                <span className="text-xs sm:text-sm text-zinc-400">/ month</span>
+                <span className="text-xs text-muted-foreground">/ month</span>
               </div>
 
-              <div className="h-px bg-zinc-800 my-4" />
+              <div className="h-px bg-border my-2.5" />
 
-              <ul className="space-y-2.5 text-xs sm:text-sm text-zinc-300">
+              <ul className="space-y-2 text-xs text-muted-foreground">
                 {plans.growth?.features.map((feat, idx) => (
-                  <li key={idx} className="flex items-start gap-2.5">
-                    <Check className="w-4 h-4 text-[#00F0FF] shrink-0 mt-0.5" />
-                    <span>{feat}</span>
+                  <li key={idx} className="flex items-start gap-2">
+                    <Check className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-foreground">{feat}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="pt-8 space-y-2">
+            <div className="pt-5 space-y-1.5">
               <button
                 onClick={() => handleCheckout("growth")}
                 disabled={processingPlan === "growth" || currentPlanKey === "growth"}
-                className={`w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                className={`w-full py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   currentPlanKey === "growth"
-                    ? "bg-zinc-800/80 text-zinc-400 cursor-default"
-                    : "bg-gradient-to-r from-[#00F0FF] to-blue-500 hover:from-[#00D0DF] hover:to-blue-600 text-[#0A0D14] font-bold shadow-md shadow-[#00F0FF]/25"
+                    ? "bg-muted text-muted-foreground cursor-default"
+                    : "bg-primary hover:opacity-90 text-primary-foreground shadow-sm"
                 }`}
               >
                 {processingPlan === "growth" ? (
@@ -563,7 +581,7 @@ export default function BillingPage() {
               <button
                 onClick={() => handleMockActivate("growth")}
                 disabled={processingPlan === "growth"}
-                className="w-full py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors"
+                className="w-full py-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
               >
                 (Dev mode: 1-click test activate)
               </button>
@@ -573,50 +591,50 @@ export default function BillingPage() {
       </div>
 
       {/* Credit Usage Ledger Table */}
-      <div className="p-6 rounded-2xl border border-zinc-800 bg-[#121722]/80 backdrop-blur-xl space-y-4">
+      <div className="p-4 sm:p-5 rounded-xl border border-border bg-card shadow-sm space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <History className="w-5 h-5 text-[#00F0FF]" />
-            <h3 className="text-lg font-bold text-white">Append-Only Credit Ledger</h3>
+            <History className="w-4 h-4 text-primary" />
+            <h3 className="text-sm sm:text-base font-bold text-foreground">Append-Only Credit Ledger</h3>
           </div>
-          <span className="text-xs text-zinc-400">Strict Tenancy & Audit Log Protected</span>
+          <span className="text-[11px] text-muted-foreground">Strict Tenancy & Audit Log Protected</span>
         </div>
 
         {recentUsage.length === 0 ? (
           /* Empty State */
-          <div className="p-12 text-center rounded-xl border border-dashed border-zinc-800 space-y-2">
-            <Layers className="w-8 h-8 text-zinc-600 mx-auto" />
-            <p className="text-sm text-zinc-400">No credit deductions yet this cycle.</p>
-            <p className="text-xs text-zinc-400">
+          <div className="p-8 text-center rounded-xl border border-dashed border-border space-y-2">
+            <Layers className="w-7 h-7 text-muted-foreground mx-auto" />
+            <p className="text-xs sm:text-sm text-foreground">No credit deductions yet this cycle.</p>
+            <p className="text-[11px] text-muted-foreground">
               Draft promotional posts or synthesize regional voiceovers to view usage records.
             </p>
           </div>
         ) : (
           /* Data Table */
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs sm:text-sm">
+            <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-zinc-800 text-zinc-400 text-xs uppercase font-semibold">
-                  <th className="pb-3 px-2">Date (IST)</th>
-                  <th className="pb-3 px-2">Action</th>
-                  <th className="pb-3 px-2 text-right">Credits Change</th>
-                  <th className="pb-3 px-2 text-right">Reference</th>
+                <tr className="border-b border-border text-muted-foreground text-[10px] uppercase font-semibold">
+                  <th className="pb-2.5 px-2">Date (IST)</th>
+                  <th className="pb-2.5 px-2">Action</th>
+                  <th className="pb-2.5 px-2 text-right">Credits Change</th>
+                  <th className="pb-2.5 px-2 text-right">Reference</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800/60">
+              <tbody className="divide-y divide-border">
                 {recentUsage.map((item) => (
-                  <tr key={item.id} className="hover:bg-zinc-800/20 transition-colors">
-                    <td className="py-3 px-2 text-zinc-400 whitespace-nowrap">
+                  <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="py-2.5 px-2 text-muted-foreground whitespace-nowrap">
                       {formatIST(item.createdAt)}
                     </td>
-                    <td className="py-3 px-2 text-zinc-200 font-medium">
+                    <td className="py-2.5 px-2 text-foreground font-medium">
                       {item.actionType.replace(/_/g, " ")}
                     </td>
-                    <td className="py-3 px-2 text-right font-mono font-semibold">
+                    <td className="py-2.5 px-2 text-right font-mono font-semibold">
                       {item.creditsUsed < 0 ? (
-                        <span className="text-emerald-400">+{Math.abs(item.creditsUsed)}</span>
+                        <span className="text-emerald-500">+{Math.abs(item.creditsUsed)}</span>
                       ) : item.creditsUsed === 0 ? (
-                        <span className="text-zinc-500">0</span>
+                        <span className="text-muted-foreground">0</span>
                       ) : (
                         <span className="text-amber-400">-{item.creditsUsed}</span>
                       )}
@@ -633,32 +651,43 @@ export default function BillingPage() {
       </div>
 
       {/* Sovereign UPI QR Code Modal */}
-      {showQrModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-[#121722] border border-zinc-700 rounded-2xl p-6 space-y-5 text-center shadow-2xl relative">
+      {mounted && showQrModal && createPortal(
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowQrModal(null);
+          }}
+          className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-md w-full bg-card border border-border rounded-2xl p-6 space-y-5 text-center shadow-2xl relative text-card-foreground animate-in zoom-in-95 duration-200"
+          >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-[#00F0FF]" /> Direct Sovereign UPI
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-primary" /> Instant UPI Pay
               </h3>
               <button
+                type="button"
                 onClick={() => setShowQrModal(null)}
-                className="text-zinc-400 hover:text-white p-1 rounded-lg"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-1">
-              <p className="text-xs text-zinc-400">
-                Scan with any Indian UPI App (PhonePe, GPay, Paytm, CRED). Zero transaction surcharges.
+              <p className="text-xs text-muted-foreground">
+                Scan with any UPI App (PhonePe, GPay, Paytm). Zero surcharge.
               </p>
-              <div className="text-2xl font-black text-white text-[#00F0FF]">
+              <div className="text-2xl font-black text-primary">
                 {formatINR(showQrModal.price)}
               </div>
             </div>
 
             {/* Generated UPI QR Code for Indian VPA */}
-            <div className="w-48 h-48 mx-auto bg-white p-3 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-48 h-48 mx-auto bg-white p-3 rounded-xl flex items-center justify-center shadow-lg border border-border">
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
                   `upi://pay?pa=8167685731@okaxis&pn=ABCD+Social+Hub&am=${showQrModal.price}&cu=INR&tn=ABCD+${showQrModal.credits}+Credits`
@@ -668,30 +697,33 @@ export default function BillingPage() {
               />
             </div>
 
-            <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 font-mono flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-muted/60 border border-border text-xs text-foreground font-mono flex items-center justify-between">
               <span>UPI ID: 8167685731@okaxis</span>
-              <span className="text-[#00F0FF] text-[10px] font-sans">Verified Merchant</span>
+              <span className="text-primary text-[10px] font-sans font-semibold">Verified Merchant</span>
             </div>
 
             <div className="space-y-2">
               <button
+                type="button"
                 onClick={async () => {
                   setShowQrModal(null);
                   await handleMockActivate("topup_50");
                 }}
-                className="w-full py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D0DF] text-[#0A0D14] text-xs font-bold transition-all"
+                className="w-full py-2.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-bold transition-all shadow-sm cursor-pointer"
               >
-                I have completed the payment (Simulate Verification)
+                Simulate Payment Verification
               </button>
               <button
+                type="button"
                 onClick={() => setShowQrModal(null)}
-                className="w-full py-2 text-xs text-zinc-400 hover:text-zinc-200"
+                className="w-full py-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 Cancel
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

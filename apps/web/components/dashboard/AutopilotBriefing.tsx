@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -62,6 +63,23 @@ export function AutopilotBriefing({
   const router = useRouter();
   const [showOfferModal, setShowOfferModal] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState(REGIONAL_OFFERS[0]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!showOfferModal) return;
+    const origBody = document.body.style.overflow;
+    const origDoc = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = origBody;
+      document.documentElement.style.overflow = origDoc;
+    };
+  }, [showOfferModal]);
 
   // Determine IST time greeting
   const getGreeting = () => {
@@ -96,37 +114,37 @@ export function AutopilotBriefing({
 
   return (
     <>
-      <div className="rounded-2xl bg-[#111722]/90 border border-zinc-800 p-6 sm:p-7 relative overflow-hidden backdrop-blur-xl">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+      <div className="rounded-xl bg-card border border-border p-4 sm:p-5 relative overflow-hidden backdrop-blur-xl shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-5 relative z-10">
           {/* Main Greeting & Status Brief */}
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-[#00F0FF]/10 border border-[#00F0FF]/25 text-[#00F0FF] text-xs font-semibold">
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-primary/10 border border-primary/25 text-primary text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Autopilot Engine Active • IST Dispatch Schedule</span>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">
               {getGreeting()},{" "}
-              <span className="text-[#00F0FF]">
+              <span className="text-primary">
                 {businessName}
               </span>
             </h2>
 
-            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Your autonomous marketing engine is actively safeguarding and publishing your regional
               promotional assets across connected Meta, Instagram, and LinkedIn channels.
             </p>
 
             {/* 3 Core Status Pills */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
               {/* Pill 1 */}
-              <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="p-2.5 rounded-lg bg-muted/60 border border-border flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
-                  <div className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                     Published Today
                   </div>
-                  <div className="text-xs font-semibold text-zinc-200">
+                  <div className="text-xs font-semibold text-foreground">
                     {stats.publishedCount > 0
                       ? `${stats.publishedCount} Posts Dispatched`
                       : "Engine Standing By"}
@@ -135,13 +153,13 @@ export function AutopilotBriefing({
               </div>
 
               {/* Pill 2 */}
-              <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-2.5">
-                <Clock className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
+              <div className="p-2.5 rounded-lg bg-muted/60 border border-border flex items-start gap-2">
+                <Clock className="w-4 h-4 text-sky-500 shrink-0 mt-0.5" />
                 <div className="space-y-0.5">
-                  <div className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                     Next In Queue
                   </div>
-                  <div className="text-xs font-semibold text-zinc-200 truncate">
+                  <div className="text-xs font-semibold text-foreground truncate">
                     {autopilot.nextScheduled
                       ? new Date(autopilot.nextScheduled.scheduledFor).toLocaleTimeString("en-IN", {
                           hour: "2-digit",
@@ -156,17 +174,17 @@ export function AutopilotBriefing({
               </div>
 
               {/* Pill 3 */}
-              <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-start gap-2.5">
+              <div className="p-2.5 rounded-lg bg-muted/60 border border-border flex items-start gap-2">
                 <AlertTriangle
                   className={`w-4 h-4 shrink-0 mt-0.5 ${
-                    stats.inReviewCount > 0 ? "text-amber-400" : "text-emerald-400"
+                    stats.inReviewCount > 0 ? "text-amber-500" : "text-emerald-500"
                   }`}
                 />
                 <div className="space-y-0.5">
-                  <div className="text-[11px] font-medium text-zinc-400 uppercase tracking-wider">
+                  <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                     Review Required
                   </div>
-                  <div className="text-xs font-semibold text-zinc-200">
+                  <div className="text-xs font-semibold text-foreground">
                     {stats.inReviewCount > 0
                       ? `${stats.inReviewCount} Awaiting Approval`
                       : "0 Pending Review"}
@@ -180,23 +198,23 @@ export function AutopilotBriefing({
           <div className="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0 justify-center">
             <button
               onClick={() => setShowOfferModal(true)}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
             >
-              <Zap className="w-4 h-4 fill-[#0A0D14]" />
+              <Zap className="w-4 h-4 fill-primary-foreground" />
               <span>Regional Campaign Templates</span>
             </button>
 
             <Link
               href="/content?mode=voice"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 font-semibold text-xs transition-all active:scale-95"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-muted hover:bg-accent border border-border text-foreground font-semibold text-xs transition-all active:scale-95"
             >
-              <Mic className="w-4 h-4 text-[#00F0FF]" />
+              <Mic className="w-4 h-4 text-primary" />
               <span>Voice Memo Prompt</span>
             </Link>
 
             <button
               onClick={handleSendWhatsAppApproval}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-400 font-semibold text-xs transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-500 font-semibold text-xs transition-all active:scale-95 cursor-pointer"
             >
               <Share2 className="w-4 h-4" />
               <span>Send WhatsApp Review</span>
@@ -206,26 +224,37 @@ export function AutopilotBriefing({
       </div>
 
       {/* Regional Festive Offer Modal */}
-      {showOfferModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-xl rounded-2xl bg-[#111722] border border-zinc-800 shadow-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+      {mounted && showOfferModal && createPortal(
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowOfferModal(false);
+          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xl rounded-2xl bg-card border border-border shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#00F0FF]/10 border border-[#00F0FF]/30 flex items-center justify-center">
-                  <Layers className="w-4 h-4 text-[#00F0FF]" />
+                <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-zinc-100">
+                  <h3 className="text-sm font-semibold text-foreground">
                     Regional Campaign Templates
                   </h3>
-                  <p className="text-xs text-zinc-400">
+                  <p className="text-xs text-muted-foreground">
                     Curated marketing hooks for Bengali and Indian commercial calendars
                   </p>
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setShowOfferModal(false)}
-                className="p-1 rounded-lg hover:bg-white/[0.06] text-zinc-400 hover:text-zinc-200"
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -238,42 +267,45 @@ export function AutopilotBriefing({
                   onClick={() => setSelectedOffer(offer)}
                   className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                     selectedOffer.title === offer.title
-                      ? "bg-[#00F0FF]/10 border-[#00F0FF]/40 shadow-sm"
-                      : "bg-zinc-900/60 border-zinc-800 hover:bg-zinc-900"
+                      ? "bg-primary/10 border-primary/40 shadow-sm"
+                      : "bg-muted/50 border-border hover:bg-muted"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-zinc-100">
+                    <span className="text-xs font-semibold text-foreground">
                       {offer.title}
                     </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded font-medium bg-white/[0.06] text-zinc-300">
+                    <span className="text-[10px] px-2 py-0.5 rounded font-medium bg-muted text-foreground border border-border">
                       {offer.category}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                     {offer.brief}
                   </p>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
               <button
+                type="button"
                 onClick={() => setShowOfferModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-200"
+                className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => handleLaunchOffer(selectedOffer.brief)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-xs transition-all shadow-md active:scale-95"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
               >
                 <span>Draft Campaign in Studio</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

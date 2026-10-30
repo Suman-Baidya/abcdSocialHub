@@ -6,7 +6,7 @@ import { encryptToken } from "@abcd/integrations";
 import { z } from "zod";
 
 const connectAccountSchema = z.object({
-  platform: z.enum(["FACEBOOK_PAGE", "INSTAGRAM_BUSINESS", "LINKEDIN", "X_TWITTER"]),
+  platform: z.enum(["FACEBOOK_PAGE", "INSTAGRAM_BUSINESS", "LINKEDIN", "X_TWITTER", "YOUTUBE"]),
   platformAccountId: z.string().min(1),
   accountName: z.string().min(1),
   accessToken: z.string().min(5),

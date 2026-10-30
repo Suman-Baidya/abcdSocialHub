@@ -35,8 +35,9 @@ Keep this file short. Put long reference material in `docs/` and link it.
 
 ## 3. Design system (consistency rules)
 
-**Source of truth:** design tokens in `packages/ui/styles/tokens.css` and components in `packages/ui`. Do not style outside the system.
+**Source of truth:** design tokens in `packages/ui/styles/tokens.css` and components in `packages/ui`. Detailed layout specifications: `docs/ui-layout-structure.md`. Do not style outside the system.
 
+- **Layout & Dashboard Structure:** strictly follow `docs/ui-layout-structure.md` for sidebar collapsing, header alignment, mobile bottom navigation, page titles (strictly 2–3 words), page descriptions (strictly 7–8 words), and compact card spacing (no vertical stretching voids).
 - **No hardcoded values.** Never write raw hex colours, arbitrary pixel sizes (`w-[13px]`), custom shadows, or custom radii. Use semantic tokens only: `bg-background`, `text-foreground`, `text-muted-foreground`, `bg-primary`, `border-border`, `ring-ring`, and the status tokens below.
 - **Reuse before create.** Search `packages/ui` first. A new component is allowed only if nothing fits, must live in `packages/ui`, use `cva` variants, and be documented with a usage example.
 - **Standard building blocks (always use these):** `AppShell`, `PageHeader`, `DataTable`, `StatCard`, `EmptyState`, `ErrorState`, `LoadingSkeleton`, `ConfirmDialog`, `StatusBadge`, `PlatformIcon`, `FormField`.

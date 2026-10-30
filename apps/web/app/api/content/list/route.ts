@@ -14,6 +14,9 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const statusParam = searchParams.get("status");
+    const searchParam = searchParams.get("search");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
 
     // Resolve user workspace
     const user = await prisma.user.findUnique({
@@ -50,6 +53,17 @@ export async function GET(req: Request) {
       whereClause.status = statusParam as PostStatus;
     }
 
+    if (searchParam && searchParam.trim()) {
+      whereClause.OR = [
+        { title: { contains: searchParam.trim(), mode: "insensitive" } },
+        { rawBrief: { contains: searchParam.trim(), mode: "insensitive" } },
+      ];
+    }
+
+    // Get total matching count for pagination
+    const totalCount = await prisma.contentItem.count({ where: whereClause });
+
+    // Fetch paginated items
     const items = await prisma.contentItem.findMany({
       where: whereClause,
       include: {
@@ -60,13 +74,36 @@ export async function GET(req: Request) {
         },
       },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    // Compute workspace queue stats
+    const [scheduledCount, inReviewCount, publishedCount, failedCount, totalAllCount] = await Promise.all([
+      prisma.contentItem.count({ where: { workspaceId: workspace.id, status: PostStatus.SCHEDULED } }),
+      prisma.contentItem.count({ where: { workspaceId: workspace.id, status: PostStatus.IN_REVIEW } }),
+      prisma.contentItem.count({ where: { workspaceId: workspace.id, status: PostStatus.PUBLISHED } }),
+      prisma.contentItem.count({ where: { workspaceId: workspace.id, status: PostStatus.FAILED } }),
+      prisma.contentItem.count({ where: { workspaceId: workspace.id } }),
+    ]);
 
     return NextResponse.json({
       success: true,
       workspaceId: workspace.id,
       items,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit) || 1,
+      },
+      stats: {
+        total: totalAllCount,
+        scheduled: scheduledCount,
+        inReview: inReviewCount,
+        published: publishedCount,
+        failed: failedCount,
+      },
     });
   } catch (error: any) {
     console.error("Content list API error:", error);

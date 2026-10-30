@@ -11,7 +11,7 @@ const brandKitSchema = z.object({
   addressBanner: z.string().min(3, "Contact/Address banner is required"),
   primaryColor: z.string().default("#00F0FF"),
   secondaryColor: z.string().default("#0A0D14"),
-  defaultLanguage: z.enum(["bengali", "english"]).default("bengali"),
+  defaultLanguage: z.enum(["bengali", "english", "hindi"]).default("bengali"),
   logoUrl: z.string().optional().nullable(),
 });
 

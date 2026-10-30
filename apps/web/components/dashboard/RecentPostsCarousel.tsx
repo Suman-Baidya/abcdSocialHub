@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import {
   Sparkles,
@@ -8,7 +9,6 @@ import {
   Copy,
   Check,
   Calendar,
-  Share2,
   X,
   ExternalLink,
   ImageIcon,
@@ -40,6 +40,23 @@ interface RecentPostsCarouselProps {
 export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
   const [selectedPost, setSelectedPost] = useState<PostItem | null>(null);
   const [copiedCaption, setCopiedCaption] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedPost) return;
+    const origBody = document.body.style.overflow;
+    const origDoc = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = origBody;
+      document.documentElement.style.overflow = origDoc;
+    };
+  }, [selectedPost]);
 
   const handleCopyCaption = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -49,18 +66,18 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
 
   if (!posts || posts.length === 0) {
     return (
-      <div className="p-8 rounded-2xl bg-[#111722]/80 border border-white/[0.06] backdrop-blur-xl text-center space-y-3">
-        <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto text-zinc-400">
+      <div className="p-8 rounded-2xl bg-card border border-border backdrop-blur-xl text-center space-y-3 shadow-sm">
+        <div className="w-12 h-12 rounded-2xl bg-muted border border-border flex items-center justify-center mx-auto text-muted-foreground">
           <ImageIcon className="w-6 h-6" />
         </div>
-        <h4 className="text-sm font-semibold text-zinc-200">No Creative Posts Generated Yet</h4>
-        <p className="text-xs text-zinc-400 max-w-sm mx-auto">
+        <h4 className="text-sm font-semibold text-foreground">No Creative Posts Generated Yet</h4>
+        <p className="text-xs text-muted-foreground max-w-sm mx-auto">
           Your workspace has no drafts or scheduled posters. Generate your first Bengali & English
           promotional poster in 30 seconds.
         </p>
         <Link
           href="/content"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-xs transition-all shadow-md active:scale-95"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs transition-all shadow-md active:scale-95"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>Launch Content Studio</span>
@@ -71,15 +88,15 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
 
   return (
     <>
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#111722]/80 border border-white/[0.06] backdrop-blur-xl space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+      <div className="p-5 sm:p-6 rounded-2xl bg-card border border-border backdrop-blur-xl shadow-sm space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#00F0FF]" />
-            <h3 className="text-sm font-semibold text-zinc-100">Recent Creative Feed</h3>
+            <Sparkles className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Recent Creative Feed</h3>
           </div>
           <Link
             href="/content"
-            className="text-xs text-[#00F0FF] hover:underline font-medium flex items-center gap-1"
+            className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
           >
             <span>Open Studio</span>
             <ExternalLink className="w-3 h-3" />
@@ -96,10 +113,10 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
             return (
               <div
                 key={post.id}
-                className="group rounded-xl bg-zinc-900/60 border border-white/[0.06] hover:border-white/[0.15] overflow-hidden transition-all flex flex-col justify-between"
+                className="group rounded-xl bg-muted/40 border border-border hover:border-primary/40 overflow-hidden transition-all flex flex-col justify-between"
               >
                 {/* Media Preview Box */}
-                <div className="relative aspect-video w-full bg-gradient-to-br from-zinc-800 to-zinc-900 overflow-hidden flex items-center justify-center">
+                <div className="relative aspect-video w-full bg-muted/60 overflow-hidden flex items-center justify-center">
                   {mediaUrl ? (
                     <img
                       src={mediaUrl}
@@ -107,7 +124,7 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-1 text-zinc-500">
+                    <div className="flex flex-col items-center justify-center gap-1 text-muted-foreground">
                       <ImageIcon className="w-8 h-8 opacity-40" />
                       <span className="text-[10px]">Poster Rendering</span>
                     </div>
@@ -146,13 +163,13 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
                 {/* Content Details */}
                 <div className="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
                   <div>
-                    <h4 className="text-xs font-semibold text-zinc-200 line-clamp-1">{post.title}</h4>
-                    <p className="text-[11px] text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                    <h4 className="text-xs font-semibold text-foreground line-clamp-1">{post.title}</h4>
+                    <p className="text-[11px] text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
                       {firstVariant?.caption || "Autonomous promotional draft ready for review."}
                     </p>
                   </div>
 
-                  <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10px] text-zinc-500">
+                  <div className="pt-2 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       {post.scheduledFor
@@ -161,7 +178,7 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
                     </span>
                     <button
                       onClick={() => setSelectedPost(post)}
-                      className="text-[#00F0FF] hover:underline font-medium"
+                      className="text-primary hover:underline font-medium"
                     >
                       Inspect
                     </button>
@@ -174,19 +191,30 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
       </div>
 
       {/* Post Inspection Modal */}
-      {selectedPost && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl rounded-2xl bg-[#111722] border border-white/[0.1] shadow-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+      {mounted && selectedPost && createPortal(
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedPost(null);
+          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-2xl rounded-2xl bg-card border border-border shadow-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <h3 className="text-sm font-semibold text-zinc-100">{selectedPost.title}</h3>
-                <span className="text-[11px] text-zinc-400">
-                  Status: <strong className="text-zinc-200">{selectedPost.status}</strong>
+                <h3 className="text-sm font-semibold text-foreground">{selectedPost.title}</h3>
+                <span className="text-[11px] text-muted-foreground">
+                  Status: <strong className="text-foreground">{selectedPost.status}</strong>
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedPost(null)}
-                className="p-1 rounded-lg hover:bg-white/[0.06] text-zinc-400 hover:text-zinc-200"
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -194,7 +222,7 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
 
             {/* Poster Preview */}
             {selectedPost.variants[0]?.mediaUrl && (
-              <div className="aspect-square max-w-sm mx-auto rounded-xl overflow-hidden border border-white/[0.1] shadow-lg">
+              <div className="aspect-square max-w-sm mx-auto rounded-xl overflow-hidden border border-border shadow-lg">
                 <img
                   src={selectedPost.variants[0].mediaUrl}
                   alt={selectedPost.title}
@@ -205,29 +233,30 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
 
             {/* Captions by Platform */}
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold text-zinc-300">Platform Variants & Captions</h4>
+              <h4 className="text-xs font-semibold text-foreground">Platform Variants & Captions</h4>
               {selectedPost.variants.map((v) => (
                 <div
                   key={v.id}
-                  className="p-3.5 rounded-xl bg-zinc-900/60 border border-white/[0.06] space-y-2"
+                  className="p-3.5 rounded-xl bg-muted/50 border border-border space-y-2"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-[#00F0FF]">{v.platform}</span>
+                    <span className="text-xs font-semibold text-primary">{v.platform}</span>
                     <button
+                      type="button"
                       onClick={() => handleCopyCaption(v.caption)}
-                      className="inline-flex items-center gap-1 text-[11px] text-zinc-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.1] px-2 py-0.5 rounded transition-colors"
+                      className="inline-flex items-center gap-1 text-[11px] text-foreground hover:text-primary bg-card hover:bg-muted px-2 py-0.5 rounded border border-border transition-colors cursor-pointer"
                     >
-                      {copiedCaption ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                      {copiedCaption ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
                       <span>{copiedCaption ? "Copied" : "Copy Caption"}</span>
                     </button>
                   </div>
-                  <p className="text-xs text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
                     {v.caption}
                   </p>
                   {v.hashtags && v.hashtags.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-1">
                       {v.hashtags.map((h, i) => (
-                        <span key={i} className="text-[10px] text-sky-400">
+                        <span key={i} className="text-[10px] text-sky-500 font-mono">
                           #{h}
                         </span>
                       ))}
@@ -237,22 +266,25 @@ export function RecentPostsCarousel({ posts }: RecentPostsCarouselProps) {
               ))}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.08]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
               <button
+                type="button"
                 onClick={() => setSelectedPost(null)}
-                className="px-4 py-2 text-xs font-semibold text-zinc-400 hover:text-zinc-200"
+                className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 Close
               </button>
               <Link
                 href="/content"
-                className="px-4 py-2 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-xs transition-all"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold shadow-sm transition-all cursor-pointer"
               >
-                Open in Studio
+                <span>Edit in Studio</span>
+                <ExternalLink className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

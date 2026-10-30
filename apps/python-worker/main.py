@@ -53,6 +53,9 @@ class PosterRenderRequest(BaseModel):
     template_id: str = "festive-banner-v1"
     brand_primary_color: str = "#00F0FF"
     logo_url: Optional[str] = None
+    width: Optional[int] = 1080
+    height: Optional[int] = 1350
+    aspect_ratio: Optional[str] = "4:5"
 
 class HumanizeRequest(BaseModel):
     text: str

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Share2,
   CheckCircle2,
@@ -10,6 +11,10 @@ import {
   ExternalLink,
   ShieldCheck,
   X,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Twitter,
 } from "lucide-react";
 
 interface ChannelAccount {
@@ -33,30 +38,34 @@ interface ChannelHealthWidgetProps {
 const CHANNEL_CONFIG = [
   {
     key: "FACEBOOK_PAGE",
-    label: "Facebook Page",
+    label: "Facebook",
+    icon: Facebook,
     iconColor: "text-blue-500",
     bgColor: "bg-blue-500/10 border-blue-500/20",
     docsUrl: "https://developers.facebook.com/docs/pages",
   },
   {
     key: "INSTAGRAM_BUSINESS",
-    label: "Instagram Professional",
+    label: "Instagram",
+    icon: Instagram,
     iconColor: "text-pink-500",
     bgColor: "bg-pink-500/10 border-pink-500/20",
     docsUrl: "https://developers.facebook.com/docs/instagram-api",
   },
   {
     key: "LINKEDIN",
-    label: "LinkedIn Company",
+    label: "LinkedIn",
+    icon: Linkedin,
     iconColor: "text-sky-500",
     bgColor: "bg-sky-500/10 border-sky-500/20",
     docsUrl: "https://learn.microsoft.com/en-us/linkedin/shared/authentication-and-authorization",
   },
   {
     key: "X_TWITTER",
-    label: "X (Twitter) Feed",
-    iconColor: "text-zinc-200",
-    bgColor: "bg-zinc-500/10 border-zinc-500/20",
+    label: "X (Twitter)",
+    icon: Twitter,
+    iconColor: "text-foreground",
+    bgColor: "bg-muted border-border",
     docsUrl: "https://developer.x.com/en/docs",
   },
 ] as const;
@@ -67,6 +76,23 @@ export function ChannelHealthWidget({ channels, onRefresh }: ChannelHealthWidget
   const [tokenInput, setTokenInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!connectModalPlatform) return;
+    const origBody = document.body.style.overflow;
+    const origDoc = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = origBody;
+      document.documentElement.style.overflow = origDoc;
+    };
+  }, [connectModalPlatform]);
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,54 +135,59 @@ export function ChannelHealthWidget({ channels, onRefresh }: ChannelHealthWidget
 
   return (
     <>
-      <div className="p-5 sm:p-6 rounded-2xl bg-[#111722]/80 border border-white/[0.06] backdrop-blur-xl space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+      <div className="h-full flex flex-col justify-between p-4 sm:p-5 rounded-xl bg-card border border-border shadow-sm space-y-3.5">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#00F0FF]" />
-            <h3 className="text-sm font-semibold text-zinc-100">Live Channel Health</h3>
+            <ShieldCheck className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Live Channel Health</h3>
           </div>
-          <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span className="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
             Encrypted AES-256
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 flex-1 items-stretch">
           {CHANNEL_CONFIG.map((cfg) => {
             const account = channels[cfg.key as keyof typeof channels];
             const isConnected = !!account && account.isActive;
+            const Icon = cfg.icon;
 
             return (
               <div
                 key={cfg.key}
-                className={`p-3.5 rounded-xl border flex flex-col justify-between gap-3 transition-all ${
+                className={`p-3 rounded-lg border flex flex-col justify-between gap-2.5 transition-all min-h-[105px] ${
                   isConnected
-                    ? "bg-white/[0.03] border-white/[0.08]"
-                    : "bg-zinc-900/40 border-white/[0.04] opacity-80 hover:opacity-100"
+                    ? "bg-muted/40 border-border"
+                    : "bg-muted/15 border-border/70 hover:border-border"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-zinc-200">{cfg.label}</span>
+                {/* Channel Header: Icon + Single-Line Title + Status Badge */}
+                <div className="flex items-center justify-between gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${cfg.iconColor}`} />
+                    <span className="text-xs font-semibold text-foreground truncate">{cfg.label}</span>
+                  </div>
                   {isConnected ? (
-                    <span className="flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                    <span className="shrink-0 flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded-full border border-emerald-500/20">
                       <CheckCircle2 className="w-2.5 h-2.5" />
-                      Connected
+                      Online
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-400 bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.08]">
+                    <span className="shrink-0 flex items-center gap-1 text-[9px] sm:text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border">
                       <AlertCircle className="w-2.5 h-2.5" />
                       Offline
                     </span>
                   )}
                 </div>
 
-                <div className="text-[11px] text-zinc-400 truncate">
+                <div className="text-[11px] text-muted-foreground truncate">
                   {isConnected
                     ? `@${account?.accountName || "Active"}`
                     : "No authorized credential"}
                 </div>
 
-                <div className="pt-2 border-t border-white/[0.04] flex items-center justify-between">
-                  <span className="text-[10px] text-zinc-400">
+                <div className="pt-2 border-t border-border flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground">
                     {isConnected
                       ? `Sync: ${new Date(account!.updatedAt).toLocaleDateString("en-IN")}`
                       : "Direct API"}
@@ -166,10 +197,10 @@ export function ChannelHealthWidget({ channels, onRefresh }: ChannelHealthWidget
                       setConnectModalPlatform(cfg.key);
                       setAccountName(account?.accountName || "");
                     }}
-                    className={`text-[11px] font-medium px-2 py-1 rounded transition-colors ${
+                    className={`text-[10px] sm:text-[11px] font-medium px-2 py-0.5 rounded transition-colors cursor-pointer ${
                       isConnected
-                        ? "text-zinc-300 hover:text-white bg-white/[0.05] hover:bg-white/[0.1]"
-                        : "text-[#00F0FF] hover:text-[#00D4E0] bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20"
+                        ? "text-foreground bg-muted hover:bg-accent"
+                        : "text-primary bg-primary/10 hover:bg-primary/20"
                     }`}
                   >
                     {isConnected ? "Refresh" : "+ Link"}
@@ -182,87 +213,106 @@ export function ChannelHealthWidget({ channels, onRefresh }: ChannelHealthWidget
       </div>
 
       {/* Connect / Refresh Modal */}
-      {connectModalPlatform && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl bg-[#111722] border border-white/[0.1] shadow-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+      {mounted && connectModalPlatform && createPortal(
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setConnectModalPlatform(null);
+          }}
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md rounded-2xl bg-card border border-border shadow-2xl p-6 space-y-4 animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#00F0FF]" />
-                <h3 className="text-sm font-semibold text-zinc-100">
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">
                   Connect {connectModalPlatform.replace("_", " ")}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setConnectModalPlatform(null)}
-                className="p-1 rounded-lg hover:bg-white/[0.06] text-zinc-400 hover:text-zinc-200"
+                className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleConnect} className="space-y-3.5">
+            <form onSubmit={handleConnect} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1">
+                <label className="text-xs font-medium text-foreground block mb-1">
                   Account / Handle Name
                 </label>
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. salonderoyal_official"
+                  placeholder="e.g. CalcuttaStylingSalon"
                   value={accountName}
                   onChange={(e) => setAccountName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-white/[0.08] text-xs text-zinc-100 focus:outline-none focus:border-[#00F0FF]/50"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-muted border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-zinc-300 mb-1">
-                  API Access Token
+                <label className="text-xs font-medium text-foreground block mb-1">
+                  Official Long-Lived Access Token
                 </label>
                 <input
                   type="password"
-                  required
-                  placeholder="Paste long-lived graph / bearer token"
+                  placeholder="EAA... or API Key Token"
                   value={tokenInput}
                   onChange={(e) => setTokenInput(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-white/[0.08] text-xs text-zinc-100 focus:outline-none focus:border-[#00F0FF]/50 font-mono"
+                  required
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-muted border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 font-mono"
                 />
-                <p className="text-[10px] text-zinc-400 mt-1">
-                  Tokens are encrypted with AES-256-GCM before database write and never exposed.
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Stored with AES-256 symmetric encryption with key held outside database.
                 </p>
               </div>
 
               {message && (
                 <div
-                  className={`p-2.5 rounded-lg text-xs ${
+                  className={`p-3 rounded-xl text-xs font-medium ${
                     message.startsWith("Error")
-                      ? "bg-rose-500/10 text-rose-400 border border-rose-500/20"
-                      : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                      ? "bg-rose-500/10 border border-rose-500/20 text-rose-500"
+                      : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-500"
                   }`}
                 >
                   {message}
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/[0.08]">
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setConnectModalPlatform(null)}
-                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                  className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-xs transition-all disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs shadow-md active:scale-95 disabled:opacity-50 cursor-pointer"
                 >
-                  {isSubmitting ? "Encrypting & Storing..." : "Save Secure Token"}
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Encrypting...</span>
+                    </>
+                  ) : (
+                    <span>Authorize Channel</span>
+                  )}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

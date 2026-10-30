@@ -114,14 +114,15 @@ export default function TeamMembersPage() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       <PageBreadcrumb
-        pageTitle="Team & Permissions"
-        description="Invite marketing designers, branch managers, and front-desk staff with strict role-based access control."
+        pageTitle="Team & Roles"
+        description="Manage organization members and role-based access permissions."
+        hideBreadcrumb={true}
       >
         <button
           onClick={() => setIsInviteModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs sm:text-sm font-semibold transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 cursor-pointer"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs sm:text-sm font-semibold transition-all shadow-md active:scale-95 cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
           <span>Invite Team Member</span>
@@ -141,36 +142,36 @@ export default function TeamMembersPage() {
       </CustomAlert>
 
       {/* Members Table */}
-      <div className="rounded-2xl bg-[#111722]/80 border border-white/[0.06] backdrop-blur-xl overflow-hidden">
+      <div className="rounded-xl bg-card border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-zinc-900/80 border-b border-white/[0.06] text-zinc-400 uppercase tracking-wider font-semibold text-[10px]">
+            <thead className="bg-muted/50 border-b border-border text-muted-foreground uppercase tracking-wider font-semibold text-[10px]">
               <tr>
-                <th className="px-5 py-3.5">Member Name</th>
-                <th className="px-5 py-3.5">Email Address</th>
-                <th className="px-5 py-3.5">Assigned Role</th>
-                <th className="px-5 py-3.5">Status</th>
-                <th className="px-5 py-3.5">Joined</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+                <th className="px-5 py-3">Member Name</th>
+                <th className="px-5 py-3">Email Address</th>
+                <th className="px-5 py-3">Assigned Role</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Joined</th>
+                <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.04]">
+            <tbody className="divide-y divide-border">
               {members.map((member) => (
-                <tr key={member.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-5 py-4">
-                    <div className="font-semibold text-zinc-100 flex items-center gap-2">
+                <tr key={member.id} className="hover:bg-muted/30 transition-colors">
+                  <td className="px-5 py-3.5">
+                    <div className="font-semibold text-foreground flex items-center gap-2">
                       <span>{member.name}</span>
                       {member.role === "OWNER" && (
-                        <Crown className="w-3.5 h-3.5 text-amber-400" />
+                        <Crown className="w-3.5 h-3.5 text-amber-500" />
                       )}
                     </div>
                   </td>
 
-                  <td className="px-5 py-4 text-zinc-300 font-mono text-[11px]">
+                  <td className="px-5 py-3.5 text-muted-foreground font-mono text-[11px]">
                     {member.email}
                   </td>
 
-                  <td className="px-5 py-4">
+                  <td className="px-5 py-3.5">
                     <span
                       className={`text-[10px] px-2.5 py-0.5 rounded-full font-semibold border ${getRoleBadge(
                         member.role
@@ -180,29 +181,29 @@ export default function TeamMembersPage() {
                     </span>
                   </td>
 
-                  <td className="px-5 py-4">
+                  <td className="px-5 py-3.5">
                     {member.status === "ACTIVE" ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-500 font-medium">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Active</span>
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 font-medium">
+                      <span className="inline-flex items-center gap-1 text-[11px] text-amber-500 font-medium">
                         <Clock className="w-3 h-3" />
                         <span>Invited</span>
                       </span>
                     )}
                   </td>
 
-                  <td className="px-5 py-4 text-zinc-400 text-[11px]">
+                  <td className="px-5 py-3.5 text-muted-foreground text-[11px]">
                     {member.joinedAt}
                   </td>
 
-                  <td className="px-5 py-4 text-right">
+                  <td className="px-5 py-3.5 text-right">
                     {member.role !== "OWNER" && (
                       <button
                         onClick={() => setMemberToDelete(member)}
-                        className="p-1.5 rounded-lg hover:bg-rose-500/10 text-zinc-400 hover:text-rose-400 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-colors cursor-pointer"
                         title="Remove Member"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -220,8 +221,8 @@ export default function TeamMembersPage() {
       <CustomModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        title="Invite New Collaborator"
-        description="Send an authenticated invitation link to join your workspace."
+        title="Invite Member"
+        description="Send authenticated invitation link to join workspace."
       >
         <form onSubmit={handleSendInvite} className="space-y-3.5 mt-2">
           <div>
@@ -282,9 +283,9 @@ export default function TeamMembersPage() {
       <CustomModal
         isOpen={!!memberToDelete}
         onClose={() => setMemberToDelete(null)}
-        title="Revoke Member Access"
-        description={`Are you sure you want to remove ${memberToDelete?.name} (${memberToDelete?.email}) from this workspace? They will immediately lose access.`}
-        confirmText="Revoke Access"
+        title="Revoke Access"
+        description={`Remove ${memberToDelete?.name || "member"} from this team workspace?`}
+        confirmText="Revoke"
         onConfirm={handleConfirmDelete}
         isDestructive
       />

@@ -9,14 +9,10 @@ import {
   Clock,
   Coins,
   ArrowUpRight,
-  PlusCircle,
   AlertTriangle,
   RefreshCw,
   ShieldAlert,
   ArrowUp,
-  ArrowDown,
-  Layers,
-  Send,
   Lock,
   Loader2,
   ArrowRight,
@@ -118,18 +114,18 @@ export default function DashboardOverviewPage() {
   if (error === "PERMISSION_DENIED") {
     return (
       <div className="min-h-[500px] flex items-center justify-center p-6">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-[#0F141F] border border-rose-500/30 text-center space-y-4 backdrop-blur-xl">
-          <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-400">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-card border border-rose-500/30 text-center space-y-4 backdrop-blur-xl shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-500">
             <ShieldAlert className="w-6 h-6" />
           </div>
-          <h2 className="text-base font-bold text-zinc-100">Access Restricted</h2>
-          <p className="text-xs text-zinc-400 leading-relaxed">
+          <h2 className="text-base font-bold text-foreground">Access Restricted</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
             Your user role does not have authorization to inspect this workspace.
             Please contact your organization owner for permission grant.
           </p>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.08] hover:bg-white/[0.12] text-xs font-semibold text-zinc-200"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-accent text-xs font-semibold text-foreground"
           >
             Switch Account
           </Link>
@@ -142,13 +138,13 @@ export default function DashboardOverviewPage() {
   if (authStatus === "unauthenticated" || (error && error.includes("sign in"))) {
     return (
       <div className="min-h-[500px] flex items-center justify-center p-6">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-[#0F141F] border border-zinc-800 text-center space-y-5 shadow-2xl backdrop-blur-xl">
-          <div className="w-14 h-14 rounded-2xl bg-[#00F0FF]/10 border border-[#00F0FF]/25 flex items-center justify-center mx-auto text-[#00F0FF]">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-card border border-border text-center space-y-5 shadow-2xl backdrop-blur-xl">
+          <div className="w-14 h-14 rounded-2xl bg-primary/10 border border-primary/25 flex items-center justify-center mx-auto text-primary">
             <Lock className="w-7 h-7" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Authentication Required</h2>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1.5 leading-relaxed">
+            <h2 className="text-xl font-bold text-foreground tracking-tight">Authentication Required</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1.5 leading-relaxed">
               Please sign in to access your ABCD Social founder workspace and live autopilot metrics.
             </p>
           </div>
@@ -156,7 +152,7 @@ export default function DashboardOverviewPage() {
             <button
               onClick={handleQuickDemoLogin}
               disabled={loggingIn}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-sm transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 disabled:opacity-50 cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-sm transition-all shadow-md shadow-primary/20 active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               {loggingIn ? (
                 <>
@@ -172,7 +168,7 @@ export default function DashboardOverviewPage() {
             </button>
             <Link
               href="/login?callbackUrl=/dashboard"
-              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-semibold text-zinc-300 transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-muted hover:bg-accent border border-border text-xs font-semibold text-foreground transition-all"
             >
               <span>Go to Standard Login Page</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -187,15 +183,15 @@ export default function DashboardOverviewPage() {
   if (error && !loading) {
     return (
       <div className="min-h-[500px] flex items-center justify-center p-6">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-[#0F141F] border border-amber-500/30 text-center space-y-4 backdrop-blur-xl">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-400">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-card border border-amber-500/30 text-center space-y-4 backdrop-blur-xl shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-500">
             <AlertTriangle className="w-6 h-6" />
           </div>
-          <h2 className="text-base font-bold text-zinc-100">Dashboard Unavailable</h2>
-          <p className="text-xs text-zinc-400 leading-relaxed">{error}</p>
+          <h2 className="text-base font-bold text-foreground">Dashboard Unavailable</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">{error}</p>
           <button
             onClick={fetchSummary}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] font-semibold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Retry Connection</span>
@@ -205,20 +201,20 @@ export default function DashboardOverviewPage() {
     );
   }
 
-  // STATE 3: LOADING
+  // STATE 4: LOADING
   if (loading || !data) {
     return (
       <div className="space-y-6 sm:space-y-8 animate-pulse">
-        <div className="h-6 w-48 bg-zinc-800 rounded-lg" />
+        <div className="h-6 w-48 bg-muted rounded-lg" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 rounded-2xl bg-zinc-900/60 border border-zinc-800" />
+            <div key={i} className="h-32 rounded-2xl bg-card border border-border" />
           ))}
         </div>
-        <div className="h-56 rounded-2xl bg-zinc-900/60 border border-zinc-800" />
+        <div className="h-56 rounded-2xl bg-card border border-border" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-48 rounded-2xl bg-zinc-900/60 border border-zinc-800" />
-          <div className="h-48 rounded-2xl bg-zinc-900/60 border border-zinc-800" />
+          <div className="lg:col-span-2 h-48 rounded-2xl bg-card border border-border" />
+          <div className="h-48 rounded-2xl bg-card border border-border" />
         </div>
       </div>
     );
@@ -227,99 +223,100 @@ export default function DashboardOverviewPage() {
   const { workspace, stats, autopilot, credits, channels, recentPosts } = data;
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
-      {/* TailAdmin Standard Page Breadcrumb */}
+    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
+      {/* Page Header without breadcrumb trail */}
       <PageBreadcrumb
         pageTitle="Autopilot Overview"
-        description={`Real-time marketing intelligence and automated campaign operations for ${workspace.businessName}.`}
+        description="Real-time marketing intelligence and automated campaign operations."
+        hideBreadcrumb={true}
       >
         <Link
           href="/content"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#00F0FF] hover:bg-[#00D4E0] text-[#0A0D14] text-xs font-semibold transition-all shadow-md shadow-[#00F0FF]/20 active:scale-95 cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>New AI Post</span>
         </Link>
       </PageBreadcrumb>
 
-      {/* 1. TailAdmin Standard 4-Metric Grid (EcommerceMetrics style) */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
+      {/* 1. TailAdmin Standard 4-Metric Grid (2x2 on Mobile, 4x1 on Desktop) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
         {/* Metric Card 1: Published */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-[#0F141F] p-6 transition-all hover:border-zinc-700/80 flex flex-col justify-between">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 transition-all hover:border-primary/40 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <ArrowUp className="w-3 h-3" />
+            <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              <ArrowUp className="w-2.5 h-2.5" />
               <span>+12.4%</span>
             </div>
           </div>
-          <div className="mt-5">
-            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          <div className="mt-2 sm:mt-2.5">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
               Published Posts
             </span>
-            <h4 className="mt-2 text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            <h4 className="mt-0.5 text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight">
               {stats.publishedCount}
             </h4>
           </div>
         </div>
 
         {/* Metric Card 2: Queue */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-[#0F141F] p-6 transition-all hover:border-zinc-700/80 flex flex-col justify-between">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 transition-all hover:border-primary/40 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-500/10 border border-sky-500/20 text-sky-400">
-              <Clock className="w-5 h-5" />
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-500">
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-500 border border-sky-500/20">
               <span>IST Queue</span>
             </div>
           </div>
-          <div className="mt-5">
-            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          <div className="mt-2 sm:mt-2.5">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
               Scheduled Queue
             </span>
-            <h4 className="mt-2 text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            <h4 className="mt-0.5 text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight">
               {stats.scheduledCount}
             </h4>
           </div>
         </div>
 
         {/* Metric Card 3: Pending Review */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-[#0F141F] p-6 transition-all hover:border-zinc-700/80 flex flex-col justify-between">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 transition-all hover:border-primary/40 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              <AlertTriangle className="w-5 h-5" />
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500">
+              <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
               <span>Mobile Link</span>
             </div>
           </div>
-          <div className="mt-5">
-            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          <div className="mt-2 sm:mt-2.5">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
               Review Required
             </span>
-            <h4 className="mt-2 text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            <h4 className="mt-0.5 text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight">
               {stats.inReviewCount}
             </h4>
           </div>
         </div>
 
         {/* Metric Card 4: Credits Left */}
-        <div className="rounded-2xl border border-zinc-800/80 bg-[#0F141F] p-6 transition-all hover:border-zinc-700/80 flex flex-col justify-between">
+        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 transition-all hover:border-primary/40 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#00F0FF]/10 border border-[#00F0FF]/20 text-[#00F0FF]">
-              <Coins className="w-5 h-5" />
+            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
+              <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
-            <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/[0.06] text-zinc-300 border border-white/[0.08]">
+            <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-muted text-foreground border border-border">
               <span>{credits.planName}</span>
             </div>
           </div>
-          <div className="mt-5">
-            <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+          <div className="mt-2 sm:mt-2.5">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
               Available Credits
             </span>
-            <h4 className="mt-2 text-2xl sm:text-3xl font-bold text-[#00F0FF] tracking-tight">
+            <h4 className="mt-0.5 text-lg sm:text-xl md:text-2xl font-bold text-primary tracking-tight">
               {credits.remaining}
             </h4>
           </div>
@@ -334,12 +331,12 @@ export default function DashboardOverviewPage() {
         phoneNumber={workspace.phoneNumber}
       />
 
-      {/* 3. Channel Health & Credit Quota Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
-        <div className="lg:col-span-2">
+      {/* 3. Channel Health & Credit Quota Grid (Equal Height Alignment) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-3.5 md:gap-4 items-stretch">
+        <div className="lg:col-span-2 flex flex-col">
           <ChannelHealthWidget channels={channels} onRefresh={fetchSummary} />
         </div>
-        <div>
+        <div className="flex flex-col">
           <CreditQuotaRing
             allocated={credits.allocated}
             used={credits.used}
@@ -359,28 +356,28 @@ export default function DashboardOverviewPage() {
       {/* 6. Standard 3-Column Report Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
         {/* Column 1: What Happened */}
-        <div className="p-5 sm:p-6 rounded-2xl bg-[#111722]/80 border border-zinc-800 backdrop-blur-xl space-y-4">
-          <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="p-5 sm:p-6 rounded-2xl bg-card border border-border backdrop-blur-xl shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
             <h3>Execution Activity (Last 24h)</h3>
           </div>
           <div className="space-y-3">
-            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-muted/50 border border-border text-xs leading-relaxed">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-zinc-200 font-medium">Regional Poster Synthesis</span>
-                <span className="text-[10px] text-emerald-400 font-medium">Verified</span>
+                <span className="text-foreground font-medium">Regional Poster Synthesis</span>
+                <span className="text-[10px] text-emerald-500 font-medium">Verified</span>
               </div>
-              <p className="text-zinc-400">
+              <p className="text-muted-foreground">
                 1080×1080 Pillow rendering engine with Noto Sans Bengali font loaded. Cloudinary CDN configured.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-muted/50 border border-border text-xs leading-relaxed">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-zinc-200 font-medium">Neural Voice Synthesis</span>
-                <span className="text-[10px] text-emerald-400 font-medium">Active</span>
+                <span className="text-foreground font-medium">Neural Voice Synthesis</span>
+                <span className="text-[10px] text-emerald-500 font-medium">Active</span>
               </div>
-              <p className="text-zinc-400">
+              <p className="text-muted-foreground">
                 Microsoft Edge-TTS neural speech enabled for Bengali and Indian English promotional reels.
               </p>
             </div>
@@ -388,18 +385,18 @@ export default function DashboardOverviewPage() {
         </div>
 
         {/* Column 2: What is Planned Next */}
-        <div className="p-5 sm:p-6 rounded-2xl bg-[#111722]/80 border border-zinc-800 backdrop-blur-xl space-y-4">
-          <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-            <Clock className="w-4 h-4 text-sky-400" />
+        <div className="p-5 sm:p-6 rounded-2xl bg-card border border-border backdrop-blur-xl shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
+            <Clock className="w-4 h-4 text-sky-500" />
             <h3>Scheduled Operations</h3>
           </div>
           <div className="space-y-3">
-            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-muted/50 border border-border text-xs leading-relaxed">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-zinc-200 font-medium">
+                <span className="text-foreground font-medium">
                   {autopilot.nextScheduled?.title || "Regional Promo Distribution"}
                 </span>
-                <span className="text-[10px] text-sky-400 font-medium">
+                <span className="text-[10px] text-sky-500 font-medium">
                   {autopilot.nextScheduled
                     ? new Date(autopilot.nextScheduled.scheduledFor).toLocaleTimeString("en-IN", {
                         hour: "2-digit",
@@ -409,17 +406,17 @@ export default function DashboardOverviewPage() {
                     : "Scheduled Queue"}
                 </span>
               </div>
-              <p className="text-zinc-400">
+              <p className="text-muted-foreground">
                 Automated publishing dispatch to Facebook Page and Instagram Business feed.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-muted/50 border border-border text-xs leading-relaxed">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-zinc-200 font-medium">Weekly Performance Digest</span>
-                <span className="text-[10px] text-zinc-400 font-medium">Sunday 8:00 PM IST</span>
+                <span className="text-foreground font-medium">Weekly Performance Digest</span>
+                <span className="text-[10px] text-muted-foreground font-medium">Sunday 8:00 PM IST</span>
               </div>
-              <p className="text-zinc-400">
+              <p className="text-muted-foreground">
                 Summary of WhatsApp inquiries, reach, and clicks dispatched to business owner.
               </p>
             </div>
@@ -427,45 +424,45 @@ export default function DashboardOverviewPage() {
         </div>
 
         {/* Column 3: What Needs Human Review */}
-        <div className="p-5 sm:p-6 rounded-2xl bg-[#111722]/80 border border-zinc-800 backdrop-blur-xl space-y-4">
-          <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-            <AlertTriangle className="w-4 h-4 text-amber-400" />
+        <div className="p-5 sm:p-6 rounded-2xl bg-card border border-border backdrop-blur-xl shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
             <h3>Action & Review Required</h3>
           </div>
 
           {autopilot.pendingReviewItem ? (
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-zinc-300 leading-relaxed space-y-2">
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-foreground leading-relaxed space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-amber-400">Approval Required</span>
-                <span className="text-[10px] text-zinc-400">
+                <span className="font-semibold text-amber-500">Approval Required</span>
+                <span className="text-[10px] text-muted-foreground">
                   {new Date(autopilot.pendingReviewItem.createdAt).toLocaleDateString("en-IN")}
                 </span>
               </div>
-              <p className="text-zinc-200 font-medium">{autopilot.pendingReviewItem.title}</p>
-              <p className="text-zinc-400 text-[11px]">
+              <p className="text-foreground font-medium">{autopilot.pendingReviewItem.title}</p>
+              <p className="text-muted-foreground text-[11px]">
                 High-risk promotion or festive deal requires mobile approval before automatic publishing.
               </p>
               <Link
                 href="/content"
-                className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-semibold text-xs transition-colors"
+                className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-500 font-semibold text-xs transition-colors"
               >
                 <span>Inspect in Studio</span>
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           ) : (
-            <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800 text-xs text-zinc-400 leading-relaxed text-center py-6">
-              <p className="text-zinc-200 font-medium mb-1">Queue is Clear</p>
+            <div className="p-4 rounded-xl bg-muted/50 border border-border text-xs text-muted-foreground leading-relaxed text-center py-6">
+              <p className="text-foreground font-medium mb-1">Queue is Clear</p>
               All scheduled promotions have been reviewed and approved. All posts have passed guardrail checks.
             </div>
           )}
 
           <Link
             href="/content"
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-zinc-800 text-zinc-200 font-medium text-xs transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-muted hover:bg-accent border border-border text-foreground font-medium text-xs transition-all active:scale-95"
           >
             <span>Draft New Campaign in Studio</span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-[#00F0FF]" />
+            <ArrowUpRight className="w-3.5 h-3.5 text-primary" />
           </Link>
         </div>
       </div>

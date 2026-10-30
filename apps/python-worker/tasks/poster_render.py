@@ -100,7 +100,8 @@ async def generate_poster_image(payload: Any) -> Dict[str, Any]:
     Renders 1080x1080 promotional graphic with business branding, typography, and contact banner.
     Uploads directly to Cloudinary and returns a secure CDN URL.
     """
-    width, height = 1080, 1080
+    width = getattr(payload, "width", 1080) or 1080
+    height = getattr(payload, "height", 1350) or 1350
     accent_rgb = hex_to_rgb(getattr(payload, "brand_primary_color", "#00F0FF"))
     
     # 1. Base Gradient Canvas

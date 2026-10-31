@@ -427,12 +427,12 @@ export default function FounderMarketingCockpitPage() {
               ))}
             </div>
 
-            {/* Language Toggle - Compact & Matches The Other Buttons on This Line */}
-            <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg border border-border shrink-0 ml-auto">
+            {/* Language Toggle - Matches Size of Stage Tabs & Other Buttons */}
+            <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border shrink-0 ml-auto">
               <button
                 type="button"
                 onClick={() => setPitchLang("bn")}
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   pitchLang === "bn"
                     ? "bg-primary text-primary-foreground font-bold shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
@@ -443,7 +443,7 @@ export default function FounderMarketingCockpitPage() {
               <button
                 type="button"
                 onClick={() => setPitchLang("en")}
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   pitchLang === "en"
                     ? "bg-primary text-primary-foreground font-bold shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
@@ -500,12 +500,12 @@ export default function FounderMarketingCockpitPage() {
                           #{serial}
                         </span>
 
-                        {/* Identity Details - Strictly 2 Lines */}
+                        {/* Identity Details - Strictly 2 Lines Matching Image Reference */}
                         <div className="min-w-0 flex-1 overflow-hidden">
-                          {/* Line 1: Name (with dot-dot ... if large) + Category + Rating + Status Badges */}
+                          {/* Line 1: Name (with dot-dot ... if large) + Category Badge + Rating Badge */}
                           <div className="flex items-center gap-1.5 flex-nowrap min-w-0 overflow-hidden">
                             <h3
-                              className="text-xs sm:text-sm font-bold text-foreground truncate min-w-0 flex-1 max-w-[130px] sm:max-w-[160px] shrink-0"
+                              className="text-xs sm:text-sm font-bold text-foreground truncate min-w-0 flex-1 max-w-[150px] sm:max-w-[200px] shrink-0"
                               title={lead.name}
                             >
                               {lead.name}
@@ -516,6 +516,10 @@ export default function FounderMarketingCockpitPage() {
                             <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.2 rounded-full border border-border shrink-0">
                               ⭐ {lead.rating}
                             </span>
+                          </div>
+
+                          {/* Line 2: Status Badge + Phone • Address */}
+                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate mt-0.5 min-w-0 overflow-hidden">
                             <span
                               className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-full border shrink-0 ${
                                 isConverted
@@ -527,13 +531,9 @@ export default function FounderMarketingCockpitPage() {
                             >
                               {isConverted ? "Customer" : isPitched ? "Pitched" : "Ready"}
                             </span>
-                          </div>
-
-                          {/* Line 2: Phone • Address */}
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate mt-0.5 min-w-0 overflow-hidden">
                             <span className="font-mono text-foreground/85 shrink-0">{lead.phone}</span>
                             <span>•</span>
-                            <span className="truncate">{lead.address}</span>
+                            <span className="truncate" title={lead.address}>{lead.address}</span>
                           </div>
                         </div>
                       </div>

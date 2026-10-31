@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   Rocket,
   Search,
@@ -20,17 +21,24 @@ import {
   ShieldCheck,
   Loader2,
   RefreshCw,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Filter,
 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 import { StatCard, LoadingSkeleton, EmptyState } from "@/components/common";
+import { useToast } from "@/components/ui/ToastProvider";
 
 interface Lead {
   id: string;
   name: string;
   category: string;
+  city: string;
   phone: string;
   address: string;
   rating: string;
+  status: "NEW" | "PITCHED" | "CONVERTED";
   suggestedPitch: {
     bn: string;
     en: string;
@@ -53,15 +61,22 @@ interface Metrics {
 }
 
 export default function FounderMarketingCockpitPage() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"prospector" | "storyteller" | "economics">("prospector");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Harvey Prospector State
-  const [city, setCity] = useState("Kolkata");
-  const [category, setCategory] = useState("salon");
+  // Harvey Prospector Filters & State
+  const [city, setCity] = useState("all");
+  const [category, setCategory] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "NEW" | "PITCHED" | "CONVERTED">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [totalLeads, setTotalLeads] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [pitchLang, setPitchLang] = useState<"bn" | "en">("bn");
+  const PAGE_LIMIT = 5;
 
   // Metrics State
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -71,20 +86,34 @@ export default function FounderMarketingCockpitPage() {
   const [simClients, setSimClients] = useState(25);
   const [simPlanPrice, setSimPlanPrice] = useState(499);
 
-  const fetchLeads = async () => {
+  // Fetch leads with server pagination and filtering
+  const fetchLeads = useCallback(async (page = 1) => {
     setLoadingLeads(true);
     try {
-      const res = await fetch(`/api/admin/leads?city=${encodeURIComponent(city)}&category=${encodeURIComponent(category)}`);
+      const params = new URLSearchParams({
+        city,
+        category,
+        status: statusFilter,
+        search: searchQuery,
+        page: String(page),
+        limit: String(PAGE_LIMIT),
+      });
+
+      const res = await fetch(`/api/admin/leads?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setLeads(data.leads || []);
+        setTotalLeads(data.total || 0);
+        setTotalPages(data.totalPages || 1);
+        setCurrentPage(data.page || 1);
       }
     } catch (err) {
       console.error("Failed to load leads:", err);
+      toast.error("Failed to load leads", "Please check your network connection.");
     } finally {
       setLoadingLeads(false);
     }
-  };
+  }, [city, category, statusFilter, searchQuery, toast]);
 
   const fetchMetrics = async () => {
     setLoadingMetrics(true);
@@ -102,14 +131,31 @@ export default function FounderMarketingCockpitPage() {
   };
 
   useEffect(() => {
-    fetchLeads();
+    fetchLeads(1);
+  }, [fetchLeads]);
+
+  useEffect(() => {
     fetchMetrics();
   }, []);
 
-  const copyToClipboard = (text: string, key: string) => {
+  const copyToClipboard = (text: string, key: string, label = "Pitch message") => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
+    toast.success("Copied to clipboard", `${label} is ready to paste.`);
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleLaunchWhatsApp = (lead: Lead, pitch: string) => {
+    const cleanPhone = lead.phone.replace(/[^0-9]/g, "");
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(pitch)}`;
+
+    // Mark lead status as PITCHED locally for immediate responsiveness
+    setLeads((prev) =>
+      prev.map((l) => (l.id === lead.id ? { ...l, status: "PITCHED" } : l))
+    );
+
+    window.open(waUrl, "_blank", "noopener,noreferrer");
+    toast.success("WhatsApp Pitch Launched", `Pitched ${lead.name}. Status updated to Pitched.`);
   };
 
   // Build-in-Public Storyteller Templates
@@ -117,6 +163,7 @@ export default function FounderMarketingCockpitPage() {
     {
       id: "story_1",
       title: "Why Indian Local Business Owners Will Never Log In",
+      category: "Product Strategy",
       xHook: `Most SaaS builders make the fatal mistake of building complex desktop dashboards for local business owners.\n\nHere's the reality: Salons, clinics & gyms don't have laptops behind the desk. They live 100% on WhatsApp.\n\nThat's why at ABCD Social, our primary UI is a 1-tap mobile magic-link. Zero password. 5-second review.`,
       linkedInStory: `Building for India's 60M+ local service businesses taught me one brutal lesson:\n\nIf your software requires opening a laptop, logging in, or tweaking design sliders — the owner will churn in 14 days.\n\nLocal salon and clinic owners aren't lazy; they are on their feet serving customers 12 hours a day. They don't have time for Canva or complex dashboards.\n\nWe engineered ABCD Social around a simple premise:\n1. The AI drafts the 1080×1080 Bengali/English poster automatically.\n2. The owner receives a WhatsApp magic link.\n3. They tap "Approve" with one thumb in 5 seconds.\n\nMeet your users where they actually work. For India, that's WhatsApp.`,
       videoScript: `Hook: "Here is why 90% of marketing tools fail in India..."\nScene 1: Show a busy salon in Kolkata with hair stylists at work.\nScene 2: "Business owners don't want another login screen. They want clients."\nScene 3: Show phone receiving WhatsApp notification with 1-tap Approve button.\nScene 4: "Tap Approve. Done. AI publishes to Instagram & Facebook instantly."`,
@@ -124,9 +171,18 @@ export default function FounderMarketingCockpitPage() {
     {
       id: "story_2",
       title: "The Zero-Cost Bengali AI Poster Engine",
+      category: "Engineering Milestone",
       xHook: `Canva cannot render Bengali ligatures (যুক্তাক্ষর) reliably without broken glyphs.\n\nWe built a custom Pillow + GNU Cairo rendering engine with Noto Sans Bengali running on a $12 VPS.\n\nResult: 1080×1080 localized posters rendered and uploaded to Cloudinary CDN in < 450ms. Zero cloud GPUs needed.`,
       linkedInStory: `Why regional language marketing is the biggest untapped frontier in Indian SaaS:\n\nEnglish marketing copy has 5-8% engagement in Tier 2/3 cities. Conversational Bengali copy has 34%+ engagement.\n\nYet, almost every poster generation tool clips Bengali matras and breaks conjunct consonants.\n\nWe solved this with a dedicated microservice isolating Indic font shaping using Noto Sans Bengali and GNU Cairo.\n\nTotal cloud cost per generated poster? ₹0.08. Margin? 92%.\n\nHyper-localization always wins.`,
       videoScript: `Hook: "Why did we build our own regional poster engine?"\nScene 1: Screen showing broken Bengali text in generic tools vs crisp rendered poster in ABCD Social.\nScene 2: "1080×1080 promotional creative with logo, phone number, and address burned automatically."\nScene 3: "Real local reach for local businesses."`,
+    },
+    {
+      id: "story_3",
+      title: "Bootstrapping an AI Agency SaaS on a $12 Hetzner Server",
+      category: "Unit Economics",
+      xHook: `Our SaaS has 92% gross software margins from day one.\n\nHow?\n- PostgreSQL + pg-boss queue on single NVMe VPS\n- Next.js 14 App Router with zero cold starts\n- Gemini 1.5 Flash for Bengali marketing copy (₹0.02 / run)\n\nNever over-engineer cloud infrastructure before revenue.`,
+      linkedInStory: `The biggest lie sold to early-stage founders is that you need Kubernetes, microservices, and multi-region AWS clusters before you have your first 100 paying customers.\n\nWe run ABCD Social on a single ₹1,000/month Hetzner VPS:\n- Next.js App Router frontend\n- FastAPI Python worker for Cairo Indic typography\n- PostgreSQL 16 database with tenant-scoped isolation\n- pg-boss background worker for autonomous Instagram & Meta publishing\n\nTotal monthly server overhead: ₹1,000.\nBreak-even threshold: Exactly 3 paying customers at ₹499/mo.\n\nKeep overhead near zero so you can stay in the game until you win.`,
+      videoScript: `Hook: "How much does it cost to run our AI SaaS?"\nScene 1: Terminal screen showing htop with 8% CPU usage.\nScene 2: "₹1,000 VPS. 50+ business clients. 92% profit margin."\nScene 3: "Build lean. Charge real money."`,
     },
   ];
 
@@ -137,21 +193,32 @@ export default function FounderMarketingCockpitPage() {
          ───────────────────────────────────────────────────────────── */}
       <PageBreadcrumb
         pageTitle="Founder Cockpit"
-        description="Organic customer prospecting, build-in-public stories, and unit economics."
+        description="Executive growth engine, local prospecting, unit economics."
         hideBreadcrumb={true}
       >
-        <button
-          type="button"
-          onClick={() => {
-            fetchLeads();
-            fetchMetrics();
-          }}
-          disabled={loadingMetrics || loadingLeads}
-          className="p-2 rounded-xl bg-card hover:bg-muted border border-border text-foreground transition-all active:scale-95 cursor-pointer shadow-sm"
-          title="Refresh metrics and leads"
-        >
-          <RefreshCw className={`w-4 h-4 ${loadingMetrics ? "animate-spin text-primary" : ""}`} />
-        </button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/tenants"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer"
+          >
+            <Building2 className="w-3.5 h-3.5 text-amber-500" />
+            <span>Manage Tenants</span>
+          </Link>
+
+          <button
+            type="button"
+            onClick={() => {
+              fetchLeads(currentPage);
+              fetchMetrics();
+              toast.info("Refreshed", "Metrics and prospects reloaded.");
+            }}
+            disabled={loadingMetrics || loadingLeads}
+            className="p-2 rounded-xl bg-card hover:bg-muted border border-border text-foreground transition-all active:scale-95 cursor-pointer shadow-xs"
+            title="Refresh metrics and leads"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loadingMetrics || loadingLeads ? "animate-spin text-primary" : ""}`} />
+          </button>
+        </div>
       </PageBreadcrumb>
 
       {/* ─────────────────────────────────────────────────────────────
@@ -164,7 +231,7 @@ export default function FounderMarketingCockpitPage() {
           subtitle="Multi-Tenant"
           icon={Building2}
           variant="amber"
-          badge={{ text: "Multi-Tenant", variant: "neutral" }}
+          badge={{ text: "Active Tenants", variant: "neutral" }}
         />
         <StatCard
           title="Posts Generated"
@@ -195,7 +262,7 @@ export default function FounderMarketingCockpitPage() {
       {/* ─────────────────────────────────────────────────────────────
           3. Informational Strategy Banner
          ───────────────────────────────────────────────────────────── */}
-      <div className="p-3 sm:p-3.5 rounded-xl bg-card border border-border shadow-sm flex items-center justify-between gap-3">
+      <div className="p-3 sm:p-3.5 rounded-xl bg-card border border-border shadow-xs flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shrink-0">
             <Rocket className="w-3.5 h-3.5" />
@@ -205,7 +272,7 @@ export default function FounderMarketingCockpitPage() {
               Autonomous Growth Engine
             </h3>
             <p className="text-[11px] text-muted-foreground hidden sm:block">
-              Zero-cost local prospecting, viral build-in-public hooks, and transparent unit margin simulation.
+              Zero-cost regional prospecting, viral build-in-public hooks, and transparent unit margin simulation.
             </p>
           </div>
         </div>
@@ -215,9 +282,9 @@ export default function FounderMarketingCockpitPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          4. Main Navigation Tabs (Semantic Design Tokens)
+          4. Main Navigation Tabs (Semantic Design Tokens, No Scrollbars)
          ───────────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto no-scrollbar">
+      <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap">
         {[
           { id: "prospector", name: "1. Local B2B Prospector", icon: Search, badge: "Harvey" },
           { id: "storyteller", name: "2. Build-in-Public Storyteller", icon: Rocket, badge: "Viral" },
@@ -231,14 +298,14 @@ export default function FounderMarketingCockpitPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer ${
                 active
-                  ? "bg-primary/10 text-primary border border-primary/25 shadow-sm"
+                  ? "bg-primary/10 text-primary border border-primary/25 shadow-xs"
                   : "bg-card text-muted-foreground hover:text-foreground border border-border hover:bg-muted"
               }`}
             >
               <Icon className="w-4 h-4" />
               <span>{tab.name}</span>
               <span
-                className={`text-[9px] px-1.5 py-0.2 rounded-full border ${
+                className={`text-[9px] px-1.5 py-0.2 rounded-full border font-mono ${
                   active
                     ? "bg-primary/20 text-primary border-primary/30"
                     : "bg-muted text-muted-foreground border-border"
@@ -252,11 +319,11 @@ export default function FounderMarketingCockpitPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          TAB 1: Local B2B Prospector
+          TAB 1: Local B2B Prospector with Pagination & CRM Pipeline
          ───────────────────────────────────────────────────────────── */}
       {activeTab === "prospector" && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
@@ -264,18 +331,18 @@ export default function FounderMarketingCockpitPage() {
                   <span>Local Business Prospector & Cold WhatsApp Pitch</span>
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Finds salons, clinics, gyms & tutors via OpenStreetMap (100% free, zero Google Places API costs).
+                  Automated discovery and 1-tap localized outreach for salons, dental clinics, fitness gyms & coaching centres.
                 </p>
               </div>
 
               {/* Outreach Language Toggle */}
-              <div className="flex items-center gap-1 bg-muted p-1 rounded-xl border border-border self-start sm:self-auto">
+              <div className="flex items-center gap-1 bg-muted p-1 rounded-xl border border-border self-start sm:self-auto shrink-0">
                 <button
                   type="button"
                   onClick={() => setPitchLang("bn")}
                   className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
                     pitchLang === "bn"
-                      ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -286,7 +353,7 @@ export default function FounderMarketingCockpitPage() {
                   onClick={() => setPitchLang("en")}
                   className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
                     pitchLang === "en"
-                      ? "bg-primary text-primary-foreground font-bold shadow-sm"
+                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -295,66 +362,92 @@ export default function FounderMarketingCockpitPage() {
               </div>
             </div>
 
-            {/* Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                  City / Location
-                </label>
+            {/* Filter & Search Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
+              {/* Search Box */}
+              <div className="sm:col-span-5 relative">
+                <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search lead by name, phone, or address..."
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* City Selector */}
+              <div className="sm:col-span-3">
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                  className="w-full px-3 py-1.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
                 >
-                  <option value="Kolkata">Kolkata (Park Street / Gariahat)</option>
-                  <option value="Salt Lake">Salt Lake / New Town</option>
-                  <option value="Howrah">Howrah / Bally</option>
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Bangalore">Bangalore</option>
+                  <option value="all">All Cities</option>
+                  <option value="Kolkata">Kolkata</option>
+                  <option value="Salt Lake">Salt Lake</option>
+                  <option value="Howrah">Howrah</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Business Category
-                </label>
+              {/* Category Selector */}
+              <div className="sm:col-span-4">
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+                  className="w-full px-3 py-1.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
                 >
+                  <option value="all">All Categories</option>
                   <option value="salon">Hair & Beauty Salons</option>
                   <option value="dentist">Dental Clinics</option>
                   <option value="gym">Fitness Gyms & Yoga</option>
-                  <option value="auto">Car & Bike Repair</option>
+                  <option value="auto">Auto Repair & Garages</option>
                   <option value="tutor">Tuition & Coaching</option>
                 </select>
               </div>
+            </div>
 
-              <div className="flex items-end">
+            {/* Outreach Stage Filter Tabs */}
+            <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap">
+              <span className="text-[11px] font-medium text-muted-foreground mr-1 shrink-0">Stage:</span>
+              {[
+                { id: "all", label: "All Leads" },
+                { id: "NEW", label: "Ready (New)" },
+                { id: "PITCHED", label: "WhatsApp Sent" },
+                { id: "CONVERTED", label: "Converted" },
+              ].map((st) => (
                 <button
-                  onClick={fetchLeads}
-                  disabled={loadingLeads}
-                  className="w-full py-2 px-4 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm cursor-pointer"
+                  key={st.id}
+                  type="button"
+                  onClick={() => setStatusFilter(st.id as any)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                    statusFilter === st.id
+                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                      : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border"
+                  }`}
                 >
-                  {loadingLeads ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                  <span>Search Prospects</span>
+                  {st.label}
                 </button>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Prospects List */}
+          {/* Prospects List & Pagination */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-5 h-5 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                  <Users className="w-3.5 h-3.5" />
-                </div>
-                <h2 className="text-sm font-bold text-foreground">Discovered Local Businesses</h2>
-              </div>
-              <span className="text-[11px] font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
-                {leads.length} Leads Ready
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">
+                Showing <strong>{leads.length}</strong> of <strong>{totalLeads}</strong> prospects
+              </span>
+              <span className="text-[11px]">
+                Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
               </span>
             </div>
 
@@ -364,30 +457,48 @@ export default function FounderMarketingCockpitPage() {
               <EmptyState
                 icon={Search}
                 title="No leads found"
-                description="Try searching with a different city or business category above."
-                actionText="Refresh Prospects"
-                onAction={fetchLeads}
+                description="Try adjusting your city, category, or search filters above."
+                actionText="Reset Filters"
+                onAction={() => {
+                  setCity("all");
+                  setCategory("all");
+                  setStatusFilter("all");
+                  setSearchQuery("");
+                }}
               />
             ) : (
               <div className="grid grid-cols-1 gap-3">
                 {leads.map((lead) => {
-                  const cleanPhone = lead.phone.replace(/[^0-9]/g, "");
                   const pitch = lead.suggestedPitch[pitchLang];
-                  const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(pitch)}`;
+                  const isPitched = lead.status === "PITCHED";
+                  const isConverted = lead.status === "CONVERTED";
 
                   return (
                     <div
                       key={lead.id}
-                      className="p-4 sm:p-4.5 rounded-2xl border border-border bg-card hover:border-primary/40 shadow-sm transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      className="p-4 sm:p-4.5 rounded-2xl border border-border bg-card hover:border-primary/40 shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
                     >
-                      <div className="space-y-1.5 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-foreground">{lead.name}</h3>
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-sm font-bold text-foreground truncate">{lead.name}</h3>
                           <span className="text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full capitalize">
                             {lead.category}
                           </span>
                           <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border">
                             ⭐ {lead.rating}
+                          </span>
+
+                          {/* Lead Stage Badge */}
+                          <span
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                              isConverted
+                                ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25"
+                                : isPitched
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                            }`}
+                          >
+                            {isConverted ? "● Customer" : isPitched ? "● Pitched" : "● Ready"}
                           </span>
                         </div>
 
@@ -397,23 +508,24 @@ export default function FounderMarketingCockpitPage() {
                             <span>{lead.phone}</span>
                           </span>
                           <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="w-3 h-3 text-rose-500" />
-                            <span>{lead.address}</span>
+                          <span className="flex items-center gap-1 truncate max-w-sm">
+                            <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                            <span className="truncate">{lead.address}</span>
                           </span>
                         </div>
 
-                        {/* Pitch preview box */}
-                        <div className="mt-2 p-2.5 rounded-xl bg-muted/60 border border-border text-xs text-muted-foreground italic font-sans">
-                          &ldquo;{pitch.slice(0, 110)}...&rdquo;
+                        {/* Pitch Preview Box */}
+                        <div className="mt-2 p-2.5 rounded-xl bg-muted/60 border border-border text-xs text-muted-foreground italic font-sans leading-relaxed">
+                          &ldquo;{pitch.slice(0, 120)}...&rdquo;
                         </div>
                       </div>
 
-                      {/* 1-Tap WhatsApp outreach button */}
+                      {/* Outreach Actions */}
                       <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
                         <button
+                          type="button"
                           onClick={() => copyToClipboard(pitch, `pitch_${lead.id}`)}
-                          className="p-2.5 rounded-xl bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all shadow-sm cursor-pointer"
+                          className="p-2.5 rounded-xl bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-95"
                           title="Copy Pitch Message"
                         >
                           {copiedKey === `pitch_${lead.id}` ? (
@@ -423,19 +535,57 @@ export default function FounderMarketingCockpitPage() {
                           )}
                         </button>
 
-                        <a
-                          href={waUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all active:scale-95 shadow-sm"
+                        <button
+                          type="button"
+                          onClick={() => handleLaunchWhatsApp(lead, pitch)}
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-white font-semibold text-xs transition-all active:scale-95 shadow-xs cursor-pointer ${
+                            isPitched
+                              ? "bg-emerald-700 hover:bg-emerald-600"
+                              : "bg-emerald-600 hover:bg-emerald-500"
+                          }`}
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          <span>Send WhatsApp Pitch</span>
-                        </a>
+                          <span>{isPitched ? "Re-Pitch WhatsApp" : "Send WhatsApp Pitch"}</span>
+                        </button>
                       </div>
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-card shadow-xs text-xs text-muted-foreground">
+                <span className="text-[11px]">
+                  Showing {(currentPage - 1) * PAGE_LIMIT + 1}–{Math.min(currentPage * PAGE_LIMIT, totalLeads)} of {totalLeads} prospects
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fetchLeads(currentPage - 1)}
+                    disabled={currentPage <= 1 || loadingLeads}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Previous</span>
+                  </button>
+
+                  <span className="px-2 text-xs font-semibold text-foreground">
+                    {currentPage} / {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => fetchLeads(currentPage + 1)}
+                    disabled={currentPage >= totalPages || loadingLeads}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -447,7 +597,7 @@ export default function FounderMarketingCockpitPage() {
          ───────────────────────────────────────────────────────────── */}
       {activeTab === "storyteller" && (
         <div className="space-y-4">
-          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-sm space-y-1">
+          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-xs space-y-1">
             <h2 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
               <Rocket className="w-4 h-4 text-primary" />
               <span>Build-in-Public Viral Storyteller</span>
@@ -461,12 +611,12 @@ export default function FounderMarketingCockpitPage() {
             {stories.map((story) => (
               <div
                 key={story.id}
-                className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-sm space-y-4"
+                className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-xs space-y-4"
               >
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <h3 className="text-sm font-bold text-foreground">{story.title}</h3>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest bg-muted px-2.5 py-0.5 rounded-full border border-border">
-                    Viral Framework
+                  <span className="text-[10px] text-primary font-semibold bg-primary/10 border border-primary/25 px-2.5 py-0.5 rounded-full">
+                    {story.category}
                   </span>
                 </div>
 
@@ -486,8 +636,8 @@ export default function FounderMarketingCockpitPage() {
                     </div>
 
                     <button
-                      onClick={() => copyToClipboard(story.xHook, `x_${story.id}`)}
-                      className="w-full mt-3 py-2 rounded-lg bg-card hover:bg-muted text-xs font-semibold text-foreground border border-border flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer active:scale-98"
+                      onClick={() => copyToClipboard(story.xHook, `x_${story.id}`, "X Post")}
+                      className="w-full mt-3 py-2 rounded-lg bg-card hover:bg-muted text-xs font-semibold text-foreground border border-border flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-98"
                     >
                       {copiedKey === `x_${story.id}` ? (
                         <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -513,8 +663,8 @@ export default function FounderMarketingCockpitPage() {
                     </div>
 
                     <button
-                      onClick={() => copyToClipboard(story.linkedInStory, `li_${story.id}`)}
-                      className="w-full mt-3 py-2 rounded-lg bg-card hover:bg-muted text-xs font-semibold text-foreground border border-border flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer active:scale-98"
+                      onClick={() => copyToClipboard(story.linkedInStory, `li_${story.id}`, "LinkedIn Story")}
+                      className="w-full mt-3 py-2 rounded-lg bg-card hover:bg-muted text-xs font-semibold text-foreground border border-border flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-98"
                     >
                       {copiedKey === `li_${story.id}` ? (
                         <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -540,8 +690,8 @@ export default function FounderMarketingCockpitPage() {
                     </div>
 
                     <button
-                      onClick={() => copyToClipboard(story.videoScript, `vid_${story.id}`)}
-                      className="w-full mt-3 py-2 rounded-lg bg-card hover:bg-muted text-xs font-semibold text-foreground border border-border flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer active:scale-98"
+                      onClick={() => copyToClipboard(story.videoScript, `vid_${story.id}`, "Video Script")}
+                      className="w-full mt-3 py-2 rounded-lg bg-card hover:bg-muted text-xs font-semibold text-foreground border border-border flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer active:scale-98"
                     >
                       {copiedKey === `vid_${story.id}` ? (
                         <Check className="w-3.5 h-3.5 text-emerald-500" />
@@ -563,7 +713,7 @@ export default function FounderMarketingCockpitPage() {
          ───────────────────────────────────────────────────────────── */}
       {activeTab === "economics" && (
         <div className="space-y-4">
-          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-sm space-y-1">
+          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-xs space-y-1">
             <h2 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-500" />
               <span>Unit Economics & Profit Run-Rate Calculator</span>
@@ -574,8 +724,8 @@ export default function FounderMarketingCockpitPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* Left Column: Sliders */}
-            <div className="lg:col-span-5 p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-sm space-y-5">
+            {/* Left Column: Interactive Inputs */}
+            <div className="lg:col-span-5 p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-xs space-y-5">
               <div>
                 <div className="flex justify-between text-xs font-semibold text-foreground mb-2">
                   <span>Paying Workspaces / Clients</span>
@@ -633,12 +783,16 @@ export default function FounderMarketingCockpitPage() {
                   <span>Cloudinary Media Storage:</span>
                   <span className="text-emerald-500 font-medium">₹0 (Free 25GB)</span>
                 </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Razorpay Payment Fee (2%):</span>
+                  <span className="text-foreground font-medium">~₹{Math.round(simClients * simPlanPrice * 0.02)} / mo</span>
+                </div>
               </div>
             </div>
 
-            {/* Right Column: Dynamic Projections */}
+            {/* Right Column: Dynamic Financial Projections */}
             <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2 flex flex-col justify-between">
+              <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-xs space-y-2 flex flex-col justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
                     Projected Monthly Revenue
@@ -652,7 +806,7 @@ export default function FounderMarketingCockpitPage() {
                 </p>
               </div>
 
-              <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2 flex flex-col justify-between">
+              <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-xs space-y-2 flex flex-col justify-between">
                 <div>
                   <span className="text-[11px] font-bold text-primary uppercase tracking-widest">
                     Annual Run Rate (ARR)
@@ -664,12 +818,12 @@ export default function FounderMarketingCockpitPage() {
                 <p className="text-xs text-muted-foreground mt-2">Annualized run-rate revenue.</p>
               </div>
 
-              <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-sm space-y-2 sm:col-span-2">
+              <div className="p-5 sm:p-6 rounded-2xl border border-border bg-card shadow-xs space-y-2 sm:col-span-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-foreground">Software Gross Margin</span>
                   <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
                     {Math.round(
-                      (((simClients * simPlanPrice) - (1000 + simClients * 50 * 0.08)) /
+                      (((simClients * simPlanPrice) - (1000 + simClients * 50 * 0.08 + simClients * simPlanPrice * 0.02)) /
                         (simClients * simPlanPrice)) *
                         100
                     )}% Net Margin
@@ -684,7 +838,7 @@ export default function FounderMarketingCockpitPage() {
                         Math.max(
                           20,
                           Math.round(
-                            (((simClients * simPlanPrice) - (1000 + simClients * 50 * 0.08)) /
+                            (((simClients * simPlanPrice) - (1000 + simClients * 50 * 0.08 + simClients * simPlanPrice * 0.02)) /
                               (simClients * simPlanPrice)) *
                               100
                           )
@@ -694,7 +848,7 @@ export default function FounderMarketingCockpitPage() {
                   />
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-2">
-                  Ultra-lean server architecture ensures high profit margins even with entry-level pricing.
+                  Ultra-lean server architecture ensures high profit margins even with entry-level local pricing.
                 </p>
               </div>
             </div>

@@ -239,6 +239,148 @@ const ALL_PROSPECTS: LeadItem[] = [
       en: `Hi Target Commerce! Announce your new batch admissions with this sharp visual creative: https://abcdsocial.com/demo`,
     },
   },
+
+  // Additional prospects for multi-page pagination demo
+  {
+    id: "lead_kol_5",
+    name: "Luxe Nail Art & Lash Bar",
+    category: "salon",
+    city: "Kolkata",
+    phone: "+91 98322 11223",
+    address: "South City Mall Area, Prince Anwar Shah Rd",
+    rating: "4.9",
+    status: "NEW",
+    suggestedPitch: {
+      bn: `নমস্কার Luxe Nail Art! আপনার স্টুডিওর প্রিমিয়াম জেল নেল এক্সটেনশনের প্রচারের জন্য এই ট্রেন্ডি পোস্টারটি দেখুন: https://abcdsocial.com/demo`,
+      en: `Hello Luxe Nail Bar! Check out this high-end aesthetic creative for your luxury nail extension packages: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_dent_4",
+    name: "Dr. Roy's Pediatric Dental Care",
+    category: "dentist",
+    city: "Kolkata",
+    phone: "+91 98323 22334",
+    address: "Southern Avenue, Lake Area, Kolkata",
+    rating: "5.0",
+    status: "NEW",
+    suggestedPitch: {
+      bn: `নমস্কার Dr. Roy! শিশুদের ডেন্টাল কেয়ার ও ক্যাভিটি প্রিভেনশনের জন্য মিষ্টি ডিজাইন করা এই ব্যানারটি দেখুন: https://abcdsocial.com/demo`,
+      en: `Hello Dr. Roy! Here is a friendly pediatric dental checkup social poster ready for your clinic: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_gym_4",
+    name: "Spartan Heavy Lifters Gym",
+    category: "gym",
+    city: "Howrah",
+    phone: "+91 98324 33445",
+    address: "Salkia Chowrasta, Howrah",
+    rating: "4.7",
+    status: "PITCHED",
+    suggestedPitch: {
+      bn: `নমস্কার Spartan Gym! হাউড়ার বডিবিল্ডার ও ফিটনেস প্রেমীদের জন্য মেম্বারশিপ ড্রাইভ পোস্টারটি দেখে নিন: https://abcdsocial.com/demo`,
+      en: `Hi Spartan Gym! Boost your quarterly gym registrations with this dynamic high-energy social creative: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_auto_3",
+    name: "German Motor Works Specialists",
+    category: "auto",
+    city: "Salt Lake",
+    phone: "+91 98325 44556",
+    address: "Sector 5, Electronics Complex, Salt Lake",
+    rating: "4.8",
+    status: "NEW",
+    suggestedPitch: {
+      bn: `নমস্কার German Motor Works! প্রিমিয়াম কার সার্ভিসিং ও ডায়াগনস্টিকের ডিজিটাল পোস্টারটি চেক করুন: https://abcdsocial.com/demo`,
+      en: `Hello German Motor Works! Announce your expert European car maintenance service on LinkedIn & WhatsApp: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_tutor_4",
+    name: "Vidyasagar Science Coaching",
+    category: "tutor",
+    city: "Howrah",
+    phone: "+91 98326 55667",
+    address: "Kadamtala Central, Howrah",
+    rating: "4.8",
+    status: "CONVERTED",
+    suggestedPitch: {
+      bn: `নমস্কার Vidyasagar Science! মাধ্যমিক ও উচ্চমাধ্যমিক সায়েন্স ব্যাচ ঘোষণার জন্য রেডি ব্যানারটি দেখুন: https://abcdsocial.com/demo`,
+      en: `Hello Vidyasagar Academy! Promote your upcoming board exam crash batches with automated posters: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_kol_6",
+    name: "Bliss Ayurvedic Wellness Spa",
+    category: "salon",
+    city: "Kolkata",
+    phone: "+91 98327 66778",
+    address: "Deshapriya Park, Rashbehari, Kolkata",
+    rating: "4.9",
+    status: "NEW",
+    suggestedPitch: {
+      bn: `নমস্কার Bliss Wellness! খাঁটি আয়ুর্বেদিক অভ্যাঙ্গম ও পঞ্চকর্ম থেরাপির এই রিফ্রেশিং পোস্টারটি দেখুন: https://abcdsocial.com/demo`,
+      en: `Hello Bliss Wellness! Share this authentic Ayurvedic therapy promo creative with your south Kolkata clientele: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_dent_5",
+    name: "CosmoSmile Laser Teeth Clinic",
+    category: "dentist",
+    city: "Salt Lake",
+    phone: "+91 98328 77889",
+    address: "Sector 3, GD Block, Salt Lake",
+    rating: "4.9",
+    status: "NEW",
+    suggestedPitch: {
+      bn: `নমস্কার CosmoSmile! লেজার টিথ হোয়াইটেনিং ও পেনলেস ট্রিটমেন্টের আকর্ষণীয় পোস্টারটি দেখুন: https://abcdsocial.com/demo`,
+      en: `Hello CosmoSmile Dental! Increase your high-ticket cosmetic dentistry bookings with this sleek promo: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_gym_5",
+    name: "Zenith Yoga & Pilates Sanctuary",
+    category: "gym",
+    city: "Kolkata",
+    phone: "+91 98329 88990",
+    address: "Alipore Park Road, Kolkata",
+    rating: "5.0",
+    status: "PITCHED",
+    suggestedPitch: {
+      bn: `নমস্কার Zenith Sanctuary! সকালের মেডিটেশন ও পাইলেটস ক্লাসের মার্জিত পোস্টারটি চেক করে নিন: https://abcdsocial.com/demo`,
+      en: `Hello Zenith Yoga! Reach mindful wellness seekers in Alipore with this serene social graphic: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_auto_4",
+    name: "Express Tyre & Battery Hub",
+    category: "auto",
+    city: "Howrah",
+    phone: "+91 98330 99001",
+    address: "GT Road South, Howrah",
+    rating: "4.6",
+    status: "NEW",
+    suggestedPitch: {
+      bn: `নমস্কার Express Hub! নতুন টায়ার ও ব্যাটারি এক্সচেঞ্জ ক্যাম্পেইনের সোশ্যাল অ্যাড ব্যানারটি দেখুন: https://abcdsocial.com/demo`,
+      en: `Hello Express Tyre Hub! Launch your emergency battery replacement offer with this high-visibility poster: https://abcdsocial.com/demo`,
+    },
+  },
+  {
+    id: "lead_tutor_5",
+    name: "Pathfinder Foundation Institute",
+    category: "tutor",
+    city: "Kolkata",
+    phone: "+91 98331 10112",
+    address: "Hazra Road, Kalighat, Kolkata",
+    rating: "4.8",
+    status: "NEW",
+    suggestedPitch: {
+      bn: `নমস্কার Pathfinder Institute! অলিম্পিয়াড ও ট্যালেন্ট সার্চ পরীক্ষার প্রমোশনাল পোস্টারটি দেখুন: https://abcdsocial.com/demo`,
+      en: `Hello Pathfinder team! Drive student talent search registrations with this compelling poster: https://abcdsocial.com/demo`,
+    },
+  },
 ];
 
 export async function GET(req: Request) {
@@ -262,12 +404,12 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
-    const city = searchParams.get("city") || "Kolkata";
+    const city = searchParams.get("city") || "all";
     const category = searchParams.get("category") || "all";
     const status = searchParams.get("status") || "all";
     const search = (searchParams.get("search") || "").trim().toLowerCase();
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "5", 10)));
+    const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "10", 10)));
 
     // Filter leads
     let filtered = ALL_PROSPECTS;

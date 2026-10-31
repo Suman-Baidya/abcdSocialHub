@@ -449,11 +449,11 @@ export default function TenantManagementPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. Unified Filter & Search Toolbar (Single Row with Hidden Scrollbars)
+          3. Unified Filter & Search Toolbar (No Blank Space, Full Width)
          ───────────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap p-2 sm:p-2.5 rounded-xl border border-border bg-card shadow-xs">
-        {/* Search Box */}
-        <div className="relative min-w-[240px] sm:min-w-[320px] md:min-w-[380px] flex-1 max-w-lg shrink-0">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-2.5 p-2 sm:p-2.5 rounded-xl border border-border bg-card shadow-xs">
+        {/* Search Box - Expands to Fill Available Space Without Blank Voids */}
+        <div className="relative flex-1 min-w-0">
           <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5 sm:top-3" />
           <input
             type="text"
@@ -473,52 +473,55 @@ export default function TenantManagementPage() {
           )}
         </div>
 
-        {/* Plan Filter Dropdown */}
-        <div className="min-w-[120px] shrink-0">
-          <select
-            value={planFilter}
-            onChange={(e) => setPlanFilter(e.target.value)}
-            className="w-full px-2.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
-          >
-            <option value="ALL">All Plans</option>
-            <option value="starter">Starter Plan</option>
-            <option value="growth">Growth Plan</option>
-            <option value="agency">Agency Suite</option>
-          </select>
-        </div>
-
-        {/* Sort By Dropdown */}
-        <div className="min-w-[130px] shrink-0">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="w-full px-2.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
-          >
-            <option value="newest">Sort: Newest</option>
-            <option value="oldest">Sort: Oldest</option>
-            <option value="name_asc">Sort: Brand (A-Z)</option>
-            <option value="name_desc">Sort: Brand (Z-A)</option>
-            <option value="posts">Sort: Most Posts</option>
-            <option value="members">Sort: Most Seats</option>
-          </select>
-        </div>
-
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1 shrink-0 px-1 border-l border-border pl-2">
-          {(["ALL", "APPROVED", "PENDING"] as const).map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              onClick={() => setStatusFilter(filter)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                statusFilter === filter
-                  ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                  : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/80"
-              }`}
+        {/* Filters & Status Segment (Cleanly Grouped on the Right) */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden shrink-0 flex-nowrap">
+          {/* Plan Filter Dropdown */}
+          <div className="min-w-[115px] shrink-0">
+            <select
+              value={planFilter}
+              onChange={(e) => setPlanFilter(e.target.value)}
+              className="w-full px-2.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
             >
-              {filter === "ALL" ? "All" : filter === "APPROVED" ? "Approved" : "Pending"}
-            </button>
-          ))}
+              <option value="ALL">All Plans</option>
+              <option value="starter">Starter Plan</option>
+              <option value="growth">Growth Plan</option>
+              <option value="agency">Agency Suite</option>
+            </select>
+          </div>
+
+          {/* Sort By Dropdown */}
+          <div className="min-w-[125px] shrink-0">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="w-full px-2.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
+            >
+              <option value="newest">Sort: Newest</option>
+              <option value="oldest">Sort: Oldest</option>
+              <option value="name_asc">Brand (A-Z)</option>
+              <option value="name_desc">Brand (Z-A)</option>
+              <option value="posts">Most Posts</option>
+              <option value="members">Most Seats</option>
+            </select>
+          </div>
+
+          {/* Status Filter Tabs */}
+          <div className="flex items-center gap-1 shrink-0 px-1 border-l border-border pl-2">
+            {(["ALL", "APPROVED", "PENDING"] as const).map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => setStatusFilter(filter)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  statusFilter === filter
+                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                    : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/80"
+                }`}
+              >
+                {filter === "ALL" ? "All" : filter === "APPROVED" ? "Approved" : "Pending"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -556,12 +559,12 @@ export default function TenantManagementPage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-[11px] uppercase tracking-wider">
-                    <th className="py-2.5 px-3 text-center w-[54px]">#SL</th>
-                    <th className="py-2.5 px-3 w-[28%] sm:w-[26%]">Workspace / Brand</th>
-                    <th className="py-2.5 px-3 w-[24%] sm:w-[22%]">Owner & Contact</th>
-                    <th className="py-2.5 px-3 w-[16%]">Plan & Status</th>
-                    <th className="py-2.5 px-3 text-center w-[12%]">Usage</th>
-                    <th className="py-2.5 px-3 text-right w-[18%] sm:w-[20%]">Actions</th>
+                    <th className="py-2.5 px-3 text-center w-[50px]">#SL</th>
+                    <th className="py-2.5 px-3 w-[34%]">Workspace / Brand</th>
+                    <th className="py-2.5 px-3 w-[26%]">Owner & Contact</th>
+                    <th className="py-2.5 px-3 text-center w-[12%]">Status</th>
+                    <th className="py-2.5 px-3 text-center w-[10%]">Usage</th>
+                    <th className="py-2.5 px-3 text-right w-[18%]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
@@ -579,30 +582,36 @@ export default function TenantManagementPage() {
                         }`}
                       >
                         {/* 1. Serial Number (#SL) */}
-                        <td className="py-3 px-3 text-center align-middle">
+                        <td className="py-2.5 px-3 text-center align-middle">
                           <span className="w-7 h-7 rounded-lg bg-muted/80 border border-border text-foreground font-mono font-bold text-[11px] inline-flex items-center justify-center shadow-2xs">
                             #{serial}
                           </span>
                         </td>
 
-                        {/* 2. Workspace & Brand (Name, Slug, Created) */}
-                        <td className="py-3 px-3 align-middle">
+                        {/* 2. Workspace & Brand (Name + Plan on Line 1, Slug • Joined on Line 2) */}
+                        <td className="py-2.5 px-3 align-middle">
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2">
+                            {/* Line 1: Avatar + Name (with dot-dot ... if big) + Plan Badge beside name */}
+                            <div className="flex items-center gap-2 min-w-0 flex-nowrap">
                               <div className="w-6 h-6 rounded-md bg-primary/10 border border-primary/20 text-primary font-bold text-[11px] flex items-center justify-center shrink-0">
                                 {t.businessName ? t.businessName[0].toUpperCase() : "W"}
                               </div>
                               <span
-                                className="font-bold text-foreground text-xs sm:text-sm truncate max-w-[150px] sm:max-w-[200px]"
+                                className="font-bold text-foreground text-xs sm:text-sm truncate min-w-0 max-w-[140px] sm:max-w-[200px]"
                                 title={t.businessName || t.name}
                               >
                                 {t.businessName || t.name}
                               </span>
+                              <span className="text-[10px] font-semibold px-2 py-0.2 rounded-full bg-muted border border-border text-muted-foreground uppercase tracking-wide shrink-0">
+                                {t.plan} Plan
+                              </span>
                             </div>
-                            <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5 font-mono truncate">
-                              <span>slug: {t.name}</span>
-                              <span>•</span>
-                              <span>
+
+                            {/* Line 2: Slug • Joined date */}
+                            <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5 font-mono truncate min-w-0">
+                              <span className="truncate">slug: {t.name}</span>
+                              <span className="shrink-0">•</span>
+                              <span className="shrink-0">
                                 Joined{" "}
                                 {new Date(t.createdAt).toLocaleDateString("en-IN", {
                                   day: "numeric",
@@ -614,37 +623,34 @@ export default function TenantManagementPage() {
                           </div>
                         </td>
 
-                        {/* 3. Owner & Contact */}
-                        <td className="py-3 px-3 align-middle">
+                        {/* 3. Owner & Contact (Strictly 2 lines) */}
+                        <td className="py-2.5 px-3 align-middle">
                           <div className="min-w-0">
-                            <div className="font-semibold text-foreground text-xs truncate">
+                            {/* Line 1: Owner Name */}
+                            <div className="font-semibold text-foreground text-xs truncate" title={t.ownerName}>
                               {t.ownerName}
                             </div>
-                            <div className="text-[11px] text-muted-foreground font-mono truncate flex items-center gap-1">
+                            {/* Line 2: Email • Phone with dot dot if long */}
+                            <div className="text-[11px] text-muted-foreground font-mono truncate mt-0.5 flex items-center gap-1.5 min-w-0">
                               <Mail className="w-3 h-3 text-muted-foreground shrink-0" />
-                              <span className="truncate">{t.ownerEmail}</span>
+                              <span className="truncate" title={t.ownerEmail}>{t.ownerEmail}</span>
+                              {t.phoneNumber && (
+                                <>
+                                  <span className="shrink-0">•</span>
+                                  <span className="shrink-0" title={t.phoneNumber}>{t.phoneNumber}</span>
+                                </>
+                              )}
                             </div>
-                            {t.phoneNumber && (
-                              <div className="text-[10px] text-muted-foreground font-mono truncate flex items-center gap-1">
-                                <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
-                                <span>{t.phoneNumber}</span>
-                              </div>
-                            )}
                           </div>
                         </td>
 
-                        {/* 4. Plan & Status */}
-                        <td className="py-3 px-3 align-middle">
-                          <div className="flex flex-col gap-1 items-start">
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted border border-border text-foreground uppercase tracking-wide">
-                              {t.plan} Plan
-                            </span>
-                            <StatusBadge status={t.isApproved ? "APPROVED" : "PENDING"} />
-                          </div>
+                        {/* 4. Status (ONLY StatusBadge) */}
+                        <td className="py-2.5 px-3 align-middle text-center">
+                          <StatusBadge status={t.isApproved ? "APPROVED" : "PENDING"} />
                         </td>
 
                         {/* 5. Usage (Members & Posts Count) */}
-                        <td className="py-3 px-3 align-middle text-center">
+                        <td className="py-2.5 px-3 align-middle text-center">
                           <div className="inline-flex items-center gap-2.5 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1" title="Team Seats Enrolled">
                               <Users className="w-3.5 h-3.5 text-primary" />
@@ -799,7 +805,7 @@ export default function TenantManagementPage() {
             )}
 
             {/* ─────────────────────────────────────────────────────────────
-                5. Pagination Footer (10 rows per page standard)
+                5. Pagination Footer (Always-Visible Next/Previous System)
                ───────────────────────────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 px-3.5 py-2.5 border-t border-border bg-muted/20 text-xs text-muted-foreground">
               <div className="flex items-center gap-3">
@@ -829,56 +835,32 @@ export default function TenantManagementPage() {
                 </div>
               </div>
 
-              {/* Page Navigation Controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage <= 1}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
-                  >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Previous</span>
-                  </button>
+              {/* Next / Previous System of Pagination */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage <= 1}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Previous</span>
+                </button>
 
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                      .map((p, idx, arr) => {
-                        const prev = arr[idx - 1];
-                        return (
-                          <div key={p} className="flex items-center">
-                            {prev && p - prev > 1 && (
-                              <span className="px-1 text-muted-foreground">...</span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => setCurrentPage(p)}
-                              className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
-                                currentPage === p
-                                  ? "bg-primary text-primary-foreground shadow-xs"
-                                  : "bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground"
-                              }`}
-                            >
-                              {p}
-                            </button>
-                          </div>
-                        );
-                      })}
-                  </div>
+                <span className="px-2 text-xs font-semibold text-foreground whitespace-nowrap">
+                  Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
+                </span>
 
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage >= totalPages}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
-                  >
-                    <span>Next</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                >
+                  <span>Next</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>

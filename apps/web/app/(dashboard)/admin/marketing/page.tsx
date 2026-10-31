@@ -18,13 +18,11 @@ import {
   Video,
   Twitter,
   Linkedin,
-  ShieldCheck,
   Loader2,
   RefreshCw,
   X,
   ChevronLeft,
   ChevronRight,
-  Filter,
 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 import { StatCard, LoadingSkeleton, EmptyState } from "@/components/common";
@@ -76,6 +74,7 @@ export default function FounderMarketingCockpitPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingLeads, setLoadingLeads] = useState(false);
   const [pitchLang, setPitchLang] = useState<"bn" | "en">("bn");
+  const [expandedPitchId, setExpandedPitchId] = useState<string | null>(null);
   const PAGE_LIMIT = 5;
 
   // Metrics State
@@ -260,29 +259,7 @@ export default function FounderMarketingCockpitPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          3. Informational Strategy Banner
-         ───────────────────────────────────────────────────────────── */}
-      <div className="p-3 sm:p-3.5 rounded-xl bg-card border border-border shadow-xs flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shrink-0">
-            <Rocket className="w-3.5 h-3.5" />
-          </div>
-          <div>
-            <h3 className="text-xs font-semibold text-foreground">
-              Autonomous Growth Engine
-            </h3>
-            <p className="text-[11px] text-muted-foreground hidden sm:block">
-              Zero-cost regional prospecting, viral build-in-public hooks, and transparent unit margin simulation.
-            </p>
-          </div>
-        </div>
-        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-2 py-0.5 rounded-md bg-muted border border-border shrink-0">
-          Founder Suite
-        </span>
-      </div>
-
-      {/* ─────────────────────────────────────────────────────────────
-          4. Main Navigation Tabs (Semantic Design Tokens, No Scrollbars)
+          3. Main Navigation Tabs (Semantic Design Tokens, No Scrollbars)
          ───────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap">
         {[
@@ -319,53 +296,74 @@ export default function FounderMarketingCockpitPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          TAB 1: Local B2B Prospector with Pagination & CRM Pipeline
+          TAB 1: Local B2B Prospector with 2-Line Header & Compact Rows
          ───────────────────────────────────────────────────────────── */}
       {activeTab === "prospector" && (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-border bg-card p-4 sm:p-5 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-sm sm:text-base font-bold text-foreground flex items-center gap-2">
-                  <Search className="w-4 h-4 text-primary" />
-                  <span>Local Business Prospector & Cold WhatsApp Pitch</span>
-                </h2>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Automated discovery and 1-tap localized outreach for salons, dental clinics, fitness gyms & coaching centres.
-                </p>
+        <div className="space-y-3.5">
+          {/* Header Card: Strictly 2 Clean Lines on Both Desktop & Mobile */}
+          <div className="rounded-2xl border border-border bg-card p-3 sm:p-4 shadow-xs space-y-2.5">
+            {/* LINE 1: Short Title + Sorting Stage Tabs + Language Toggle */}
+            <div className="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap">
+              {/* Short Title */}
+              <div className="flex items-center gap-1.5 shrink-0 text-xs sm:text-sm font-bold text-foreground">
+                <Search className="w-4 h-4 text-primary" />
+                <span className="whitespace-nowrap">Lead Prospector</span>
               </div>
 
-              {/* Outreach Language Toggle */}
-              <div className="flex items-center gap-1 bg-muted p-1 rounded-xl border border-border self-start sm:self-auto shrink-0">
+              {/* Sorting Tabs */}
+              <div className="flex items-center gap-1 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap px-1">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "NEW", label: "Ready" },
+                  { id: "PITCHED", label: "Pitched" },
+                  { id: "CONVERTED", label: "Converted" },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    type="button"
+                    onClick={() => setStatusFilter(st.id as any)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
+                      statusFilter === st.id
+                        ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                        : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/80"
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Language Toggle */}
+              <div className="flex items-center gap-0.5 bg-muted p-0.5 rounded-lg border border-border shrink-0">
                 <button
                   type="button"
                   onClick={() => setPitchLang("bn")}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                  className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
                     pitchLang === "bn"
-                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                      ? "bg-primary text-primary-foreground font-bold shadow-2xs"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  বাংলা (BN)
+                  বাংলা
                 </button>
                 <button
                   type="button"
                   onClick={() => setPitchLang("en")}
-                  className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                  className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-semibold transition-all cursor-pointer ${
                     pitchLang === "en"
-                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                      ? "bg-primary text-primary-foreground font-bold shadow-2xs"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  English (EN)
+                  EN
                 </button>
               </div>
             </div>
 
-            {/* Filter & Search Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1">
+            {/* LINE 2: Search Input + City Selector + Category Selector */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap sm:grid sm:grid-cols-12 sm:gap-2.5 pt-0.5">
               {/* Search Box */}
-              <div className="sm:col-span-5 relative">
+              <div className="relative min-w-[150px] flex-1 sm:col-span-6">
                 <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-2.5" />
                 <input
                   type="text"
@@ -385,11 +383,11 @@ export default function FounderMarketingCockpitPage() {
               </div>
 
               {/* City Selector */}
-              <div className="sm:col-span-3">
+              <div className="min-w-[110px] sm:col-span-3">
                 <select
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs cursor-pointer"
                 >
                   <option value="all">All Cities</option>
                   <option value="Kolkata">Kolkata</option>
@@ -399,52 +397,28 @@ export default function FounderMarketingCockpitPage() {
               </div>
 
               {/* Category Selector */}
-              <div className="sm:col-span-4">
+              <div className="min-w-[130px] sm:col-span-3">
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                  className="w-full px-2.5 py-1.5 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs cursor-pointer"
                 >
                   <option value="all">All Categories</option>
-                  <option value="salon">Hair & Beauty Salons</option>
-                  <option value="dentist">Dental Clinics</option>
-                  <option value="gym">Fitness Gyms & Yoga</option>
-                  <option value="auto">Auto Repair & Garages</option>
-                  <option value="tutor">Tuition & Coaching</option>
+                  <option value="salon">Hair & Beauty</option>
+                  <option value="dentist">Dental Clinic</option>
+                  <option value="gym">Fitness Gym</option>
+                  <option value="auto">Auto Repair</option>
+                  <option value="tutor">Tuition Coaching</option>
                 </select>
               </div>
-            </div>
-
-            {/* Outreach Stage Filter Tabs */}
-            <div className="flex items-center gap-1.5 pt-1 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap">
-              <span className="text-[11px] font-medium text-muted-foreground mr-1 shrink-0">Stage:</span>
-              {[
-                { id: "all", label: "All Leads" },
-                { id: "NEW", label: "Ready (New)" },
-                { id: "PITCHED", label: "WhatsApp Sent" },
-                { id: "CONVERTED", label: "Converted" },
-              ].map((st) => (
-                <button
-                  key={st.id}
-                  type="button"
-                  onClick={() => setStatusFilter(st.id as any)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
-                    statusFilter === st.id
-                      ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                      : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground border border-border"
-                  }`}
-                >
-                  {st.label}
-                </button>
-              ))}
             </div>
           </div>
 
           {/* Prospects List & Pagination */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
               <span className="font-medium text-foreground">
-                Showing <strong>{leads.length}</strong> of <strong>{totalLeads}</strong> prospects
+                Showing <strong>{leads.length}</strong> of <strong>{totalLeads}</strong> leads
               </span>
               <span className="text-[11px]">
                 Page <strong>{currentPage}</strong> of <strong>{totalPages}</strong>
@@ -467,85 +441,99 @@ export default function FounderMarketingCockpitPage() {
                 }}
               />
             ) : (
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 gap-2">
                 {leads.map((lead) => {
                   const pitch = lead.suggestedPitch[pitchLang];
                   const isPitched = lead.status === "PITCHED";
                   const isConverted = lead.status === "CONVERTED";
+                  const isExpanded = expandedPitchId === lead.id;
 
                   return (
                     <div
                       key={lead.id}
-                      className="p-4 sm:p-4.5 rounded-2xl border border-border bg-card hover:border-primary/40 shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                      className="p-2.5 sm:p-3 rounded-xl border border-border bg-card hover:border-primary/40 shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3"
                     >
-                      <div className="space-y-1.5 flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-sm font-bold text-foreground truncate">{lead.name}</h3>
-                          <span className="text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full capitalize">
-                            {lead.category}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full border border-border">
-                            ⭐ {lead.rating}
-                          </span>
+                      {/* Left: Identity & Contact Info */}
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0 md:w-[36%] lg:w-[32%] shrink-0">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h3 className="text-xs sm:text-sm font-bold text-foreground truncate">{lead.name}</h3>
+                            <span className="text-[10px] font-semibold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.2 rounded-full capitalize shrink-0">
+                              {lead.category}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.2 rounded-full border border-border shrink-0">
+                              ⭐ {lead.rating}
+                            </span>
+                            <span
+                              className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-full border shrink-0 ${
+                                isConverted
+                                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25"
+                                  : isPitched
+                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
+                                  : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                              }`}
+                            >
+                              {isConverted ? "Customer" : isPitched ? "Pitched" : "Ready"}
+                            </span>
+                          </div>
 
-                          {/* Lead Stage Badge */}
-                          <span
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                              isConverted
-                                ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25"
-                                : isPitched
-                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25"
-                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
-                            }`}
-                          >
-                            {isConverted ? "● Customer" : isPitched ? "● Pitched" : "● Ready"}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1 font-mono">
-                            <Phone className="w-3 h-3 text-primary" />
-                            <span>{lead.phone}</span>
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1 truncate max-w-sm">
-                            <MapPin className="w-3 h-3 text-rose-500 shrink-0" />
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate mt-0.5">
+                            <span className="font-mono text-foreground/85 shrink-0">{lead.phone}</span>
+                            <span>•</span>
                             <span className="truncate">{lead.address}</span>
-                          </span>
-                        </div>
-
-                        {/* Pitch Preview Box */}
-                        <div className="mt-2 p-2.5 rounded-xl bg-muted/60 border border-border text-xs text-muted-foreground italic font-sans leading-relaxed">
-                          &ldquo;{pitch.slice(0, 120)}...&rdquo;
+                          </div>
                         </div>
                       </div>
 
-                      {/* Outreach Actions */}
-                      <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+                      {/* Center: Pitch with dot-dot (...) that expands inline when clicked */}
+                      <div className="flex-1 min-w-0 px-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setExpandedPitchId(isExpanded ? null : lead.id)}
+                          className="text-left w-full group cursor-pointer"
+                          title={isExpanded ? "Click to collapse pitch" : "Click to view full pitch"}
+                        >
+                          <div
+                            className={`p-1.5 sm:p-2 rounded-lg bg-muted/40 hover:bg-muted border border-border/70 text-xs text-muted-foreground transition-all ${
+                              isExpanded ? "whitespace-pre-wrap leading-relaxed text-foreground" : "truncate"
+                            }`}
+                          >
+                            <span className="font-serif italic">&ldquo;</span>
+                            <span>{isExpanded ? pitch : `${pitch.slice(0, 65)}...`}</span>
+                            <span className="font-serif italic">&rdquo;</span>
+                            <span className="text-[10px] text-primary ml-1.5 font-medium underline opacity-80 group-hover:opacity-100">
+                              {isExpanded ? "(collapse)" : "(show all)"}
+                            </span>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* Right: Copy & WhatsApp Action Buttons */}
+                      <div className="flex items-center gap-1.5 shrink-0 self-end md:self-auto">
                         <button
                           type="button"
                           onClick={() => copyToClipboard(pitch, `pitch_${lead.id}`)}
-                          className="p-2.5 rounded-xl bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-95"
+                          className="p-1.5 sm:p-2 rounded-lg bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-95"
                           title="Copy Pitch Message"
                         >
                           {copiedKey === `pitch_${lead.id}` ? (
-                            <Check className="w-4 h-4 text-emerald-500" />
+                            <Check className="w-3.5 h-3.5 text-emerald-500" />
                           ) : (
-                            <Copy className="w-4 h-4" />
+                            <Copy className="w-3.5 h-3.5" />
                           )}
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleLaunchWhatsApp(lead, pitch)}
-                          className={`inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-white font-semibold text-xs transition-all active:scale-95 shadow-xs cursor-pointer ${
+                          className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-white font-semibold text-xs transition-all active:scale-95 shadow-xs cursor-pointer whitespace-nowrap ${
                             isPitched
                               ? "bg-emerald-700 hover:bg-emerald-600"
                               : "bg-emerald-600 hover:bg-emerald-500"
                           }`}
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
-                          <span>{isPitched ? "Re-Pitch WhatsApp" : "Send WhatsApp Pitch"}</span>
+                          <span>{isPitched ? "Re-Pitch" : "WhatsApp"}</span>
                         </button>
                       </div>
                     </div>
@@ -556,9 +544,9 @@ export default function FounderMarketingCockpitPage() {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-card shadow-xs text-xs text-muted-foreground">
+              <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-border bg-card shadow-xs text-xs text-muted-foreground">
                 <span className="text-[11px]">
-                  Showing {(currentPage - 1) * PAGE_LIMIT + 1}–{Math.min(currentPage * PAGE_LIMIT, totalLeads)} of {totalLeads} prospects
+                  Showing {(currentPage - 1) * PAGE_LIMIT + 1}–{Math.min(currentPage * PAGE_LIMIT, totalLeads)} of {totalLeads} leads
                 </span>
 
                 <div className="flex items-center gap-2">
@@ -566,7 +554,7 @@ export default function FounderMarketingCockpitPage() {
                     type="button"
                     onClick={() => fetchLeads(currentPage - 1)}
                     disabled={currentPage <= 1 || loadingLeads}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     <span>Previous</span>
@@ -580,7 +568,7 @@ export default function FounderMarketingCockpitPage() {
                     type="button"
                     onClick={() => fetchLeads(currentPage + 1)}
                     disabled={currentPage >= totalPages || loadingLeads}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
                   >
                     <span>Next</span>
                     <ChevronRight className="w-3.5 h-3.5" />

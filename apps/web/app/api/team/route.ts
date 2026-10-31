@@ -10,7 +10,7 @@ export interface TeamMember {
   name: string;
   email: string;
   role: "DEVELOPER" | "SUPER_ADMIN" | "SUPER_ADMIN_STAFF" | "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
-  status: "ACTIVE" | "INVITED";
+  status: "ACTIVE" | "INVITED" | "PAUSED";
   joinedAt: string;
   allowedPages?: string[];
   avatarUrl?: string;
@@ -108,7 +108,8 @@ const patchRoleSchema = z.object({
     "STAFF",
     "CREATOR",
     "GUEST",
-  ]),
+  ]).optional(),
+  status: z.enum(["ACTIVE", "INVITED", "PAUSED"]).optional(),
   allowedPages: z.array(z.string()).optional(),
 });
 
@@ -321,7 +322,7 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { id, role } = parseResult.data;
+    const { id, role, status, allowedPages } = parseResult.data;
     const memberIndex = members.findIndex((m) => m.id === id);
 
     if (memberIndex === -1) {
@@ -332,22 +333,27 @@ export async function PATCH(req: Request) {
     }
 
     // Cannot demote Founding Owner
-    if (members[memberIndex].id === "mem_01" && role !== "OWNER" && role !== "TENANT_ADMIN") {
+    if (members[memberIndex].id === "mem_01" && role && role !== "OWNER" && role !== "TENANT_ADMIN") {
       return NextResponse.json(
         { success: false, error: "Primary Workspace Owner role cannot be reassigned." },
         { status: 403 }
       );
     }
 
-    members[memberIndex].role = role;
-    if (parseResult.data.allowedPages) {
-      members[memberIndex].allowedPages = parseResult.data.allowedPages;
+    if (role) {
+      members[memberIndex].role = role;
+    }
+    if (status) {
+      members[memberIndex].status = status;
+    }
+    if (allowedPages) {
+      members[memberIndex].allowedPages = allowedPages;
     }
 
     return NextResponse.json({
       success: true,
       member: members[memberIndex],
-      message: `Role updated to ${role}`,
+      message: `Member updated successfully`,
     });
   } catch (error: any) {
     return NextResponse.json(

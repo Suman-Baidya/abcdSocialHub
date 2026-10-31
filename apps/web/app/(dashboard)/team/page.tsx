@@ -26,6 +26,10 @@ import {
   UserCheck,
   Eye,
   MessageSquare,
+  Edit2,
+  Pause,
+  Play,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/components/ui/ToastProvider";
 import { CustomModal } from "@/components/ui/CustomModal";
@@ -36,7 +40,7 @@ export interface TeamMember {
   name: string;
   email: string;
   role: "DEVELOPER" | "SUPER_ADMIN" | "SUPER_ADMIN_STAFF" | "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
-  status: "ACTIVE" | "INVITED";
+  status: "ACTIVE" | "INVITED" | "PAUSED";
   joinedAt: string;
   allowedPages?: string[];
   lastActive?: string;
@@ -111,6 +115,14 @@ export default function TeamMembersPage() {
   // Delete & Revoke State
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
+
+  // Edit Member Modal State
+  const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
+  const [editRole, setEditRole] = useState<TeamMember["role"]>("CREATOR");
+  const [editStatus, setEditStatus] = useState<"ACTIVE" | "PAUSED" | "INVITED">("ACTIVE");
+  const [editAllowedPages, setEditAllowedPages] = useState<string[]>([]);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isTogglingPauseId, setIsTogglingPauseId] = useState<string | null>(null);
 
   // Role Policy Details Collapsible
   const [showPolicyDetails, setShowPolicyDetails] = useState(false);
@@ -270,6 +282,72 @@ export default function TeamMembersPage() {
       toast.error("Revoke Failed", err.message || "Failed to remove member.");
     } finally {
       setIsRevoking(false);
+    }
+  };
+
+  // Open Edit Role & Access Modal
+  const openEditModal = (member: TeamMember) => {
+    setMemberToEdit(member);
+    setEditRole(member.role);
+    setEditStatus(member.status);
+    setEditAllowedPages(member.allowedPages || []);
+  };
+
+  // Save Role & Permissions Edit
+  const handleSaveEdit = async () => {
+    if (!memberToEdit) return;
+    try {
+      setIsSavingEdit(true);
+      const res = await fetch("/api/team", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: memberToEdit.id,
+          role: editRole,
+          status: editStatus,
+          allowedPages: editAllowedPages,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to update member");
+      }
+      toast.success("Member Updated", `${memberToEdit.name} permissions updated.`);
+      setMemberToEdit(null);
+      fetchMembers();
+    } catch (err: any) {
+      toast.error("Update Failed", err.message || "Failed to update member.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // 1-Click Toggle Pause / Resume
+  const handleTogglePause = async (member: TeamMember) => {
+    try {
+      setIsTogglingPauseId(member.id);
+      const nextStatus = member.status === "PAUSED" ? "ACTIVE" : "PAUSED";
+      const res = await fetch("/api/team", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: member.id,
+          status: nextStatus,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to update status");
+      }
+      toast.success(
+        nextStatus === "PAUSED" ? "Member Paused" : "Member Resumed",
+        `${member.name}'s access is now ${nextStatus.toLowerCase()}.`
+      );
+      fetchMembers();
+    } catch (err: any) {
+      toast.error("Status Update Failed", err.message || "Failed to toggle pause.");
+    } finally {
+      setIsTogglingPauseId(null);
     }
   };
 
@@ -470,9 +548,6 @@ export default function TeamMembersPage() {
             )}
           </button>
         </div>
-        <p className="text-muted-foreground text-[11px] leading-relaxed">
-          Cryptographic server-side enforcement for workspace security.
-        </p>
 
         {showPolicyDetails && (
           <div className="pt-3 border-t border-border space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
@@ -731,23 +806,22 @@ export default function TeamMembersPage() {
           <table className="w-full text-left text-xs min-w-[760px]">
             <thead className="bg-muted/50 border-b border-border text-muted-foreground uppercase tracking-wider font-semibold text-[10px]">
               <tr>
-                <th className="w-12 px-3 py-3.5 text-center">#</th>
-                <th className="min-w-[200px] sm:min-w-[240px] px-3 sm:px-4 py-3.5">Member & Email</th>
-                <th className="min-w-[140px] px-3 sm:px-4 py-3.5">Assigned Role</th>
-                <th className="min-w-[120px] px-3 sm:px-4 py-3.5">Status</th>
-                <th className="min-w-[140px] px-3 sm:px-4 py-3.5">Joined Date</th>
-                <th className="w-24 px-3 sm:px-4 py-3.5 text-right">Actions</th>
+                <th className="w-12 px-3 py-3 text-center">#</th>
+                <th className="min-w-[240px] sm:w-[38%] px-3 sm:px-4 py-3">Team Member</th>
+                <th className="min-w-[110px] sm:w-[15%] px-3 sm:px-4 py-3">Status</th>
+                <th className="min-w-[120px] sm:w-[18%] px-3 sm:px-4 py-3">Joined Date</th>
+                <th className="min-w-[150px] sm:w-[25%] px-3 sm:px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading && members.length === 0 ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={`skel_${i}`} className="animate-pulse">
-                    <td className="w-12 px-3 py-4 text-center">
+                    <td className="w-12 px-3 py-3.5 text-center">
                       <div className="h-3 w-4 bg-muted rounded mx-auto" />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-full bg-muted shrink-0" />
                         <div className="space-y-1.5 flex-1">
                           <div className="h-3.5 bg-muted rounded w-32" />
@@ -755,23 +829,20 @@ export default function TeamMembersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="h-6 w-24 bg-muted rounded-full" />
+                    <td className="px-4 py-3.5">
+                      <div className="h-5 w-16 bg-muted rounded" />
                     </td>
-                    <td className="px-4 py-4">
-                      <div className="h-4 w-16 bg-muted rounded" />
-                    </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-3.5">
                       <div className="h-3 w-24 bg-muted rounded" />
                     </td>
-                    <td className="px-4 py-4 text-right">
-                      <div className="h-7 w-7 bg-muted rounded-lg ml-auto" />
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="h-7 w-20 bg-muted rounded-lg ml-auto" />
                     </td>
                   </tr>
                 ))
               ) : members.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-muted-foreground space-y-3">
+                  <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground space-y-3">
                     <div className="w-10 h-10 rounded-2xl bg-muted border border-border flex items-center justify-center mx-auto text-muted-foreground">
                       <Users className="w-5 h-5" />
                     </div>
@@ -799,70 +870,53 @@ export default function TeamMembersPage() {
                 members.map((member, idx) => (
                   <tr key={member.id} className="hover:bg-muted/30 transition-colors">
                     {/* SL Number */}
-                    <td className="w-12 px-3 py-3.5 text-center font-mono text-[11px] font-bold text-muted-foreground">
+                    <td className="w-12 px-3 py-3 text-center font-mono text-[11px] font-bold text-muted-foreground align-middle">
                       {(pagination.page - 1) * pagination.limit + idx + 1}
                     </td>
 
-                    {/* Member & Email (Initials Avatar + Name & Email) */}
-                    <td className="min-w-[200px] sm:min-w-[240px] px-3 sm:px-4 py-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-muted/80 border border-border flex items-center justify-center text-foreground font-bold text-xs shrink-0 select-none">
+                    {/* Member & Role (Avatar + Name + Role Badge on Line 1, Email on Line 2) */}
+                    <td className="min-w-[240px] sm:w-[38%] px-3 sm:px-4 py-3 align-middle">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center text-primary font-bold text-xs shrink-0 select-none">
                           {getInitials(member.name)}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <div className="font-bold text-foreground text-xs flex items-center gap-1.5 whitespace-nowrap">
-                            <span>{member.name}</span>
-                            {member.role === "OWNER" && (
-                              <span title="Workspace Owner" className="inline-flex items-center">
-                                <Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                              </span>
-                            )}
+                          {/* Line 1: Name + Role Badge directly beside name */}
+                          <div className="font-bold text-foreground text-xs flex items-center gap-1.5 flex-nowrap min-w-0">
+                            <span className="truncate max-w-[130px] sm:max-w-[180px]" title={member.name}>
+                              {member.name}
+                            </span>
+                            <span
+                              className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.2 rounded-full font-bold border shrink-0 ${getRoleBadgeClasses(
+                                member.role
+                              )}`}
+                            >
+                              {member.role === "OWNER" && <Crown className="w-2.5 h-2.5 text-amber-500" />}
+                              <span>{member.role.replace(/_/g, " ")}</span>
+                            </span>
                           </div>
-                          <div className="text-muted-foreground font-mono text-[11px] truncate max-w-[220px]">
+                          {/* Line 2: Email */}
+                          <div className="text-muted-foreground font-mono text-[11px] truncate mt-0.5" title={member.email}>
                             {member.email}
                           </div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Assigned Role Dropdown */}
-                    <td className="min-w-[140px] px-3 sm:px-4 py-3.5">
-                      {member.role === "OWNER" || member.role === "TENANT_ADMIN" ? (
-                        <span
-                          className={`inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full font-bold border ${getRoleBadgeClasses(
-                            member.role
-                          )}`}
-                        >
-                          <Lock className="w-2.5 h-2.5" />
-                          <span>OWNER</span>
-                        </span>
-                      ) : (
-                        <select
-                          value={member.role}
-                          onChange={(e) =>
-                            handleRoleChange(member.id, e.target.value as TeamMember["role"])
-                          }
-                          className={`text-[10px] font-bold px-2 py-1 rounded-full border bg-card focus:outline-none cursor-pointer transition-colors ${getRoleBadgeClasses(
-                            member.role
-                          )}`}
-                        >
-                          <option value="CREATOR">CREATOR</option>
-                          <option value="ADMIN_STAFF">ADMIN STAFF</option>
-                          <option value="STAFF">STAFF</option>
-                          <option value="GUEST">GUEST</option>
-                        </select>
-                      )}
-                    </td>
-
                     {/* Status Badge */}
-                    <td className="min-w-[120px] px-3 sm:px-4 py-3.5">
+                    <td className="min-w-[110px] sm:w-[15%] px-3 sm:px-4 py-3 align-middle">
                       {member.status === "ACTIVE" ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-[10px] text-emerald-500 font-semibold whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold whitespace-nowrap">
                           <CheckCircle2 className="w-3 h-3 shrink-0" />
                           <span>Active</span>
                         </span>
+                      ) : member.status === "PAUSED" ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/30 text-[10px] text-rose-600 dark:text-rose-400 font-semibold whitespace-nowrap">
+                          <Pause className="w-3 h-3 shrink-0" />
+                          <span>Paused</span>
+                        </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-[10px] text-amber-500 font-semibold whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30 text-[10px] text-amber-600 dark:text-amber-400 font-semibold whitespace-nowrap">
                           <Clock className="w-3 h-3 shrink-0" />
                           <span>Invited</span>
                         </span>
@@ -870,23 +924,59 @@ export default function TeamMembersPage() {
                     </td>
 
                     {/* Joined Date */}
-                    <td className="min-w-[140px] px-3 sm:px-4 py-3.5 text-muted-foreground text-[11px] whitespace-nowrap">
+                    <td className="min-w-[120px] sm:w-[18%] px-3 sm:px-4 py-3 text-muted-foreground text-[11px] whitespace-nowrap align-middle">
                       {member.joinedAt}
                     </td>
 
-                    {/* Actions: Revoke Member */}
-                    <td className="w-24 px-3 sm:px-4 py-3.5 text-right whitespace-nowrap">
+                    {/* Actions: Edit, Pause / Resume, Revoke */}
+                    <td className="min-w-[150px] sm:w-[25%] px-3 sm:px-4 py-3 text-right whitespace-nowrap align-middle">
                       {member.role !== "OWNER" ? (
-                        <button
-                          type="button"
-                          onClick={() => setMemberToDelete(member)}
-                          className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-colors cursor-pointer"
-                          title={`Revoke ${member.name}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="inline-flex items-center gap-1.5">
+                          {/* Edit Role & Access */}
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(member)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-card hover:bg-muted border border-border text-foreground text-xs font-semibold transition-all shadow-2xs active:scale-95 cursor-pointer"
+                            title={`Edit ${member.name}'s role & permissions`}
+                          >
+                            <Edit2 className="w-3 h-3 text-primary" />
+                            <span>Edit</span>
+                          </button>
+
+                          {/* Pause / Resume Toggle */}
+                          <button
+                            type="button"
+                            onClick={() => handleTogglePause(member)}
+                            disabled={isTogglingPauseId === member.id}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all shadow-2xs active:scale-95 cursor-pointer disabled:opacity-50 ${
+                              member.status === "PAUSED"
+                                ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                            }`}
+                            title={member.status === "PAUSED" ? "Resume member access" : "Pause member access"}
+                          >
+                            {isTogglingPauseId === member.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : member.status === "PAUSED" ? (
+                              <Play className="w-3 h-3" />
+                            ) : (
+                              <Pause className="w-3 h-3" />
+                            )}
+                            <span>{member.status === "PAUSED" ? "Resume" : "Pause"}</span>
+                          </button>
+
+                          {/* Revoke Member */}
+                          <button
+                            type="button"
+                            onClick={() => setMemberToDelete(member)}
+                            className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 border border-transparent hover:border-rose-500/25 transition-all cursor-pointer"
+                            title={`Revoke ${member.name} from workspace`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       ) : (
-                        <span className="text-[10px] text-muted-foreground/60 italic pr-1">
+                        <span className="text-[10px] text-muted-foreground/60 italic font-mono px-2 py-1 rounded bg-muted/40 border border-border">
                           Protected
                         </span>
                       )}
@@ -1142,6 +1232,123 @@ export default function TeamMembersPage() {
         onConfirm={handleConfirmRevoke}
         isDestructive
       />
+
+      {/* ─────────────────────────────────────────────────────────────
+          10. Edit Member Role & Status Modal
+         ───────────────────────────────────────────────────────────── */}
+      <CustomModal
+        isOpen={!!memberToEdit}
+        onClose={() => setMemberToEdit(null)}
+        title="Edit Team Member Role"
+        description={`Update role permissions, operational scope and access state for ${memberToEdit?.name}.`}
+        confirmText={isSavingEdit ? "Saving..." : "Save Changes"}
+        onConfirm={handleSaveEdit}
+        isLoading={isSavingEdit}
+      >
+        <div className="space-y-4 pt-2">
+          {/* Member Name & Email */}
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Member Profile
+            </label>
+            <div className="px-3 py-2 rounded-xl bg-muted/40 border border-border text-xs text-foreground flex items-center justify-between">
+              <span className="font-semibold">{memberToEdit?.name}</span>
+              <span className="text-muted-foreground font-mono text-[11px]">{memberToEdit?.email}</span>
+            </div>
+          </div>
+
+          {/* Role Selection */}
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Assign Workspace Role
+            </label>
+            <select
+              value={editRole}
+              onChange={(e) => setEditRole(e.target.value as any)}
+              className="w-full px-3 py-2 rounded-xl bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary transition-colors cursor-pointer"
+            >
+              <option value="CREATOR">CREATOR (Design, Poster & Video Drafting)</option>
+              <option value="ADMIN_STAFF">ADMIN STAFF (Leads, Calendar & Ops Access)</option>
+              <option value="STAFF">STAFF (Inbound WhatsApp Leads & CRM)</option>
+              <option value="GUEST">GUEST (Read-Only Autopilot Briefings)</option>
+            </select>
+          </div>
+
+          {/* Access Status (Active vs Paused) */}
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Access State
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditStatus("ACTIVE")}
+                className={`flex-1 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  editStatus === "ACTIVE"
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold shadow-2xs"
+                    : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Active</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditStatus("PAUSED")}
+                className={`flex-1 py-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                  editStatus === "PAUSED"
+                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 font-bold shadow-2xs"
+                    : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
+                }`}
+              >
+                <Pause className="w-3.5 h-3.5" />
+                <span>Paused</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Granular Page Permission Checkboxes for Admin Staff / Staff */}
+          {(editRole === "ADMIN_STAFF" || editRole === "STAFF") && (
+            <div className="space-y-2 p-3 rounded-xl bg-muted/40 border border-border">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-foreground">
+                  Allowed Workspace Pages
+                </label>
+                <span className="text-[10px] text-muted-foreground">Select accessible routes</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "leads", label: "WhatsApp Leads CRM" },
+                  { id: "calendar", label: "Publishing Calendar" },
+                  { id: "content", label: "Content Studio" },
+                  { id: "social", label: "Social Channels" },
+                  { id: "brand", label: "Brand Identity Kit" },
+                ].map((pg) => {
+                  const checked = editAllowedPages.includes(pg.id);
+                  return (
+                    <label
+                      key={pg.id}
+                      className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          setEditAllowedPages((prev) =>
+                            checked ? prev.filter((p) => p !== pg.id) : [...prev, pg.id]
+                          );
+                        }}
+                        className="rounded border-border text-primary focus:ring-primary cursor-pointer w-3.5 h-3.5"
+                      />
+                      <span className="text-[11px]">{pg.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </CustomModal>
     </div>
   );
 }

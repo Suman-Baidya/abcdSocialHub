@@ -4,13 +4,23 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@abcd/db";
 
-const DEVELOPER_EMAILS = (process.env.DEVELOPER_EMAILS || process.env.DEVELOPER_EMAIL || "suman.baidya.pro@gmail.com")
-  .split(",")
-  .map((e) => e.trim().toLowerCase());
+function parseEmailList(val?: string, fallback: string = ""): string[] {
+  const str = val || fallback;
+  return str
+    .split(",")
+    .map((e) => e.replace(/['"]/g, "").trim().toLowerCase())
+    .filter(Boolean);
+}
 
-const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "suman.baidya.pro@gmail.com")
-  .split(",")
-  .map((e) => e.trim().toLowerCase());
+const DEVELOPER_EMAILS = parseEmailList(
+  process.env.DEVELOPER_EMAILS || process.env.DEVELOPER_EMAIL,
+  "suman.baidya.pro@gmail.com"
+);
+
+const SUPER_ADMIN_EMAILS = parseEmailList(
+  process.env.SUPER_ADMIN_EMAILS,
+  "suman.baidya.pro@gmail.com"
+);
 
 import { resolveDashboardType, type DashboardType, type RoleType } from "./roles";
 export { resolveDashboardType, type DashboardType, type RoleType };

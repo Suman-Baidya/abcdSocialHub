@@ -10,12 +10,19 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const urlError = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(
+    urlError === "OAuthCallback" || urlError === "OAuthSignin"
+      ? "Google Sign-In returned an authorization error. Please check that http://localhost:3000/api/auth/callback/google is authorized in your Google Cloud Console, or use the 1-Click Developer Sign In below."
+      : urlError
+      ? `Authentication error: ${urlError}`
+      : ""
+  );
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +63,40 @@ function LoginForm() {
           <span>{error}</span>
         </div>
       )}
+
+      {/* 1-Click Developer Instant Sign In */}
+      <button
+        onClick={async () => {
+          setEmail("suman.baidya.pro@gmail.com");
+          setPassword("Password123!");
+          setLoading(true);
+          setError("");
+          try {
+            const res = await signIn("credentials", {
+              email: "suman.baidya.pro@gmail.com",
+              password: "Password123!",
+              redirect: false,
+              callbackUrl,
+            });
+            if (res?.error) {
+              setError(res.error);
+              setLoading(false);
+            } else {
+              router.push(callbackUrl);
+              router.refresh();
+            }
+          } catch (err: any) {
+            setError(err?.message || "Sign in failed");
+            setLoading(false);
+          }
+        }}
+        disabled={loading || googleLoading}
+        type="button"
+        className="w-full mb-3 flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold text-sm transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
+      >
+        <Sparkles className="w-4 h-4 text-amber-400" />
+        <span>1-Click Developer Sign In</span>
+      </button>
 
       {/* 1-Click Google Sign In */}
       <button

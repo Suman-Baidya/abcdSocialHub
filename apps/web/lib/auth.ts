@@ -117,7 +117,7 @@ export const authOptions: AuthOptions = {
       // Auto-provision initial Organization and Workspace if none exist
       if (!dbUser.memberships || dbUser.memberships.length === 0) {
         const orgSlug = `org-${dbUser.id.slice(-6)}-${Date.now().toString(36)}`;
-        const initialRole = isDeveloper ? "DEVELOPER" : isSuperAdmin ? "SUPER_ADMIN" : "TENANT_ADMIN";
+        const initialRole: RoleType = isDeveloper ? "DEVELOPER" : isSuperAdmin ? "SUPER_ADMIN" : "TENANT_ADMIN";
 
         await prisma.organization.create({
           data: {
@@ -135,14 +135,14 @@ export const authOptions: AuthOptions = {
                     primaryColor: "#00F0FF",
                   },
                 },
-              },
+              } as any,
             },
             memberships: {
               create: {
                 userId: dbUser.id,
                 role: initialRole as any,
-                allowedPages: [],
-              },
+                allowedPages: [] as string[],
+              } as any,
             },
           },
         });
@@ -187,11 +187,11 @@ export const authOptions: AuthOptions = {
           token.isSuperAdmin = isSuperAdmin;
 
           const primaryMembership = dbUser.memberships[0];
-          let userRole = primaryMembership?.role || "TENANT_ADMIN";
+          let userRole: RoleType = (primaryMembership?.role as RoleType) || "TENANT_ADMIN";
           
           if (isDeveloper) {
             userRole = "DEVELOPER";
-          } else if (isSuperAdmin && (userRole === "SUPER_ADMIN" || userRole === "OWNER" || !primaryMembership)) {
+          } else if (isSuperAdmin && (userRole === "SUPER_ADMIN" || (userRole as string) === "OWNER" || !primaryMembership)) {
             userRole = "SUPER_ADMIN";
           }
 

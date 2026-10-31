@@ -1041,38 +1041,36 @@ export default function FounderMarketingCockpitPage() {
 
             {/* Right Column: Dynamic Financial Projections & Waterfall */}
             <div className="lg:col-span-7 space-y-3 sm:space-y-4">
-              {/* 4 Revenue & Margin Metric Cards (Identical Structure, No Tags) */}
+              {/* 4 Revenue & Margin Metric Cards (Identical Structure, Icons Kept, No Tags) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                {[
-                  {
-                    label: "Monthly MRR",
-                    value: `₹${monthlyRevenue.toLocaleString("en-IN")}`,
-                  },
-                  {
-                    label: "Annual ARR",
-                    value: `₹${annualRunRate.toLocaleString("en-IN")}`,
-                  },
-                  {
-                    label: "Net Profit",
-                    value: `₹${netProfit.toLocaleString("en-IN")}`,
-                  },
-                  {
-                    label: "Gross Margin",
-                    value: `${netMarginPct}%`,
-                  },
-                ].map((card) => (
-                  <div
-                    key={card.label}
-                    className="p-3 sm:p-3.5 rounded-xl border border-border bg-card shadow-xs flex flex-col justify-between space-y-1.5"
-                  >
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block truncate">
-                      {card.label}
-                    </span>
-                    <div className="text-xl sm:text-2xl font-black text-foreground tracking-tight truncate">
-                      {card.value}
-                    </div>
-                  </div>
-                ))}
+                <StatCard
+                  title="Monthly MRR"
+                  value={`₹${monthlyRevenue.toLocaleString("en-IN")}`}
+                  subtitle="Simulated Monthly"
+                  icon={DollarSign}
+                  variant="sky"
+                />
+                <StatCard
+                  title="Annual ARR"
+                  value={`₹${annualRunRate.toLocaleString("en-IN")}`}
+                  subtitle="12-Month Projected"
+                  icon={TrendingUp}
+                  variant="primary"
+                />
+                <StatCard
+                  title="Net Profit"
+                  value={`₹${netProfit.toLocaleString("en-IN")}`}
+                  subtitle="After Total COGS"
+                  icon={DollarSign}
+                  variant="emerald"
+                />
+                <StatCard
+                  title="Gross Margin"
+                  value={`${netMarginPct}%`}
+                  subtitle="Software Margin"
+                  icon={TrendingUp}
+                  variant="amber"
+                />
               </div>
 
               {/* Waterfall Margin Visual Distribution Bar */}

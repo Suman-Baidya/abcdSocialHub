@@ -24,7 +24,6 @@ export const ROLE_LABELS: Record<RoleType, string> = {
 };
 
 export const SIMULATION_ROLES: RoleType[] = [
-  "DEVELOPER",
   "SUPER_ADMIN",
   "SUPER_ADMIN_STAFF",
   "TENANT_ADMIN",

@@ -36,6 +36,7 @@ export async function GET(req: Request) {
           include: {
             organization: {
               include: {
+                subscription: true,
                 workspaces: {
                   include: {
                     brandKit: {
@@ -62,6 +63,9 @@ export async function GET(req: Request) {
       workspaceName: string;
       businessName: string;
       allowedPages: string[];
+      isActive: boolean;
+      status: "ACTIVE" | "INACTIVE";
+      createdAt: string;
     }> = [];
 
     for (const u of users) {
@@ -94,6 +98,10 @@ export async function GET(req: Request) {
           }
         }
 
+        const isWorkspaceApproved = ws?.isApproved !== false;
+        const isSubActive = !org?.subscription || org.subscription.status !== "CANCELED";
+        const isActive = isWorkspaceApproved && isSubActive;
+
         formattedUsers.push({
           id: u.id,
           name: u.name || email.split("@")[0],
@@ -103,6 +111,9 @@ export async function GET(req: Request) {
           workspaceName: wsName,
           businessName,
           allowedPages: (m as any).allowedPages || [],
+          isActive,
+          status: isActive ? "ACTIVE" : "INACTIVE",
+          createdAt: u.createdAt.toISOString(),
         });
       }
     }
@@ -116,6 +127,53 @@ export async function GET(req: Request) {
     console.error("Failed to load platform users:", error);
     return NextResponse.json(
       { error: "Failed to load platform users", details: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    const user = session?.user as any;
+
+    const isDeveloper =
+      user?.isDeveloper ||
+      user?.role === "DEVELOPER" ||
+      user?.email === "suman.baidya.pro@gmail.com";
+
+    const isSuperAdmin =
+      isDeveloper ||
+      user?.isSuperAdmin ||
+      user?.role === "SUPER_ADMIN" ||
+      user?.email === "suman.baidya.pro@gmail.com";
+
+    if (!session || !isSuperAdmin) {
+      return NextResponse.json({ error: "Forbidden: Platform Admin access required" }, { status: 403 });
+    }
+
+    const body = await req.json();
+    const { workspaceId, isActive } = body;
+
+    if (!workspaceId) {
+      return NextResponse.json({ error: "workspaceId is required" }, { status: 400 });
+    }
+
+    const updated = await prisma.workspace.update({
+      where: { id: workspaceId },
+      data: { isApproved: Boolean(isActive) },
+    });
+
+    return NextResponse.json({
+      success: true,
+      workspaceId: updated.id,
+      isActive: updated.isApproved,
+      status: updated.isApproved ? "ACTIVE" : "INACTIVE",
+    });
+  } catch (error: any) {
+    console.error("Failed to update user/workspace status:", error);
+    return NextResponse.json(
+      { error: "Failed to update status", details: error.message },
       { status: 500 }
     );
   }

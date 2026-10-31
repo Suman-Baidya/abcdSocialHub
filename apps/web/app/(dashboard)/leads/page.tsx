@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import {
   MessageSquare,
   Phone,
@@ -26,6 +27,7 @@ import {
   Tag,
   Loader2,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import { useToast, CustomModal } from "@/components/ui/ToastProvider";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
@@ -62,6 +64,17 @@ interface LeadsStats {
 
 export default function WhatsAppLeadsPage() {
   const { toast } = useToast();
+  const { data: session } = useSession();
+
+  // Role and Permission Resolution
+  const user = session?.user as any;
+  const role = user?.role;
+  const allowedPages: string[] = user?.allowedPages || [];
+
+  const isRestricted =
+    role === "CREATOR" ||
+    role === "GUEST" ||
+    ((role === "ADMIN_STAFF" || role === "STAFF") && allowedPages.length > 0 && !allowedPages.includes("leads"));
 
   // Data & State
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -278,6 +291,24 @@ export default function WhatsAppLeadsPage() {
   // Calculate items display range
   const startItem = pagination.totalItems > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0;
   const endItem = Math.min(pagination.page * pagination.limit, pagination.totalItems);
+
+  // ─────────────────────────────────────────────────────────────
+  // 0. Permission Denied State (Creators, Guests, Restricted Staff)
+  // ─────────────────────────────────────────────────────────────
+  if (isRestricted) {
+    return (
+      <div className="max-w-xl mx-auto my-20 p-8 rounded-2xl border border-rose-500/20 bg-card text-card-foreground text-center space-y-4 shadow-xl">
+        <div className="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
+          <Lock className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">Access Restricted</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Your role ({role ? role.replace("_", " ") : "Member"}) does not have authorization to access WhatsApp Inbound Leads CRM.
+          Please contact your workspace Owner or Admin for changes.
+        </p>
+      </div>
+    );
+  }
 
   // ─────────────────────────────────────────────────────────────
   // 1. Loading Skeleton State

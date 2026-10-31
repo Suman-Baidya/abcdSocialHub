@@ -176,7 +176,23 @@ const updateLeadSchema = z.object({
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const workspaceId = (session?.user as any)?.workspaceId || "ws_demo_default";
+    const user = session?.user as any;
+    const role = user?.role;
+    const allowedPages: string[] = user?.allowedPages || [];
+
+    // Role check: Creators and Guests are barred from customer CRM leads
+    if (
+      role === "CREATOR" ||
+      role === "GUEST" ||
+      ((role === "ADMIN_STAFF" || role === "STAFF") && allowedPages.length > 0 && !allowedPages.includes("leads"))
+    ) {
+      return NextResponse.json(
+        { error: "Forbidden: You do not have permission to access CRM leads" },
+        { status: 403 }
+      );
+    }
+
+    const workspaceId = user?.workspaceId || "ws_demo_default";
 
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

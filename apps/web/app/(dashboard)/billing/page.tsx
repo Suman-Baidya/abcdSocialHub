@@ -84,7 +84,12 @@ export default function BillingPage() {
   }, [showQrModal]);
 
   const user = session?.user as any;
-  const isStaff = user?.role === "STAFF";
+  const role = user?.role;
+  const isBarredFromBilling =
+    role === "STAFF" ||
+    role === "ADMIN_STAFF" ||
+    role === "CREATOR" ||
+    role === "GUEST";
 
   const fetchBilling = async () => {
     try {
@@ -284,16 +289,16 @@ export default function BillingPage() {
     );
   }
 
-  // 2. Permission Denied State (Staff)
-  if (isStaff || error === "PERMISSION_DENIED") {
+  // 2. Permission Denied State (Staff, Creators, Guests)
+  if (isBarredFromBilling || error === "PERMISSION_DENIED") {
     return (
-      <div className="max-w-xl mx-auto my-20 p-8 rounded-2xl border border-red-500/20 bg-[#121722]/80 backdrop-blur-xl text-center space-y-4">
-        <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center mx-auto">
+      <div className="max-w-xl mx-auto my-20 p-8 rounded-2xl border border-rose-500/20 bg-card text-card-foreground text-center space-y-4 shadow-xl">
+        <div className="w-14 h-14 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
           <Lock className="w-6 h-6" />
         </div>
-        <h2 className="text-xl font-bold text-white">Access Restricted</h2>
-        <p className="text-sm text-zinc-400">
-          Staff accounts do not have permission to access billing, subscriptions, or financial ledgers.
+        <h2 className="text-xl font-bold text-foreground">Access Restricted</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Your role ({role ? role.replace("_", " ") : "Member"}) does not have authorization to access billing, subscriptions, or financial ledgers.
           Please contact your workspace Owner or Admin for changes.
         </p>
       </div>

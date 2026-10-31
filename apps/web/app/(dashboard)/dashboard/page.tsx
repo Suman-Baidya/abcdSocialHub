@@ -55,6 +55,8 @@ interface DashboardData {
 
 export default function DashboardOverviewPage() {
   const { data: session, status: authStatus } = useSession();
+  const user = session?.user as any;
+  const role = user?.role;
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -230,13 +232,31 @@ export default function DashboardOverviewPage() {
         description="Real-time marketing intelligence and automated campaign operations."
         hideBreadcrumb={true}
       >
-        <Link
-          href="/content"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>New AI Post</span>
-        </Link>
+        {role === "GUEST" ? (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/25 text-xs font-semibold">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Client Observer • Read Only</span>
+          </span>
+        ) : (
+          <div className="flex items-center gap-2">
+            {(user?.isSuperAdmin || user?.isDeveloper || role === "SUPER_ADMIN" || role === "DEVELOPER") && (
+              <Link
+                href="/admin/marketing"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition-all active:scale-95"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Founder Cockpit</span>
+              </Link>
+            )}
+            <Link
+              href="/content"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>New AI Post</span>
+            </Link>
+          </div>
+        )}
       </PageBreadcrumb>
 
       {/* 1. TailAdmin Standard 4-Metric Grid (2x2 on Mobile, 4x1 on Desktop) */}

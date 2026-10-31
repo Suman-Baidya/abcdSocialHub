@@ -41,12 +41,20 @@ export async function POST(req: Request) {
       },
     });
 
-    const hasAccess = user?.memberships.some((m) =>
+    const targetMembership = user?.memberships.find((m) =>
       m.organization.workspaces.some((w) => w.id === workspaceId)
     );
 
-    if (!hasAccess) {
+    if (!targetMembership) {
       return NextResponse.json({ error: "Forbidden: No access to this workspace" }, { status: 403 });
+    }
+
+    const role = targetMembership.role;
+    if (role === "STAFF" || role === "ADMIN_STAFF" || role === "CREATOR" || role === "GUEST") {
+      return NextResponse.json(
+        { error: "Forbidden: Only workspace owners and admins can initiate checkout orders" },
+        { status: 403 }
+      );
     }
 
     const planConfig = ABCD_PLANS[planId as PlanKey];

@@ -37,11 +37,12 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Role check: Staff cannot access billing
+    // Role check: Staff, Creators, and Guests cannot access billing endpoints
     const primaryMembership = user.memberships[0];
-    if (primaryMembership.role === "STAFF") {
+    const role = primaryMembership.role;
+    if (role === "STAFF" || role === "ADMIN_STAFF" || role === "CREATOR" || role === "GUEST") {
       return NextResponse.json(
-        { error: "Forbidden: Staff members cannot view billing information" },
+        { error: "Forbidden: Only Tenant Admins and Super Admins can access billing" },
         { status: 403 }
       );
     }

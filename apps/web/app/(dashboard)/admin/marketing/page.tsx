@@ -353,32 +353,33 @@ export default function FounderMarketingCockpitPage() {
         <div className="space-y-3">
           {/* Top Toolbar: Strictly ONE Single Line on Both Desktop & Mobile (No Title) */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap p-2 sm:p-2.5 rounded-xl border border-border bg-card shadow-xs">
-            {/* Search Box - Increased Width */}
-            <div className="relative min-w-[240px] sm:min-w-[320px] flex-1 max-w-sm shrink-0">
-              <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-2.5" />
+            {/* Search Box - Significantly Increased Width */}
+            <div className="relative min-w-[280px] sm:min-w-[360px] md:min-w-[420px] flex-1 max-w-lg shrink-0">
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5 sm:top-3" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search lead by name, phone, or address..."
-                className="w-full pl-8 pr-7 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                className="w-full pl-9 sm:pl-10 pr-8 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs placeholder:text-muted-foreground/70"
               />
               {searchQuery && (
                 <button
+                  type="button"
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-2.5 top-2.5 sm:top-3 text-muted-foreground hover:text-foreground"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
             {/* City Selector */}
-            <div className="min-w-[105px] shrink-0">
+            <div className="min-w-[110px] shrink-0">
               <select
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs cursor-pointer"
+                className="w-full px-2.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
               >
                 <option value="all">All Cities</option>
                 <option value="Kolkata">Kolkata</option>
@@ -388,11 +389,11 @@ export default function FounderMarketingCockpitPage() {
             </div>
 
             {/* Category Selector */}
-            <div className="min-w-[125px] shrink-0">
+            <div className="min-w-[130px] shrink-0">
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs cursor-pointer"
+                className="w-full px-2.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
               >
                 <option value="all">All Categories</option>
                 <option value="salon">Hair & Beauty</option>
@@ -415,7 +416,7 @@ export default function FounderMarketingCockpitPage() {
                   key={st.id}
                   type="button"
                   onClick={() => setStatusFilter(st.id as any)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all shrink-0 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     statusFilter === st.id
                       ? "bg-primary text-primary-foreground font-bold shadow-xs"
                       : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/80"
@@ -426,15 +427,15 @@ export default function FounderMarketingCockpitPage() {
               ))}
             </div>
 
-            {/* Language Toggle - Increased Size */}
-            <div className="flex items-center gap-1 bg-muted p-1 rounded-xl border border-border shrink-0 ml-auto">
+            {/* Language Toggle - Prominently Increased Size & Prominence */}
+            <div className="flex items-center gap-1.5 bg-muted/80 p-1 sm:p-1.5 rounded-xl border border-border shrink-0 ml-auto shadow-xs">
               <button
                 type="button"
                 onClick={() => setPitchLang("bn")}
-                className={`text-xs sm:text-[13px] px-3.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                className={`text-xs sm:text-sm px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-bold transition-all cursor-pointer ${
                   pitchLang === "bn"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/60"
                 }`}
               >
                 বাংলা
@@ -442,10 +443,10 @@ export default function FounderMarketingCockpitPage() {
               <button
                 type="button"
                 onClick={() => setPitchLang("en")}
-                className={`text-xs sm:text-[13px] px-3.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                className={`text-xs sm:text-sm px-4 sm:px-5 py-1.5 sm:py-2 rounded-lg font-bold transition-all cursor-pointer ${
                   pitchLang === "en"
-                    ? "bg-primary text-primary-foreground shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/60"
                 }`}
               >
                 EN
@@ -494,17 +495,17 @@ export default function FounderMarketingCockpitPage() {
                       className="p-2 sm:p-2.5 rounded-xl border border-border bg-card hover:border-primary/40 shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-2 sm:gap-3"
                     >
                       {/* 1. Serial Number Badge & Identity Block (Strictly 2 Lines) */}
-                      <div className="flex items-center gap-2.5 min-w-0 md:w-[34%] lg:w-[32%] shrink-0">
+                      <div className="flex items-center gap-2.5 min-w-0 w-full md:w-[38%] lg:w-[36%] shrink-0">
                         <span className="w-7 h-7 rounded-lg bg-muted/80 border border-border text-foreground font-mono font-bold text-[11px] flex items-center justify-center shrink-0 shadow-2xs">
                           #{serial}
                         </span>
 
                         {/* Identity Details - Strictly 2 Lines */}
-                        <div className="min-w-0 flex-1">
-                          {/* Line 1: Name (truncated with ... if large) + Badges */}
-                          <div className="flex items-center gap-1.5 flex-nowrap min-w-0">
+                        <div className="min-w-0 flex-1 overflow-hidden">
+                          {/* Line 1: Name (with dot-dot ... if large) + Category + Rating + Status Badges */}
+                          <div className="flex items-center gap-1.5 flex-nowrap min-w-0 overflow-hidden">
                             <h3
-                              className="text-xs sm:text-sm font-bold text-foreground truncate max-w-[130px] sm:max-w-[160px] shrink-0"
+                              className="text-xs sm:text-sm font-bold text-foreground truncate min-w-0 flex-1 max-w-[130px] sm:max-w-[160px] shrink-0"
                               title={lead.name}
                             >
                               {lead.name}
@@ -529,7 +530,7 @@ export default function FounderMarketingCockpitPage() {
                           </div>
 
                           {/* Line 2: Phone • Address */}
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate mt-0.5 min-w-0">
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate mt-0.5 min-w-0 overflow-hidden">
                             <span className="font-mono text-foreground/85 shrink-0">{lead.phone}</span>
                             <span>•</span>
                             <span className="truncate">{lead.address}</span>
@@ -1042,53 +1043,38 @@ export default function FounderMarketingCockpitPage() {
             <div className="lg:col-span-7 space-y-3 sm:space-y-4">
               {/* 4 Revenue & Margin Metric Cards (Identical Structure & Alignments) */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
-                {[
-                  {
-                    label: "Monthly MRR",
-                    value: `₹${monthlyRevenue.toLocaleString("en-IN")}`,
-                    badge: "Run-Rate",
-                    color: "text-foreground",
-                    badgeStyle: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25",
-                  },
-                  {
-                    label: "Annual ARR",
-                    value: `₹${annualRunRate.toLocaleString("en-IN")}`,
-                    badge: "Annualized",
-                    color: "text-foreground",
-                    badgeStyle: "bg-primary/10 text-primary border-primary/25",
-                  },
-                  {
-                    label: "Net Profit",
-                    value: `₹${netProfit.toLocaleString("en-IN")}`,
-                    badge: "After Costs",
-                    color: "text-emerald-600 dark:text-emerald-400",
-                    badgeStyle: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25",
-                  },
-                  {
-                    label: "Gross Margin",
-                    value: `${netMarginPct}%`,
-                    badge: "> 85% Target",
-                    color: "text-foreground",
-                    badgeStyle: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25",
-                  },
-                ].map((card) => (
-                  <div
-                    key={card.label}
-                    className="p-3 sm:p-3.5 rounded-xl border border-border bg-card shadow-xs flex flex-col justify-between space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate">
-                        {card.label}
-                      </span>
-                      <span className={`text-[9px] font-semibold px-1.5 py-0.2 rounded-full border shrink-0 ${card.badgeStyle}`}>
-                        {card.badge}
-                      </span>
-                    </div>
-                    <div className={`text-lg sm:text-xl font-extrabold ${card.color} tracking-tight truncate`}>
-                      {card.value}
-                    </div>
-                  </div>
-                ))}
+                <StatCard
+                  title="Monthly MRR"
+                  value={`₹${monthlyRevenue.toLocaleString("en-IN")}`}
+                  subtitle="Simulated Monthly"
+                  icon={DollarSign}
+                  variant="sky"
+                  badge={{ text: "Run-Rate", variant: "info" }}
+                />
+                <StatCard
+                  title="Annual ARR"
+                  value={`₹${annualRunRate.toLocaleString("en-IN")}`}
+                  subtitle="12-Month Projected"
+                  icon={TrendingUp}
+                  variant="primary"
+                  badge={{ text: "Annualized", variant: "info" }}
+                />
+                <StatCard
+                  title="Net Profit"
+                  value={`₹${netProfit.toLocaleString("en-IN")}`}
+                  subtitle="After Total COGS"
+                  icon={DollarSign}
+                  variant="emerald"
+                  badge={{ text: "Retained", variant: "success" }}
+                />
+                <StatCard
+                  title="Gross Margin"
+                  value={`${netMarginPct}%`}
+                  subtitle="Software Margin"
+                  icon={TrendingUp}
+                  variant="amber"
+                  badge={{ text: "> 85% Target", variant: "warning" }}
+                />
               </div>
 
               {/* Waterfall Margin Visual Distribution Bar */}

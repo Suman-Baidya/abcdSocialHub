@@ -317,14 +317,14 @@ export function RoleSimulatorBanner({
           {/* Top Bar: Search Input & Role Filters (Scrollbars hidden) */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
             {/* Search Box */}
-            <div className="relative flex-1 max-w-md">
-              <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-2.5" />
+            <div className="relative flex-1 max-w-lg">
+              <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search user by name, email, or business brand..."
-                className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-card border border-border text-foreground text-xs focus:outline-none focus:ring-1 focus:ring-primary shadow-xs"
+                className="w-full pl-9 pr-8 py-2 rounded-xl bg-card border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs"
               />
               {searchQuery && (
                 <button

@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { CustomModal } from "@/components/ui/CustomModal";
 import { StatCard, EmptyState, LoadingSkeleton, StatusBadge } from "@/components/common";
+import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 
 interface Member {
   id: string;
@@ -284,23 +285,17 @@ export default function TenantManagementPage() {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       {/* 1. Header with strictly 2-3 word title and 7-8 word description */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/40 pb-5">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
-            <Building2 className="w-6 h-6 text-amber-400" />
-            <span>Tenant Management</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Manage registered business workspaces and approval status.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
+      <PageBreadcrumb
+        pageTitle="Tenant Workspaces"
+        description="Manage registered business workspaces and approval status."
+        hideBreadcrumb={true}
+      >
+        <div className="flex items-center gap-2">
           <button
             onClick={() => setShowCreateModal(true)}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-all active:scale-95 shadow-md shadow-primary/20 cursor-pointer"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all active:scale-95 shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Create New Tenant</span>
@@ -309,13 +304,13 @@ export default function TenantManagementPage() {
           <button
             onClick={fetchTenants}
             disabled={loading}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-card border border-border hover:bg-muted text-xs font-semibold text-foreground transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+            className="p-2 rounded-xl bg-card hover:bg-muted border border-border text-foreground transition-all active:scale-95 cursor-pointer shadow-sm"
+            title="Refresh Directory"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span>Refresh Directory</span>
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-primary" : ""}`} />
           </button>
         </div>
-      </div>
+      </PageBreadcrumb>
 
       {/* Feedback Toast */}
       {feedbackMessage && (

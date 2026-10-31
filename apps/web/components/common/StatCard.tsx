@@ -110,3 +110,4 @@ export const StatCard = memo(function StatCard({
     </div>
   );
 });
+

@@ -56,3 +56,4 @@ export const PlatformIcon = memo(function PlatformIcon({
 
   return <Icon className={`${className} ${config.color}`} aria-label={config.label} />;
 });
+

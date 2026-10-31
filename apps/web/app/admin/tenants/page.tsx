@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { CustomModal } from "@/components/ui/CustomModal";
+import { StatCard, EmptyState, LoadingSkeleton, StatusBadge } from "@/components/common";
 
 interface Member {
   id: string;
@@ -337,83 +338,38 @@ export default function TenantManagementPage() {
 
       {/* 2. 4-Metric Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              <Building2 className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-              Total
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
-              Total Workspaces
-            </span>
-            <h4 className="mt-0.5 text-xl sm:text-2xl font-bold text-foreground tracking-tight">
-              {stats.totalWorkspaces}
-            </h4>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              <CheckCircle2 className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Active
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
-              Approved Tenants
-            </span>
-            <h4 className="mt-0.5 text-xl sm:text-2xl font-bold text-emerald-400 tracking-tight">
-              {stats.approvedCount}
-            </h4>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
-              <Clock className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              Needs Review
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
-              Pending Approval
-            </span>
-            <h4 className="mt-0.5 text-xl sm:text-2xl font-bold text-amber-400 tracking-tight">
-              {stats.pendingCount}
-            </h4>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
-              <Users className="w-4 h-4" />
-            </div>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              Coverage
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
-              Approval Ratio
-            </span>
-            <h4 className="mt-0.5 text-xl sm:text-2xl font-bold text-primary tracking-tight">
-              {stats.totalWorkspaces > 0
-                ? `${Math.round((stats.approvedCount / stats.totalWorkspaces) * 100)}%`
-                : "0%"}
-            </h4>
-          </div>
-        </div>
+        <StatCard
+          title="Total Workspaces"
+          value={stats.totalWorkspaces}
+          icon={Building2}
+          variant="amber"
+          badge={{ text: "Total", variant: "neutral" }}
+        />
+        <StatCard
+          title="Approved Tenants"
+          value={stats.approvedCount}
+          icon={CheckCircle2}
+          variant="emerald"
+          badge={{ text: "Active", variant: "success" }}
+        />
+        <StatCard
+          title="Pending Approval"
+          value={stats.pendingCount}
+          icon={Clock}
+          variant="amber"
+          badge={{ text: "Needs Review", variant: "warning" }}
+        />
+        <StatCard
+          title="Approval Ratio"
+          value={
+            stats.totalWorkspaces > 0
+              ? `${Math.round((stats.approvedCount / stats.totalWorkspaces) * 100)}%`
+              : "0%"
+          }
+          icon={Users}
+          variant="primary"
+          badge={{ text: "Coverage", variant: "info" }}
+        />
       </div>
 
       {/* 3. Search and Filter Bar */}
@@ -448,22 +404,20 @@ export default function TenantManagementPage() {
 
       {/* 4. Tenants Roster Cards */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-border bg-card/40 space-y-3">
-          <Loader2 className="w-7 h-7 text-primary animate-spin" />
-          <p className="text-xs text-muted-foreground">Loading registered business workspaces...</p>
-        </div>
+        <LoadingSkeleton type="cards" count={3} />
       ) : filteredTenants.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-border bg-card/40 text-center px-4 space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <h3 className="text-sm font-bold text-foreground">No matching workspaces</h3>
-          <p className="text-xs text-muted-foreground max-w-sm">
-            {searchQuery
+        <EmptyState
+          icon={Building2}
+          title="No matching workspaces"
+          description={
+            searchQuery
               ? `No registered tenants matched "${searchQuery}". Try adjusting your search query.`
-              : "No business workspaces enrolled yet. Click 'Create New Tenant' above to add your first client."}
-          </p>
-        </div>
+              : "No business workspaces enrolled yet. Click 'Create New Tenant' above to add your first client."
+          }
+          actionText={searchQuery ? undefined : "Create New Tenant"}
+          onAction={() => setShowCreateModal(true)}
+          actionIcon={Plus}
+        />
       ) : (
         <div className="space-y-3">
           {filteredTenants.map((t) => {
@@ -485,17 +439,7 @@ export default function TenantManagementPage() {
                       <span className="text-sm sm:text-base font-bold text-foreground truncate">
                         {t.businessName || t.name}
                       </span>
-                      {t.isApproved ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Approved</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                          <Clock className="w-3 h-3" />
-                          <span>Pending Approval</span>
-                        </span>
-                      )}
+                      <StatusBadge status={t.isApproved ? "APPROVED" : "PENDING"} />
                       <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">
                         {t.plan} Plan
                       </span>

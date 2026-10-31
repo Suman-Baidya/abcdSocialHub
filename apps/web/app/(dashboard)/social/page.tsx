@@ -34,6 +34,7 @@ import {
   Globe,
 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
+import { StatCard, LoadingSkeleton } from "@/components/common";
 import { useToast, CustomModal } from "@/components/ui/ToastProvider";
 
 export interface SocialAccount {
@@ -476,105 +477,38 @@ export default function SocialAccountsPage() {
              2 boxes per row on mobile = 2 rows, 2 cols = 4 boxes
          ───────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
-        {/* KPI 1: Active Connected Channels */}
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 shadow-sm hover:border-primary/40 transition-colors">
-          <div className="flex items-center justify-between">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
-              <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              Live API
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
-              Connected Channels
-            </span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <h4 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
-                {stats.totalConnected}
-              </h4>
-              <span className="text-[11px] font-semibold text-muted-foreground">
-                Accounts
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 2: Credential Security */}
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 shadow-sm hover:border-primary/40 transition-colors">
-          <div className="flex items-center justify-between">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
-              <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              Zero Plaintext
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
-              Encryption Cipher
-            </span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <h4 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
-                {stats.cipherBits}
-              </h4>
-              <span className="text-[11px] font-semibold text-muted-foreground">
-                Bit GCM
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 3: Publishing Health */}
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 shadow-sm hover:border-primary/40 transition-colors">
-          <div className="flex items-center justify-between">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-500">
-              <Activity className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-500 border border-sky-500/20">
-              Standby
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
-              Channel Health
-            </span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <h4 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
-                {stats.readinessPct}%
-              </h4>
-              <span className="text-[11px] font-semibold text-muted-foreground">
-                Ready
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* KPI 4: Token Validity */}
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 shadow-sm hover:border-primary/40 transition-colors">
-          <div className="flex items-center justify-between">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-500">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </div>
-            <span className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-500 border border-purple-500/20">
-              Auto-Renew
-            </span>
-          </div>
-          <div className="mt-2.5">
-            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
-              Token Validity
-            </span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <h4 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">
-                {stats.daysRemaining}
-              </h4>
-              <span className="text-[11px] font-semibold text-muted-foreground">
-                Days Left
-              </span>
-            </div>
-          </div>
-        </div>
+        <StatCard
+          title="Connected Channels"
+          value={stats.totalConnected}
+          subtitle="Accounts"
+          icon={Share2}
+          variant="primary"
+          badge={{ text: "Live API", variant: "success" }}
+        />
+        <StatCard
+          title="Encryption Cipher"
+          value={stats.cipherBits}
+          subtitle="Bit GCM"
+          icon={Lock}
+          variant="emerald"
+          badge={{ text: "Zero Plaintext", variant: "success" }}
+        />
+        <StatCard
+          title="Channel Health"
+          value={`${stats.readinessPct}%`}
+          subtitle="Ready"
+          icon={Activity}
+          variant="sky"
+          badge={{ text: "Standby", variant: "info" }}
+        />
+        <StatCard
+          title="Token Validity"
+          value={stats.daysRemaining}
+          subtitle="Days Left"
+          icon={Clock}
+          variant="purple"
+          badge={{ text: "Auto-Renew", variant: "neutral" }}
+        />
       </div>
 
       {/* ─────────────────────────────────────────────────────────────

@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
+import { StatCard, ErrorState, LoadingSkeleton } from "@/components/common";
 import { AutopilotBriefing } from "@/components/dashboard/AutopilotBriefing";
 import { ChannelHealthWidget } from "@/components/dashboard/ChannelHealthWidget";
 import { RecentPostsCarousel } from "@/components/dashboard/RecentPostsCarousel";
@@ -200,39 +201,25 @@ export default function DashboardOverviewPage() {
   // STATE 3: GENERIC ERROR
   if (error && !loading) {
     return (
-      <div className="min-h-[500px] flex items-center justify-center p-6">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-card border border-amber-500/30 text-center space-y-4 backdrop-blur-xl shadow-lg">
-          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-500">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-          <h2 className="text-base font-bold text-foreground">Dashboard Unavailable</h2>
-          <p className="text-xs text-muted-foreground leading-relaxed">{error}</p>
-          <button
-            onClick={fetchSummary}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground font-semibold text-xs shadow-md transition-all active:scale-95 cursor-pointer"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Retry Connection</span>
-          </button>
-        </div>
-      </div>
+      <ErrorState
+        title="Dashboard Unavailable"
+        message={error}
+        onRetry={fetchSummary}
+        retrying={loading}
+      />
     );
   }
 
   // STATE 4: LOADING
   if (loading || !data) {
     return (
-      <div className="space-y-6 sm:space-y-8 animate-pulse">
-        <div className="h-6 w-48 bg-muted rounded-lg" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 rounded-2xl bg-card border border-border" />
-          ))}
-        </div>
-        <div className="h-56 rounded-2xl bg-card border border-border" />
+      <div className="space-y-6 sm:space-y-8">
+        <div className="h-6 w-48 bg-muted rounded-lg animate-pulse" />
+        <LoadingSkeleton type="metrics" count={4} />
+        <div className="h-56 rounded-2xl bg-card border border-border animate-pulse" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-48 rounded-2xl bg-card border border-border" />
-          <div className="h-48 rounded-2xl bg-card border border-border" />
+          <div className="lg:col-span-2 h-48 rounded-2xl bg-card border border-border animate-pulse" />
+          <div className="h-48 rounded-2xl bg-card border border-border animate-pulse" />
         </div>
       </div>
     );
@@ -319,86 +306,34 @@ export default function DashboardOverviewPage() {
 
       {/* 1. TailAdmin Standard 4-Metric Grid (2x2 on Mobile, 4x1 on Desktop) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
-        {/* Metric Card 1: Published */}
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 transition-all hover:border-primary/40 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
-              <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </div>
-            <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              <ArrowUp className="w-2.5 h-2.5" />
-              <span>+12.4%</span>
-            </div>
-          </div>
-          <div className="mt-2 sm:mt-2.5">
-            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
-              Published Posts
-            </span>
-            <h4 className="mt-0.5 text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight">
-              {stats.publishedCount}
-            </h4>
-          </div>
-        </div>
-
-        {/* Metric Card 2: Queue */}
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 transition-all hover:border-primary/40 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-500">
-              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </div>
-            <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-500 border border-sky-500/20">
-              <span>IST Queue</span>
-            </div>
-          </div>
-          <div className="mt-2 sm:mt-2.5">
-            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
-              Scheduled Queue
-            </span>
-            <h4 className="mt-0.5 text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight">
-              {stats.scheduledCount}
-            </h4>
-          </div>
-        </div>
-
-        {/* Metric Card 3: Pending Review */}
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 transition-all hover:border-primary/40 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-500">
-              <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </div>
-            <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/20">
-              <span>Mobile Link</span>
-            </div>
-          </div>
-          <div className="mt-2 sm:mt-2.5">
-            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
-              Review Required
-            </span>
-            <h4 className="mt-0.5 text-lg sm:text-xl md:text-2xl font-bold text-foreground tracking-tight">
-              {stats.inReviewCount}
-            </h4>
-          </div>
-        </div>
-
-        {/* Metric Card 4: Credits Left */}
-        <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 transition-all hover:border-primary/40 shadow-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
-              <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </div>
-            <div className="inline-flex items-center gap-1 text-[9px] sm:text-[10px] font-semibold px-1.5 sm:px-2 py-0.5 rounded-full bg-muted text-foreground border border-border">
-              <span>{credits.planName}</span>
-            </div>
-          </div>
-          <div className="mt-2 sm:mt-2.5">
-            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate block">
-              Available Credits
-            </span>
-            <h4 className="mt-0.5 text-lg sm:text-xl md:text-2xl font-bold text-primary tracking-tight">
-              {credits.remaining}
-            </h4>
-          </div>
-        </div>
+        <StatCard
+          title="Published Posts"
+          value={stats.publishedCount}
+          icon={CheckCircle2}
+          variant="emerald"
+          badge={{ text: "+12.4%", variant: "success" }}
+        />
+        <StatCard
+          title="Scheduled Queue"
+          value={stats.scheduledCount}
+          icon={Clock}
+          variant="sky"
+          badge={{ text: "IST Queue", variant: "info" }}
+        />
+        <StatCard
+          title="Review Required"
+          value={stats.inReviewCount}
+          icon={AlertTriangle}
+          variant="amber"
+          badge={{ text: "Mobile Link", variant: "warning" }}
+        />
+        <StatCard
+          title="Available Credits"
+          value={credits.remaining}
+          icon={Coins}
+          variant="primary"
+          badge={{ text: credits.planName, variant: "neutral" }}
+        />
       </div>
 
       {/* 2. Executive Autopilot Briefing Banner */}

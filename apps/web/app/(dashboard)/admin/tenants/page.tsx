@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Building2,
   Search,
   CheckCircle2,
-  AlertTriangle,
   Clock,
   ShieldCheck,
   ShieldAlert,
@@ -14,14 +13,17 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Mail,
   Phone,
   Layers,
-  Sparkles,
   Plus,
   Eye,
   Trash2,
   X,
+  SlidersHorizontal,
+  ArrowUpDown,
 } from "lucide-react";
 import { CustomModal } from "@/components/ui/CustomModal";
 import { StatCard, EmptyState, LoadingSkeleton, StatusBadge } from "@/components/common";
@@ -67,8 +69,18 @@ export default function TenantManagementPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "APPROVED" | "PENDING">("ALL");
+  const [planFilter, setPlanFilter] = useState<string>("ALL");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "name_asc" | "name_desc" | "posts" | "members">("newest");
+
+  // Pagination (Default exactly 10 rows per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Action states
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [inspectingId, setInspectingId] = useState<string | null>(null);
   const [expandedTenantId, setExpandedTenantId] = useState<string | null>(null);
@@ -122,6 +134,11 @@ export default function TenantManagementPage() {
     fetchTenants();
   }, [fetchTenants]);
 
+  // Reset pagination to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, planFilter, sortBy, pageSize]);
+
   // 1-Click Workspace Impersonation ("Inspect Customer Workspace")
   const handleInspectWorkspace = async (tenantId: string) => {
     try {
@@ -137,7 +154,6 @@ export default function TenantManagementPage() {
         throw new Error(errJson.error || "Failed to start workspace inspection");
       }
 
-      // Immediately navigate to customer's live dashboard view
       window.location.href = "/dashboard";
     } catch (err: any) {
       setFeedbackMessage({
@@ -193,7 +209,6 @@ export default function TenantManagementPage() {
         throw new Error(errJson.error || "Update failed");
       }
 
-      // Optimistic state update
       setTenants((prev) =>
         prev.map((t) => (t.id === tenantId ? { ...t, isApproved: nextStatus } : t))
       );
@@ -296,22 +311,61 @@ export default function TenantManagementPage() {
     }
   };
 
-  const filteredTenants = tenants.filter((t) => {
-    const matchesSearch =
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.ownerEmail.toLowerCase().includes(searchQuery.toLowerCase());
+  // Filter & Sort Pipeline
+  const processedTenants = useMemo(() => {
+    const list = tenants.filter((t) => {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        t.name.toLowerCase().includes(q) ||
+        t.businessName.toLowerCase().includes(q) ||
+        t.ownerEmail.toLowerCase().includes(q) ||
+        (t.phoneNumber && t.phoneNumber.includes(q));
 
-    if (!matchesSearch) return false;
+      if (!matchesSearch) return false;
 
-    if (statusFilter === "APPROVED") return t.isApproved;
-    if (statusFilter === "PENDING") return !t.isApproved;
-    return true;
-  });
+      if (statusFilter === "APPROVED" && !t.isApproved) return false;
+      if (statusFilter === "PENDING" && t.isApproved) return false;
+
+      if (planFilter !== "ALL" && t.plan.toLowerCase() !== planFilter.toLowerCase()) return false;
+
+      return true;
+    });
+
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "oldest":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "name_asc":
+          return a.businessName.localeCompare(b.businessName);
+        case "name_desc":
+          return b.businessName.localeCompare(a.businessName);
+        case "posts":
+          return b.totalPosts - a.totalPosts;
+        case "members":
+          return b.totalMembers - a.totalMembers;
+        default:
+          return 0;
+      }
+    });
+
+    return list;
+  }, [tenants, searchQuery, statusFilter, planFilter, sortBy]);
+
+  // Pagination slicing
+  const totalPages = Math.max(1, Math.ceil(processedTenants.length / pageSize));
+  const paginatedTenants = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return processedTenants.slice(start, start + pageSize);
+  }, [processedTenants, currentPage, pageSize]);
 
   return (
     <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
-      {/* 1. Header with strictly 2-3 word title and 7-8 word description */}
+      {/* ─────────────────────────────────────────────────────────────
+          1. Header with strictly 2-3 word title and 7-8 word description
+         ───────────────────────────────────────────────────────────── */}
       <PageBreadcrumb
         pageTitle="Tenant Workspaces"
         description="Manage registered business workspaces and approval status."
@@ -342,8 +396,8 @@ export default function TenantManagementPage() {
         <div
           className={`p-3.5 rounded-xl border text-xs font-medium flex items-center justify-between animate-in fade-in ${
             feedbackMessage.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-              : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+              : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
           }`}
         >
           <span>{feedbackMessage.text}</span>
@@ -356,28 +410,30 @@ export default function TenantManagementPage() {
         </div>
       )}
 
-      {/* 2. 4-Metric Grid */}
+      {/* ─────────────────────────────────────────────────────────────
+          2. Standard 4-Metric Grid (StatCards)
+         ───────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
         <StatCard
           title="Total Workspaces"
           value={stats.totalWorkspaces}
+          subtitle="Enrolled Tenants"
           icon={Building2}
           variant="amber"
-          badge={{ text: "Total", variant: "neutral" }}
         />
         <StatCard
           title="Approved Tenants"
           value={stats.approvedCount}
+          subtitle="Active On Platform"
           icon={CheckCircle2}
           variant="emerald"
-          badge={{ text: "Active", variant: "success" }}
         />
         <StatCard
           title="Pending Approval"
           value={stats.pendingCount}
+          subtitle="Requires Review"
           icon={Clock}
           variant="amber"
-          badge={{ text: "Needs Review", variant: "warning" }}
         />
         <StatCard
           title="Approval Ratio"
@@ -386,34 +442,78 @@ export default function TenantManagementPage() {
               ? `${Math.round((stats.approvedCount / stats.totalWorkspaces) * 100)}%`
               : "0%"
           }
+          subtitle="Platform Coverage"
           icon={Users}
           variant="primary"
-          badge={{ text: "Coverage", variant: "info" }}
         />
       </div>
 
-      {/* 3. Search and Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-card border border-border shadow-sm">
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+      {/* ─────────────────────────────────────────────────────────────
+          3. Unified Filter & Search Toolbar (Single Row with Hidden Scrollbars)
+         ───────────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap p-2 sm:p-2.5 rounded-xl border border-border bg-card shadow-xs">
+        {/* Search Box */}
+        <div className="relative min-w-[240px] sm:min-w-[320px] md:min-w-[380px] flex-1 max-w-lg shrink-0">
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5 sm:top-3" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by brand name, workspace, or owner email..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-muted/60 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+            placeholder="Search by brand name, workspace slug, or owner email..."
+            className="w-full pl-9 pr-8 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs placeholder:text-muted-foreground/70"
           />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2.5 top-2.5 sm:top-3 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        <div className="flex items-center gap-1.5 self-end sm:self-auto">
+        {/* Plan Filter Dropdown */}
+        <div className="min-w-[120px] shrink-0">
+          <select
+            value={planFilter}
+            onChange={(e) => setPlanFilter(e.target.value)}
+            className="w-full px-2.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
+          >
+            <option value="ALL">All Plans</option>
+            <option value="starter">Starter Plan</option>
+            <option value="growth">Growth Plan</option>
+            <option value="agency">Agency Suite</option>
+          </select>
+        </div>
+
+        {/* Sort By Dropdown */}
+        <div className="min-w-[130px] shrink-0">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="w-full px-2.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs sm:text-sm focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
+          >
+            <option value="newest">Sort: Newest</option>
+            <option value="oldest">Sort: Oldest</option>
+            <option value="name_asc">Sort: Brand (A-Z)</option>
+            <option value="name_desc">Sort: Brand (Z-A)</option>
+            <option value="posts">Sort: Most Posts</option>
+            <option value="members">Sort: Most Seats</option>
+          </select>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-1 shrink-0 px-1 border-l border-border pl-2">
           {(["ALL", "APPROVED", "PENDING"] as const).map((filter) => (
             <button
               key={filter}
+              type="button"
               onClick={() => setStatusFilter(filter)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                 statusFilter === filter
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                  : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/80"
               }`}
             >
               {filter === "ALL" ? "All" : filter === "APPROVED" ? "Approved" : "Pending"}
@@ -422,195 +522,371 @@ export default function TenantManagementPage() {
         </div>
       </div>
 
-      {/* 4. Tenants Roster Cards */}
+      {/* ─────────────────────────────────────────────────────────────
+          4. High-Density Tenant Data Table with Serial Numbers (#SL)
+         ───────────────────────────────────────────────────────────── */}
       {loading ? (
-        <LoadingSkeleton type="cards" count={3} />
-      ) : filteredTenants.length === 0 ? (
+        <LoadingSkeleton type="table" count={5} />
+      ) : processedTenants.length === 0 ? (
         <EmptyState
           icon={Building2}
           title="No matching workspaces"
           description={
-            searchQuery
-              ? `No registered tenants matched "${searchQuery}". Try adjusting your search query.`
+            searchQuery || planFilter !== "ALL" || statusFilter !== "ALL"
+              ? "No registered workspaces matched your active filters. Try clearing your search or filters."
               : "No business workspaces enrolled yet. Click 'Create New Tenant' above to add your first client."
           }
-          actionText={searchQuery ? undefined : "Create New Tenant"}
-          onAction={() => setShowCreateModal(true)}
+          actionText={searchQuery || planFilter !== "ALL" || statusFilter !== "ALL" ? "Reset Filters" : "Create New Tenant"}
+          onAction={() => {
+            if (searchQuery || planFilter !== "ALL" || statusFilter !== "ALL") {
+              setSearchQuery("");
+              setPlanFilter("ALL");
+              setStatusFilter("ALL");
+            } else {
+              setShowCreateModal(true);
+            }
+          }}
           actionIcon={Plus}
         />
       ) : (
         <div className="space-y-3">
-          {filteredTenants.map((t) => {
-            const isUpdating = updatingId === t.id;
-            const isInspecting = inspectingId === t.id;
-            const isExpanded = expandedTenantId === t.id;
+          {/* Table Container */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
+            <div className="overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold text-[11px] uppercase tracking-wider">
+                    <th className="py-2.5 px-3 text-center w-[54px]">#SL</th>
+                    <th className="py-2.5 px-3 w-[28%] sm:w-[26%]">Workspace / Brand</th>
+                    <th className="py-2.5 px-3 w-[24%] sm:w-[22%]">Owner & Contact</th>
+                    <th className="py-2.5 px-3 w-[16%]">Plan & Status</th>
+                    <th className="py-2.5 px-3 text-center w-[12%]">Usage</th>
+                    <th className="py-2.5 px-3 text-right w-[18%] sm:w-[20%]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {paginatedTenants.map((t, index) => {
+                    const serial = (currentPage - 1) * pageSize + index + 1;
+                    const isUpdating = updatingId === t.id;
+                    const isInspecting = inspectingId === t.id;
+                    const isExpanded = expandedTenantId === t.id;
 
-            return (
-              <div
-                key={t.id}
-                className={`rounded-2xl border bg-card p-4 sm:p-5 shadow-sm transition-all hover:border-primary/30 ${
-                  t.isApproved ? "border-border" : "border-amber-500/30 bg-amber-500/[0.02]"
-                }`}
-              >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  {/* Business & Tenant Info */}
-                  <div className="space-y-1.5 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm sm:text-base font-bold text-foreground truncate">
-                        {t.businessName || t.name}
-                      </span>
-                      <StatusBadge status={t.isApproved ? "APPROVED" : "PENDING"} />
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">
-                        {t.plan} Plan
-                      </span>
-                    </div>
+                    return (
+                      <tr
+                        key={t.id}
+                        className={`transition-colors hover:bg-muted/40 ${
+                          !t.isApproved ? "bg-amber-500/[0.02]" : ""
+                        }`}
+                      >
+                        {/* 1. Serial Number (#SL) */}
+                        <td className="py-3 px-3 text-center align-middle">
+                          <span className="w-7 h-7 rounded-lg bg-muted/80 border border-border text-foreground font-mono font-bold text-[11px] inline-flex items-center justify-center shadow-2xs">
+                            #{serial}
+                          </span>
+                        </td>
 
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-                      <span className="flex items-center gap-1">
-                        <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                        <span>{t.ownerEmail}</span>
-                      </span>
-                      {t.phoneNumber && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span>{t.phoneNumber}</span>
-                        </span>
-                      )}
-                      <span className="text-[11px]">
-                        Joined {new Date(t.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  </div>
+                        {/* 2. Workspace & Brand (Name, Slug, Created) */}
+                        <td className="py-3 px-3 align-middle">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-md bg-primary/10 border border-primary/20 text-primary font-bold text-[11px] flex items-center justify-center shrink-0">
+                                {t.businessName ? t.businessName[0].toUpperCase() : "W"}
+                              </div>
+                              <span
+                                className="font-bold text-foreground text-xs sm:text-sm truncate max-w-[150px] sm:max-w-[200px]"
+                                title={t.businessName || t.name}
+                              >
+                                {t.businessName || t.name}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5 font-mono truncate">
+                              <span>slug: {t.name}</span>
+                              <span>•</span>
+                              <span>
+                                Joined{" "}
+                                {new Date(t.createdAt).toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
 
-                  {/* Actions & Metrics */}
-                  <div className="flex items-center gap-2.5 sm:gap-3 self-end lg:self-center shrink-0">
-                    <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground border-r border-border pr-3 sm:pr-4">
-                      <span className="flex items-center gap-1" title="Team Members">
-                        <Users className="w-3.5 h-3.5 text-primary" />
-                        <strong className="text-foreground">{t.totalMembers}</strong>
-                      </span>
-                      <span className="flex items-center gap-1" title="Total Posts">
-                        <Layers className="w-3.5 h-3.5 text-sky-400" />
-                        <strong className="text-foreground">{t.totalPosts}</strong>
-                      </span>
-                    </div>
+                        {/* 3. Owner & Contact */}
+                        <td className="py-3 px-3 align-middle">
+                          <div className="min-w-0">
+                            <div className="font-semibold text-foreground text-xs truncate">
+                              {t.ownerName}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground font-mono truncate flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-muted-foreground shrink-0" />
+                              <span className="truncate">{t.ownerEmail}</span>
+                            </div>
+                            {t.phoneNumber && (
+                              <div className="text-[10px] text-muted-foreground font-mono truncate flex items-center gap-1">
+                                <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
+                                <span>{t.phoneNumber}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
 
-                    {/* 1-Click Workspace Impersonation ("Inspect") */}
-                    <button
-                      onClick={() => handleInspectWorkspace(t.id)}
-                      disabled={isInspecting}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                      title="Jump into this customer's live workspace view"
-                    >
-                      {isInspecting ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <Eye className="w-3.5 h-3.5" />
-                      )}
-                      <span>Inspect</span>
-                    </button>
-
-                    {/* Approve / Suspend Toggle Button */}
-                    <button
-                      onClick={() => handleToggleApproval(t.id, t.isApproved)}
-                      disabled={isUpdating}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50 ${
-                        t.isApproved
-                          ? "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25"
-                          : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25"
-                      }`}
-                    >
-                      {isUpdating ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : t.isApproved ? (
-                        <ShieldAlert className="w-3.5 h-3.5" />
-                      ) : (
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                      )}
-                      <span>{t.isApproved ? "Suspend" : "Approve"}</span>
-                    </button>
-
-                    {/* Delete Tenant Button */}
-                    <button
-                      onClick={() => setDeleteTarget({ id: t.id, name: t.businessName || t.name })}
-                      className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                      title="Delete Tenant Workspace"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-
-                    {/* Expand Members Button */}
-                    <button
-                      onClick={() => setExpandedTenantId(isExpanded ? null : t.id)}
-                      className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                      title={isExpanded ? "Collapse Team" : "View Team Seats"}
-                    >
-                      {isExpanded ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Expanded Member Details */}
-                {isExpanded && (
-                  <div className="pt-3 border-t border-border space-y-2 animate-in fade-in">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
-                      Enrolled Workspace Members ({t.members.length})
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                      {t.members.map((m) => (
-                        <div
-                          key={m.id}
-                          className="p-3 rounded-xl bg-card border border-border text-xs flex flex-col justify-between space-y-2 hover:border-primary/40 transition-all shadow-sm"
-                        >
-                          <div className="flex items-center justify-between gap-1.5">
-                            <span className="font-semibold text-foreground truncate">
-                              {m.name || "Member"}
+                        {/* 4. Plan & Status */}
+                        <td className="py-3 px-3 align-middle">
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted border border-border text-foreground uppercase tracking-wide">
+                              {t.plan} Plan
                             </span>
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
-                              {m.role}
+                            <StatusBadge status={t.isApproved ? "APPROVED" : "PENDING"} />
+                          </div>
+                        </td>
+
+                        {/* 5. Usage (Members & Posts Count) */}
+                        <td className="py-3 px-3 align-middle text-center">
+                          <div className="inline-flex items-center gap-2.5 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1" title="Team Seats Enrolled">
+                              <Users className="w-3.5 h-3.5 text-primary" />
+                              <strong className="text-foreground">{t.totalMembers}</strong>
+                            </span>
+                            <span className="flex items-center gap-1" title="Content Items Generated">
+                              <Layers className="w-3.5 h-3.5 text-sky-400" />
+                              <strong className="text-foreground">{t.totalPosts}</strong>
                             </span>
                           </div>
-                          <span className="text-[11px] text-muted-foreground truncate font-mono">
-                            {m.email}
-                          </span>
-                          {m.allowedPages && m.allowedPages.length > 0 && (
-                            <div className="text-[10px] text-muted-foreground truncate">
-                              Pages: {m.allowedPages.join(", ")}
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleInspectUser(t.id, m.id)}
-                            disabled={inspectingId === m.id}
-                            className="w-full mt-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 font-semibold text-[11px] transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-                            title={`Open ${m.name || m.email}'s dashboard to diagnose and fix issues`}
+                        </td>
+
+                        {/* 6. Actions */}
+                        <td className="py-3 px-3 align-middle text-right">
+                          <div className="flex items-center justify-end gap-1.5 flex-nowrap">
+                            {/* 1-Click Workspace Impersonation ("Inspect") */}
+                            <button
+                              type="button"
+                              onClick={() => handleInspectWorkspace(t.id)}
+                              disabled={isInspecting}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 transition-all active:scale-95 cursor-pointer disabled:opacity-50 shadow-2xs whitespace-nowrap"
+                              title="Jump directly into this customer's live workspace view"
+                            >
+                              {isInspecting ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Eye className="w-3 h-3" />
+                              )}
+                              <span>Inspect</span>
+                            </button>
+
+                            {/* Approve / Suspend Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleApproval(t.id, t.isApproved)}
+                              disabled={isUpdating}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50 shadow-2xs whitespace-nowrap ${
+                                t.isApproved
+                                  ? "bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/25"
+                                  : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"
+                              }`}
+                            >
+                              {isUpdating ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : t.isApproved ? (
+                                <ShieldAlert className="w-3 h-3" />
+                              ) : (
+                                <ShieldCheck className="w-3 h-3" />
+                              )}
+                              <span>{t.isApproved ? "Suspend" : "Approve"}</span>
+                            </button>
+
+                            {/* Expand Team Seats Button */}
+                            <button
+                              type="button"
+                              onClick={() => setExpandedTenantId(isExpanded ? null : t.id)}
+                              className={`p-1.5 rounded-lg border text-xs font-semibold transition-all cursor-pointer ${
+                                isExpanded
+                                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                                  : "bg-card hover:bg-muted text-muted-foreground hover:text-foreground border-border"
+                              }`}
+                              title={isExpanded ? "Collapse Team Seats" : "View Team Seats"}
+                            >
+                              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </button>
+
+                            {/* Delete Tenant Button */}
+                            <button
+                              type="button"
+                              onClick={() => setDeleteTarget({ id: t.id, name: t.businessName || t.name })}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all cursor-pointer"
+                              title="Delete Tenant Workspace"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Expanded Member Details Sub-Panel */}
+            {expandedTenantId && (
+              <div className="p-3 sm:p-4 bg-muted/20 border-t border-border space-y-2 animate-in fade-in">
+                {(() => {
+                  const currentTenant = tenants.find((t) => t.id === expandedTenantId);
+                  if (!currentTenant) return null;
+
+                  return (
+                    <div>
+                      <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                        <span className="text-[11px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                          <Users className="w-3.5 h-3.5 text-primary" />
+                          <span>Enrolled Team Members for &ldquo;{currentTenant.businessName || currentTenant.name}&rdquo; ({currentTenant.members.length})</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedTenantId(null)}
+                          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                          <span>Close</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 pt-2.5">
+                        {currentTenant.members.map((m) => (
+                          <div
+                            key={m.id}
+                            className="p-3 rounded-xl bg-card border border-border text-xs flex flex-col justify-between space-y-2 hover:border-primary/40 transition-all shadow-xs"
                           >
-                            {inspectingId === m.id ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <Eye className="w-3.5 h-3.5" />
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className="font-semibold text-foreground truncate">
+                                {m.name || "Member"}
+                              </span>
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
+                                {m.role}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-muted-foreground truncate font-mono">
+                              {m.email}
+                            </span>
+                            {m.allowedPages && m.allowedPages.length > 0 && (
+                              <div className="text-[10px] text-muted-foreground truncate">
+                                Pages: {m.allowedPages.join(", ")}
+                              </div>
                             )}
-                            <span>Open as User</span>
-                          </button>
-                        </div>
-                      ))}
+                            <button
+                              type="button"
+                              onClick={() => handleInspectUser(currentTenant.id, m.id)}
+                              disabled={inspectingId === m.id}
+                              className="w-full mt-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 font-semibold text-[11px] transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                              title={`Open ${m.name || m.email}'s dashboard to diagnose and fix issues`}
+                            >
+                              {inspectingId === m.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Eye className="w-3.5 h-3.5" />
+                              )}
+                              <span>Open as User</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
-            );
-          })}
+            )}
+
+            {/* ─────────────────────────────────────────────────────────────
+                5. Pagination Footer (10 rows per page standard)
+               ───────────────────────────────────────────────────────────── */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 px-3.5 py-2.5 border-t border-border bg-muted/20 text-xs text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <span className="text-[11px]">
+                  Showing <strong>{(currentPage - 1) * pageSize + 1}</strong>–
+                  <strong>{Math.min(currentPage * pageSize, processedTenants.length)}</strong> of{" "}
+                  <strong>{processedTenants.length}</strong> workspaces
+                </span>
+
+                {/* Page Size Selector */}
+                <div className="flex items-center gap-1.5 border-l border-border pl-3">
+                  <span className="text-[10px] text-muted-foreground">Per page:</span>
+                  {[10, 25, 50].map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setPageSize(size)}
+                      className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold transition-all cursor-pointer ${
+                        pageSize === size
+                          ? "bg-primary text-primary-foreground font-bold shadow-2xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Page Navigation Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Previous</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                      .map((p, idx, arr) => {
+                        const prev = arr[idx - 1];
+                        return (
+                          <div key={p} className="flex items-center">
+                            {prev && p - prev > 1 && (
+                              <span className="px-1 text-muted-foreground">...</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setCurrentPage(p)}
+                              className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                                currentPage === p
+                                  ? "bg-primary text-primary-foreground shadow-xs"
+                                  : "bg-card hover:bg-muted border border-border text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {p}
+                            </button>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage >= totalPages}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
+      {/* ─────────────────────────────────────────────────────────────
+          6. Modals: Create Tenant & Delete Workspace
+         ───────────────────────────────────────────────────────────── */}
       {/* Create Tenant Workspace Modal */}
       <CustomModal
         isOpen={showCreateModal}

@@ -37,8 +37,9 @@ export const authOptions: AuthOptions = {
   },
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: (process.env.GOOGLE_CLIENT_ID || "").replace(/['"]/g, "").trim(),
+      clientSecret: (process.env.GOOGLE_CLIENT_SECRET || "").replace(/['"]/g, "").trim(),
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -76,32 +77,15 @@ export const authOptions: AuthOptions = {
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (!user.email) return false;
-      const email = user.email.toLowerCase().trim();
-      const isDeveloper = DEVELOPER_EMAILS.includes(email);
-      const isSuperAdmin = isDeveloper || SUPER_ADMIN_EMAILS.includes(email);
+      try {
+        if (!user.email) return false;
+        const email = user.email.toLowerCase().trim();
+        const isDeveloper = DEVELOPER_EMAILS.includes(email);
+        const isSuperAdmin = isDeveloper || SUPER_ADMIN_EMAILS.includes(email);
 
-      // Upsert User record in database
-      let dbUser = await prisma.user.findUnique({
-        where: { email },
-        include: {
-          memberships: {
-            include: {
-              organization: {
-                include: { workspaces: true },
-              },
-            },
-          },
-        },
-      });
-
-      if (!dbUser) {
-        dbUser = await prisma.user.create({
-          data: {
-            email,
-            name: user.name ?? email.split("@")[0],
-            image: user.image,
-          },
+        // Upsert User record in database
+        let dbUser = await prisma.user.findUnique({
+          where: { email },
           include: {
             memberships: {
               include: {
@@ -112,43 +96,65 @@ export const authOptions: AuthOptions = {
             },
           },
         });
-      }
 
-      // Auto-provision initial Organization and Workspace if none exist
-      if (!dbUser.memberships || dbUser.memberships.length === 0) {
-        const orgSlug = `org-${dbUser.id.slice(-6)}-${Date.now().toString(36)}`;
-        const initialRole: RoleType = isDeveloper ? "DEVELOPER" : isSuperAdmin ? "SUPER_ADMIN" : "TENANT_ADMIN";
-
-        await prisma.organization.create({
-          data: {
-            name: `${dbUser.name || "Default"}'s Business`,
-            slug: orgSlug,
-            workspaces: {
-              create: {
-                name: "Primary Brand",
-                isApproved: true,
-                brandKit: {
-                  create: {
-                    businessName: dbUser.name || "ABCD Social Hub",
-                    phoneNumber: "+91 8944899747",
-                    addressBanner: "WhatsApp: +91 8167685731 • Email: sb.abcd321@gmail.com",
-                    primaryColor: "#00F0FF",
+        if (!dbUser) {
+          dbUser = await prisma.user.create({
+            data: {
+              email,
+              name: user.name ?? email.split("@")[0],
+              image: user.image,
+            },
+            include: {
+              memberships: {
+                include: {
+                  organization: {
+                    include: { workspaces: true },
                   },
                 },
-              } as any,
+              },
             },
-            memberships: {
-              create: {
-                userId: dbUser.id,
-                role: initialRole as any,
-                allowedPages: [] as string[],
-              } as any,
-            },
-          },
-        });
-      }
+          });
+        }
 
-      return true;
+        // Auto-provision initial Organization and Workspace if none exist
+        if (!dbUser.memberships || dbUser.memberships.length === 0) {
+          const orgSlug = `org-${dbUser.id.slice(-6)}-${Date.now().toString(36)}`;
+          const initialRole: RoleType = isDeveloper ? "DEVELOPER" : isSuperAdmin ? "SUPER_ADMIN" : "TENANT_ADMIN";
+
+          await prisma.organization.create({
+            data: {
+              name: `${dbUser.name || "Default"}'s Business`,
+              slug: orgSlug,
+              workspaces: {
+                create: {
+                  name: "Primary Brand",
+                  isApproved: true,
+                  brandKit: {
+                    create: {
+                      businessName: dbUser.name || "ABCD Social Hub",
+                      phoneNumber: "+91 8944899747",
+                      addressBanner: "WhatsApp: +91 8167685731 • Email: sb.abcd321@gmail.com",
+                      primaryColor: "#00F0FF",
+                    },
+                  },
+                } as any,
+              },
+              memberships: {
+                create: {
+                  userId: dbUser.id,
+                  role: initialRole as any,
+                  allowedPages: [] as string[],
+                } as any,
+              },
+            },
+          });
+        }
+
+        return true;
+      } catch (err) {
+        console.error("[NextAuth signIn error]:", err);
+        return true; // Don't block sign in if profile auto-provisioning had a non-fatal issue
+      }
     },
 
     async jwt({ token, user, trigger, session }) {

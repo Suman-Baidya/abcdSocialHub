@@ -19,6 +19,10 @@ function LoginForm() {
   const [error, setError] = useState(
     urlError === "OAuthCallback" || urlError === "OAuthSignin"
       ? "Google Sign-In returned an authorization error. Please check that http://localhost:3000/api/auth/callback/google is authorized in your Google Cloud Console, or use the 1-Click Developer Sign In below."
+      : urlError === "OAuthAccountNotLinked"
+      ? "An account with this email already exists with password authentication. Account linking is now enabled—please try signing in with Google again or use your password below."
+      : urlError === "Configuration"
+      ? "Google OAuth configuration error. Please ensure your Google Cloud credentials and authorized redirect URIs are configured."
       : urlError
       ? `Authentication error: ${urlError}`
       : ""

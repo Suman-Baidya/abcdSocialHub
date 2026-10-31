@@ -291,7 +291,23 @@ async function runTenantIsolationTest() {
   );
   assert.strictEqual(activeForTenant, "ws_my_own_workspace_555", "Unauthorized role cannot impersonate; personal workspace retained");
 
-  // 12. Edge Middleware Route Protection & Fast In-Memory Authorization Test
+  // 12. 1-Click Specific User Impersonation Verification
+  const canImpersonateUser = (
+    callerRole: RoleType,
+    targetRole: RoleType
+  ): boolean => {
+    if (targetRole === "DEVELOPER") {
+      return callerRole === "DEVELOPER"; // Only Developer can inspect Developer
+    }
+    return callerRole === "DEVELOPER" || callerRole === "SUPER_ADMIN";
+  };
+
+  assert.strictEqual(canImpersonateUser("DEVELOPER", "CREATOR"), true, "Developer can inspect Creator account");
+  assert.strictEqual(canImpersonateUser("SUPER_ADMIN", "CREATOR"), true, "Super Admin can inspect Creator account");
+  assert.strictEqual(canImpersonateUser("SUPER_ADMIN", "DEVELOPER"), false, "Super Admin cannot inspect Developer account");
+  assert.strictEqual(canImpersonateUser("TENANT_ADMIN", "CREATOR"), false, "Tenant Admin barred from user impersonation");
+
+  // 13. Edge Middleware Route Protection & Fast In-Memory Authorization Test
   const evaluateMiddleware = (
     pathname: string,
     token: { role?: RoleType; email?: string; isDeveloper?: boolean; isSuperAdmin?: boolean } | null

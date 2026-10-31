@@ -148,6 +148,31 @@ export default function TenantManagementPage() {
     }
   };
 
+  // 1-Click User Impersonation ("Open as this User")
+  const handleInspectUser = async (tenantId: string, memberId: string) => {
+    try {
+      setInspectingId(memberId);
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: tenantId, userId: memberId }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to start user inspection");
+      }
+
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      setFeedbackMessage({
+        text: err.message || "Failed to inspect user account",
+        type: "error",
+      });
+      setInspectingId(null);
+    }
+  };
+
   const handleToggleApproval = async (tenantId: string, currentStatus: boolean) => {
     try {
       setUpdatingId(tenantId);
@@ -543,24 +568,38 @@ export default function TenantManagementPage() {
                       {t.members.map((m) => (
                         <div
                           key={m.id}
-                          className="p-2.5 rounded-xl bg-muted/40 border border-border text-xs flex flex-col justify-between space-y-1"
+                          className="p-3 rounded-xl bg-card border border-border text-xs flex flex-col justify-between space-y-2 hover:border-primary/40 transition-all shadow-sm"
                         >
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between gap-1.5">
                             <span className="font-semibold text-foreground truncate">
                               {m.name || "Member"}
                             </span>
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
                               {m.role}
                             </span>
                           </div>
-                          <span className="text-[11px] text-muted-foreground truncate">
+                          <span className="text-[11px] text-muted-foreground truncate font-mono">
                             {m.email}
                           </span>
                           {m.allowedPages && m.allowedPages.length > 0 && (
-                            <div className="text-[10px] text-muted-foreground">
+                            <div className="text-[10px] text-muted-foreground truncate">
                               Pages: {m.allowedPages.join(", ")}
                             </div>
                           )}
+                          <button
+                            type="button"
+                            onClick={() => handleInspectUser(t.id, m.id)}
+                            disabled={inspectingId === m.id}
+                            className="w-full mt-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 font-semibold text-[11px] transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+                            title={`Open ${m.name || m.email}'s dashboard to diagnose and fix issues`}
+                          >
+                            {inspectingId === m.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5" />
+                            )}
+                            <span>Open as User</span>
+                          </button>
                         </div>
                       ))}
                     </div>

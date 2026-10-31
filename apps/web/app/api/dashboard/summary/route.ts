@@ -16,10 +16,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const workspaceIdParam = searchParams.get("workspaceId");
 
-    // Check for impersonated customer workspace cookie (Developer & Super Admin privilege)
+    // Check for impersonated customer workspace or user cookie (Developer & Super Admin privilege)
     const cookieHeader = req.headers.get("cookie") || "";
     const impMatch = cookieHeader.match(/abcd_impersonated_workspace_id=([^;]+)/);
+    const impUserMatch = cookieHeader.match(/abcd_impersonated_user_id=([^;]+)/);
     const impersonatedWorkspaceId = impMatch ? decodeURIComponent(impMatch[1]) : null;
+    const impersonatedUserId = impUserMatch ? decodeURIComponent(impUserMatch[1]) : null;
 
     const sessionUser = session.user as any;
     const isDeveloper =
@@ -35,24 +37,59 @@ export async function GET(req: Request) {
     let activeWorkspace: any = null;
     let organization: any = null;
     let isImpersonating = false;
+    let impersonatedUser: any = null;
 
-    if (impersonatedWorkspaceId && isSuperAdmin) {
-      const impWs = await prisma.workspace.findUnique({
-        where: { id: impersonatedWorkspaceId },
-        include: {
-          brandKit: true,
-          organization: {
-            include: {
-              subscription: true,
+    if (isSuperAdmin && (impersonatedWorkspaceId || impersonatedUserId)) {
+      if (impersonatedUserId) {
+        const u = await prisma.user.findUnique({
+          where: { id: impersonatedUserId },
+          include: {
+            memberships: {
+              include: {
+                organization: {
+                  include: {
+                    workspaces: { include: { brandKit: true } },
+                    subscription: true,
+                  },
+                },
+              },
             },
           },
-        },
-      });
+        });
+        if (u) {
+          const m = u.memberships[0];
+          impersonatedUser = {
+            id: u.id,
+            name: u.name || u.email,
+            email: u.email,
+            role: m?.role || "TENANT_ADMIN",
+          };
+          if (m?.organization?.workspaces?.[0]) {
+            activeWorkspace = m.organization.workspaces[0];
+            organization = m.organization;
+            isImpersonating = true;
+          }
+        }
+      }
 
-      if (impWs) {
-        activeWorkspace = impWs;
-        organization = impWs.organization;
-        isImpersonating = true;
+      if (!activeWorkspace && impersonatedWorkspaceId) {
+        const impWs = await prisma.workspace.findUnique({
+          where: { id: impersonatedWorkspaceId },
+          include: {
+            brandKit: true,
+            organization: {
+              include: {
+                subscription: true,
+              },
+            },
+          },
+        });
+
+        if (impWs) {
+          activeWorkspace = impWs;
+          organization = impWs.organization;
+          isImpersonating = true;
+        }
       }
     }
 
@@ -206,6 +243,7 @@ export async function GET(req: Request) {
     return NextResponse.json({
       success: true,
       isImpersonating,
+      impersonatedUser,
       workspace: {
         id: activeWorkspace.id,
         name: activeWorkspace.name,

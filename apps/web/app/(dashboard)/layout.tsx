@@ -101,15 +101,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     window.location.reload();
   };
 
+  // Check if Developer/Super Admin is currently impersonating a customer user
+  const [impersonatedUserRole, setImpersonatedUserRole] = useState<RoleType | null>(null);
+
+  useEffect(() => {
+    try {
+      const match = document.cookie.match(/abcd_impersonated_user_role=([^;]+)/);
+      if (match) {
+        setImpersonatedUserRole(decodeURIComponent(match[1]) as RoleType);
+      } else {
+        setImpersonatedUserRole(null);
+      }
+    } catch {}
+  }, []);
+
   // Role and Dashboard Suite extraction
   const user = session?.user as any;
   const rawRole: string = user?.role || "TENANT_ADMIN";
   const isDeveloper: boolean = user?.isDeveloper || rawRole === "DEVELOPER" || user?.email === "suman.baidya.pro@gmail.com";
   const isSuperAdmin: boolean = user?.isSuperAdmin || isDeveloper || rawRole === "SUPER_ADMIN" || user?.email === "suman.baidya.pro@gmail.com";
 
-  // If user is super admin/developer, apply simulation override if active
-  const role: RoleType = (isSuperAdmin && simulatedRole) ? simulatedRole : (rawRole as RoleType);
-  const activeIsDeveloper: boolean = role === "DEVELOPER" || (!simulatedRole && isDeveloper);
+  // If user is super admin/developer, apply active user impersonation or persona simulation override
+  const role: RoleType = isSuperAdmin
+    ? (impersonatedUserRole || (simulatedRole ? simulatedRole : (rawRole as RoleType)))
+    : (rawRole as RoleType);
+  const activeIsDeveloper: boolean = !impersonatedUserRole && (role === "DEVELOPER" || (!simulatedRole && isDeveloper));
   const dashboardType: DashboardType = resolveDashboardType(role);
   const allowedPages: string[] = user?.allowedPages || [];
 

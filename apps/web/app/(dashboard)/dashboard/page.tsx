@@ -23,6 +23,9 @@ import { ChannelHealthWidget } from "@/components/dashboard/ChannelHealthWidget"
 import { RecentPostsCarousel } from "@/components/dashboard/RecentPostsCarousel";
 import { CreditQuotaRing } from "@/components/dashboard/CreditQuotaRing";
 import { PerformanceChart } from "@/components/dashboard/PerformanceChart";
+import { CreatorStudioView } from "@/components/dashboard/CreatorStudioView";
+import { GuestPortalView } from "@/components/dashboard/GuestPortalView";
+import { resolveDashboardType, DashboardType } from "@/lib/roles";
 
 interface DashboardData {
   workspace: {
@@ -31,6 +34,7 @@ interface DashboardData {
     organizationName: string;
     businessName: string;
     phoneNumber?: string;
+    isApproved?: boolean;
   };
   stats: {
     publishedCount: number;
@@ -41,7 +45,9 @@ interface DashboardData {
   autopilot: {
     nextScheduled?: { id: string; title: string; scheduledFor: string } | null;
     pendingReviewItem?: { id: string; title: string; createdAt: string } | null;
+    upcomingScheduled?: any[];
   };
+  brand?: any;
   credits: {
     allocated: number;
     used: number;
@@ -222,6 +228,42 @@ export default function DashboardOverviewPage() {
     );
   }
 
+  const isDeveloper = user?.isDeveloper || role === "DEVELOPER";
+  const isSuperAdmin = isDeveloper || user?.isSuperAdmin || role === "SUPER_ADMIN";
+  const dashboardType: DashboardType = user?.dashboardType || resolveDashboardType(role);
+
+  // Check Workspace Approval Status (Admins/Staff/Creators/Guests cannot operate unapproved tenants)
+  if (data.workspace?.isApproved === false && !isSuperAdmin) {
+    return (
+      <div className="min-h-[500px] flex items-center justify-center p-6 animate-in fade-in">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-card border border-amber-500/30 text-center space-y-4 backdrop-blur-xl shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto text-amber-500">
+            <Clock className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-bold text-foreground">Workspace Under Review</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Your business workspace <strong>{data.workspace.businessName || data.workspace.name}</strong> is registered and queued for Super Admin verification. Automated publishing and AI generation will be fully active once approved.
+          </p>
+          <div className="pt-2">
+            <span className="text-[11px] font-semibold px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/25">
+              Status: Verification In Progress
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 1. Creator Studio View
+  if (dashboardType === "CREATOR") {
+    return <CreatorStudioView data={data} />;
+  }
+
+  // 2. Guest / Client Portal View
+  if (dashboardType === "GUEST") {
+    return <GuestPortalView data={data} />;
+  }
+
   const { workspace, stats, autopilot, credits, channels, recentPosts } = data;
 
   return (
@@ -232,14 +274,16 @@ export default function DashboardOverviewPage() {
         description="Real-time marketing intelligence and automated campaign operations."
         hideBreadcrumb={true}
       >
-        {role === "GUEST" ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/25 text-xs font-semibold">
-            <Lock className="w-3.5 h-3.5" />
-            <span>Client Observer • Read Only</span>
-          </span>
-        ) : (
-          <div className="flex items-center gap-2">
-            {(user?.isSuperAdmin || user?.isDeveloper || role === "SUPER_ADMIN" || role === "DEVELOPER") && (
+        <div className="flex items-center gap-2">
+          {isSuperAdmin && (
+            <>
+              <Link
+                href="/admin/tenants"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition-all active:scale-95"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+                <span>Tenants</span>
+              </Link>
               <Link
                 href="/admin/marketing"
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition-all active:scale-95"
@@ -247,16 +291,16 @@ export default function DashboardOverviewPage() {
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Founder Cockpit</span>
               </Link>
-            )}
-            <Link
-              href="/content"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>New AI Post</span>
-            </Link>
-          </div>
-        )}
+            </>
+          )}
+          <Link
+            href="/content"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>New AI Post</span>
+          </Link>
+        </div>
       </PageBreadcrumb>
 
       {/* 1. TailAdmin Standard 4-Metric Grid (2x2 on Mobile, 4x1 on Desktop) */}

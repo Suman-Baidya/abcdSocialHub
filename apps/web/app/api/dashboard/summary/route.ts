@@ -121,20 +121,31 @@ export async function GET(req: Request) {
       X_TWITTER: socialAccounts.find((a) => a.platform === "X_TWITTER") || null,
     };
 
-    // Find the next scheduled item
-    const nextScheduled = await prisma.contentItem.findFirst({
+    // Find the next scheduled item and upcoming queue
+    const upcomingScheduled = await prisma.contentItem.findMany({
       where: {
         workspaceId,
         status: PostStatus.SCHEDULED,
-        scheduledFor: { gte: new Date() },
       },
       orderBy: { scheduledFor: "asc" },
-      select: {
-        id: true,
-        title: true,
-        scheduledFor: true,
+      take: 4,
+      include: {
+        variants: {
+          select: {
+            id: true,
+            platform: true,
+            caption: true,
+            mediaUrl: true,
+          },
+        },
       },
     });
+
+    const nextScheduled = upcomingScheduled[0] ? {
+      id: upcomingScheduled[0].id,
+      title: upcomingScheduled[0].title,
+      scheduledFor: upcomingScheduled[0].scheduledFor,
+    } : null;
 
     // Find item requiring human review
     const pendingReviewItem = await prisma.contentItem.findFirst({
@@ -158,6 +169,7 @@ export async function GET(req: Request) {
         organizationName: organization.name,
         businessName: brandKit?.businessName || activeWorkspace.name,
         phoneNumber: brandKit?.phoneNumber || "",
+        isApproved: activeWorkspace.isApproved ?? true,
       },
       stats: {
         publishedCount,
@@ -168,7 +180,18 @@ export async function GET(req: Request) {
       autopilot: {
         nextScheduled,
         pendingReviewItem,
+        upcomingScheduled,
       },
+      brand: brandKit
+        ? {
+            businessName: brandKit.businessName,
+            tagline: brandKit.tagline,
+            primaryColor: brandKit.primaryColor,
+            secondaryColor: brandKit.secondaryColor,
+            defaultLanguage: brandKit.defaultLanguage,
+            phoneNumber: brandKit.phoneNumber,
+          }
+        : null,
       credits: {
         allocated: allocatedCredits,
         used: usedThisMonth,

@@ -29,3 +29,4 @@ export function resolveDashboardType(role?: string): DashboardType {
       return "TENANT";
   }
 }
+

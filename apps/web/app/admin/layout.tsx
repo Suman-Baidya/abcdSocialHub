@@ -9,6 +9,7 @@ import {
   Search,
   Sparkles,
   TrendingUp,
+  Building2,
 } from "lucide-react";
 
 export default async function AdminLayout({
@@ -59,6 +60,18 @@ export default async function AdminLayout({
               </div>
               <span className="font-semibold text-xs sm:text-sm text-white tracking-tight">
                 Founder <span className="text-amber-400">Cockpit</span>
+              </span>
+            </Link>
+
+            <Link
+              href="/admin/tenants"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-white/[0.06] transition-all text-zinc-300 hover:text-white"
+            >
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-600 to-amber-500 text-zinc-950 flex items-center justify-center font-black text-xs shadow-xs">
+                <Building2 className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-semibold text-xs sm:text-sm tracking-tight">
+                Tenant <span className="text-amber-400">Workspaces</span>
               </span>
             </Link>
 

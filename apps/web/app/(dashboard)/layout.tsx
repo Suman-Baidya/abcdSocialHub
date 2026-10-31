@@ -24,6 +24,7 @@ import {
   PanelLeft,
   Sun,
   Moon,
+  Building2,
 } from "lucide-react";
 import { WorkspaceSwitcher } from "@/components/dashboard/WorkspaceSwitcher";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
@@ -113,6 +114,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {
         groupTitle: "Workspace Management",
         items: [
+          { name: "Tenant Workspaces", href: "/admin/tenants", icon: Building2, badge: "Tenants" },
           { name: "Team & Admins", href: "/team", icon: Users },
           { name: "Social Channels", href: "/social", icon: Share2 },
           { name: "Platform Billing", href: "/billing", icon: CreditCard },

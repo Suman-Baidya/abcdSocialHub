@@ -22,13 +22,21 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
+import type { DashboardType } from "@/lib/auth";
 
 interface MobileBottomNavProps {
   userRole?: string;
   isSuperAdmin?: boolean;
+  dashboardType?: DashboardType;
+  allowedPages?: string[];
 }
 
-export function MobileBottomNav({ userRole = "OWNER", isSuperAdmin = false }: MobileBottomNavProps) {
+export function MobileBottomNav({
+  userRole = "TENANT_ADMIN",
+  isSuperAdmin = false,
+  dashboardType = "TENANT",
+  allowedPages = [],
+}: MobileBottomNavProps) {
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
@@ -38,51 +46,62 @@ export function MobileBottomNav({ userRole = "OWNER", isSuperAdmin = false }: Mo
     setMoreMenuOpen(false);
   }, [pathname]);
 
-  const primaryTabs = [
-    {
-      name: "Report",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      name: "Queue",
-      href: "/calendar",
-      icon: Calendar,
-    },
-    {
-      name: "Create",
-      href: "/content",
-      icon: Sparkles,
-      highlight: true,
-    },
-    {
-      name: "Leads",
-      href: "/leads",
-      icon: MessageSquare,
-      badge: "Live",
-    },
-    {
-      name: "More",
-      action: () => setMoreMenuOpen(true),
-      icon: MoreHorizontal,
-      isMore: true,
-    },
-  ];
+  // Adaptive Primary Tabs tailored to the 4 Dashboard Suites
+  let primaryTabs: any[] = [];
 
+  if (dashboardType === "CREATOR") {
+    primaryTabs = [
+      { name: "Studio", href: "/content", icon: Sparkles, highlight: true },
+      { name: "Queue", href: "/calendar", icon: Calendar },
+      { name: "Brand", href: "/brand", icon: Palette },
+      { name: "Report", href: "/dashboard", icon: LayoutDashboard },
+      { name: "More", action: () => setMoreMenuOpen(true), icon: MoreHorizontal, isMore: true },
+    ];
+  } else if (dashboardType === "GUEST") {
+    primaryTabs = [
+      { name: "Briefing", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Feed", href: "/calendar", icon: Calendar },
+      { name: "Brand", href: "/brand", icon: Palette },
+      { name: "More", action: () => setMoreMenuOpen(true), icon: MoreHorizontal, isMore: true },
+    ];
+  } else if (dashboardType === "SUPER_ADMIN") {
+    primaryTabs = [
+      { name: "Platform", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Cockpit", href: "/admin/marketing", icon: Rocket, highlight: true, badge: "Admin" },
+      { name: "Team", href: "/team", icon: Users },
+      { name: "Channels", href: "/social", icon: Share2 },
+      { name: "More", action: () => setMoreMenuOpen(true), icon: MoreHorizontal, isMore: true },
+    ];
+  } else {
+    // TENANT Business Suite (Tenant Admin & Admin Staff)
+    primaryTabs = [
+      { name: "Report", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Queue", href: "/calendar", icon: Calendar },
+      { name: "Create", href: "/content", icon: Sparkles, highlight: true },
+      { name: "Leads", href: "/leads", icon: MessageSquare, badge: "Live" },
+      { name: "More", action: () => setMoreMenuOpen(true), icon: MoreHorizontal, isMore: true },
+    ];
+  }
+
+  // Secondary more menu tailored to the active role
   const secondaryMenu = [
-    {
-      name: "Social Channels",
-      href: "/social",
-      icon: Share2,
-      desc: "Meta, Instagram & Facebook connections",
-    },
-    {
-      name: "Brand Identity Kit",
-      href: "/brand",
-      icon: Palette,
-      desc: "Colors, voice & Bengali typography",
-    },
-    ...(userRole !== "STAFF"
+    ...(dashboardType !== "GUEST"
+      ? [
+          {
+            name: "Social Channels",
+            href: "/social",
+            icon: Share2,
+            desc: "Meta, Instagram & Facebook connections",
+          },
+          {
+            name: "Brand Identity Kit",
+            href: "/brand",
+            icon: Palette,
+            desc: "Colors, voice & regional typography",
+          },
+        ]
+      : []),
+    ...(userRole === "TENANT_ADMIN" || userRole === "OWNER" || isSuperAdmin
       ? [
           {
             name: "Billing & Plans",
@@ -92,12 +111,16 @@ export function MobileBottomNav({ userRole = "OWNER", isSuperAdmin = false }: Mo
           },
         ]
       : []),
-    {
-      name: "Team & Roles",
-      href: "/team",
-      icon: Users,
-      desc: "Workspace members & access roles",
-    },
+    ...(dashboardType !== "CREATOR" && dashboardType !== "GUEST"
+      ? [
+          {
+            name: "Team & Roles",
+            href: "/team",
+            icon: Users,
+            desc: "Workspace members & access roles",
+          },
+        ]
+      : []),
     ...(isSuperAdmin
       ? [
           {

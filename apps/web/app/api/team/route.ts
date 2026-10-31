@@ -9,9 +9,10 @@ export interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: "OWNER" | "CREATOR" | "STAFF" | "GUEST";
+  role: "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
   status: "ACTIVE" | "INVITED";
   joinedAt: string;
+  allowedPages?: string[];
   avatarUrl?: string;
   lastActive?: string;
 }
@@ -25,7 +26,7 @@ function getInitialMembers(): TeamMember[] {
       id: "mem_01",
       name: "Suman Baidya",
       email: "suman.baidya.pro@gmail.com",
-      role: "OWNER",
+      role: "TENANT_ADMIN",
       status: "ACTIVE",
       joinedAt: "Founding Member",
       lastActive: "Active now",
@@ -43,7 +44,8 @@ function getInitialMembers(): TeamMember[] {
       id: "mem_03",
       name: "Amitav Ghosh",
       email: "amitav.frontdesk@salonderoyal.in",
-      role: "STAFF",
+      role: "ADMIN_STAFF",
+      allowedPages: ["leads", "calendar"],
       status: "INVITED",
       joinedAt: "Pending acceptance",
       lastActive: "Never",
@@ -71,12 +73,14 @@ function getTenantMembers(tenantKey: string): TeamMember[] {
 const inviteSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(60),
   email: z.string().trim().email("Invalid email address"),
-  role: z.enum(["OWNER", "CREATOR", "STAFF", "GUEST"]).default("CREATOR"),
+  role: z.enum(["TENANT_ADMIN", "OWNER", "ADMIN_STAFF", "STAFF", "CREATOR", "GUEST"]).default("CREATOR"),
+  allowedPages: z.array(z.string()).default([]),
 });
 
 const patchRoleSchema = z.object({
   id: z.string().min(1, "Member ID is required"),
-  role: z.enum(["OWNER", "CREATOR", "STAFF", "GUEST"]),
+  role: z.enum(["TENANT_ADMIN", "OWNER", "ADMIN_STAFF", "STAFF", "CREATOR", "GUEST"]),
+  allowedPages: z.array(z.string()).optional(),
 });
 
 const deleteMemberSchema = z.object({
@@ -178,7 +182,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, role } = parseResult.data;
+    const { name, email, role, allowedPages } = parseResult.data;
 
     // Check if email already exists in workspace
     const existing = members.find(
@@ -204,6 +208,7 @@ export async function POST(req: Request) {
       name,
       email,
       role,
+      allowedPages: (role === "ADMIN_STAFF" || role === "STAFF") ? allowedPages : [],
       status: "INVITED",
       joinedAt: "Just invited",
       lastActive: "Never",
@@ -254,7 +259,7 @@ export async function PATCH(req: Request) {
     }
 
     // Cannot demote Founding Owner
-    if (members[memberIndex].id === "mem_01" && role !== "OWNER") {
+    if (members[memberIndex].id === "mem_01" && role !== "OWNER" && role !== "TENANT_ADMIN") {
       return NextResponse.json(
         { success: false, error: "Primary Workspace Owner role cannot be reassigned." },
         { status: 403 }
@@ -262,6 +267,9 @@ export async function PATCH(req: Request) {
     }
 
     members[memberIndex].role = role;
+    if (parseResult.data.allowedPages) {
+      members[memberIndex].allowedPages = parseResult.data.allowedPages;
+    }
 
     return NextResponse.json({
       success: true,

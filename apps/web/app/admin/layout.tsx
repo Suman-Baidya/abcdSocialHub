@@ -19,8 +19,13 @@ export default async function AdminLayout({
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
 
-  // Strict Super-Admin guard per AGENTS.md Rule 5
+  const isDeveloper =
+    user?.isDeveloper ||
+    user?.role === "DEVELOPER" ||
+    user?.email === "suman.baidya.pro@gmail.com";
+
   const isSuperAdmin =
+    isDeveloper ||
     user?.isSuperAdmin ||
     user?.role === "SUPER_ADMIN" ||
     user?.email === "suman.baidya.pro@gmail.com";
@@ -39,25 +44,44 @@ export default async function AdminLayout({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-zinc-300 text-xs font-semibold transition-all active:scale-95"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Client Dashboard</span>
+            <span>SaaS Hub</span>
           </Link>
 
           <div className="h-4 w-px bg-zinc-800" />
 
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-zinc-950 flex items-center justify-center font-black text-xs shadow-md shadow-amber-500/20">
-              <Rocket className="w-4 h-4" />
-            </div>
-            <span className="font-semibold text-sm sm:text-base text-white tracking-tight">
-              Founder <span className="text-amber-400">Marketing Cockpit</span>
-            </span>
-          </div>
+          <nav className="flex items-center gap-1.5">
+            <Link
+              href="/admin/marketing"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-white/[0.06] transition-all"
+            >
+              <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-400 text-zinc-950 flex items-center justify-center font-black text-xs shadow-xs">
+                <Rocket className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-semibold text-xs sm:text-sm text-white tracking-tight">
+                Founder <span className="text-amber-400">Cockpit</span>
+              </span>
+            </Link>
+
+            {isDeveloper && (
+              <Link
+                href="/admin/diagnostics"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold hover:bg-white/[0.06] transition-all text-zinc-300 hover:text-white"
+              >
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-rose-500 to-pink-500 text-white flex items-center justify-center font-black text-xs shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <span className="font-semibold text-xs sm:text-sm tracking-tight">
+                  Developer <span className="text-rose-400">Diagnostics</span>
+                </span>
+              </Link>
+            )}
+          </nav>
         </div>
 
         <div className="flex items-center gap-2">
           <span className="text-[10px] sm:text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>FOUNDER ACCESS ONLY</span>
+            <span>{isDeveloper ? "DEVELOPER ROOT ACCESS" : "FOUNDER ACCESS ONLY"}</span>
           </span>
         </div>
       </header>

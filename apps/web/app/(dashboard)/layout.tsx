@@ -29,6 +29,8 @@ import { WorkspaceSwitcher } from "@/components/dashboard/WorkspaceSwitcher";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
+import { resolveDashboardType, type DashboardType } from "@/lib/auth";
+
 interface NavItem {
   name: string;
   href: string;
@@ -70,10 +72,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     });
   };
 
-  // Role extraction
+  // Role and Dashboard Suite extraction
   const user = session?.user as any;
-  const role = user?.role || "OWNER";
-  const isSuperAdmin = user?.isSuperAdmin || role === "SUPER_ADMIN";
+  const role: string = user?.role || "TENANT_ADMIN";
+  const isDeveloper: boolean = user?.isDeveloper || role === "DEVELOPER";
+  const isSuperAdmin: boolean = user?.isSuperAdmin || isDeveloper || role === "SUPER_ADMIN";
+  const dashboardType: DashboardType = user?.dashboardType || resolveDashboardType(role);
+  const allowedPages: string[] = user?.allowedPages || [];
 
   // Keyboard shortcut for Command/Ctrl + K search
   useEffect(() => {
@@ -92,52 +97,154 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setSidebarOpen(false);
   }, [pathname]);
 
-  const navGroups: NavGroup[] = [
-    {
-      groupTitle: "Main Menu",
-      items: [
-        { name: "Autopilot Report", href: "/dashboard", icon: LayoutDashboard },
-        { name: "Content Studio", href: "/content", icon: ImageIcon },
-        { name: "Publishing Queue", href: "/calendar", icon: Calendar },
-      ],
-    },
-    {
-      groupTitle: "Channels & Campaigns",
-      items: [
-        { name: "Social Channels", href: "/social", icon: Share2 },
-        { name: "Brand Identity Kit", href: "/brand", icon: Palette },
-      ],
-    },
-    {
-      groupTitle: "CRM & Growth",
-      items: [
-        { name: "WhatsApp Leads", href: "/leads", icon: MessageSquare, badge: "Live" },
-        ...(role !== "STAFF"
-          ? [{ name: "Billing & Plans", href: "/billing", icon: CreditCard }]
-          : []),
-      ],
-    },
-    {
-      groupTitle: "Administration",
-      items: [
-        { name: "Team & Roles", href: "/team", icon: Users },
-        ...(isSuperAdmin
-          ? [{ name: "Founder Cockpit", href: "/admin/marketing", icon: Rocket, badge: "Admin" }]
-          : []),
-      ],
-    },
-  ];
+  // Construct Dynamic Navigation based on the 4 Dashboard Suites
+  let navGroups: NavGroup[] = [];
+
+  if (dashboardType === "SUPER_ADMIN") {
+    // 1. Super Admin & Developer Suite
+    navGroups = [
+      {
+        groupTitle: "Platform Core",
+        items: [
+          { name: "Platform Overview", href: "/dashboard", icon: LayoutDashboard },
+          { name: "Founder Cockpit", href: "/admin/marketing", icon: Rocket, badge: "Admin" },
+        ],
+      },
+      {
+        groupTitle: "Workspace Management",
+        items: [
+          { name: "Team & Admins", href: "/team", icon: Users },
+          { name: "Social Channels", href: "/social", icon: Share2 },
+          { name: "Platform Billing", href: "/billing", icon: CreditCard },
+        ],
+      },
+      ...(isDeveloper
+        ? [
+            {
+              groupTitle: "Developer Engine",
+              items: [
+                { name: "Diagnostics & Logs", href: "/admin/diagnostics", icon: Sparkles, badge: "Root" },
+              ],
+            },
+          ]
+        : []),
+    ];
+  } else if (dashboardType === "CREATOR") {
+    // 2. Creator Studio Suite
+    navGroups = [
+      {
+        groupTitle: "Creative Studio",
+        items: [
+          { name: "Content Studio", href: "/content", icon: ImageIcon, badge: "AI" },
+          { name: "Publishing Calendar", href: "/calendar", icon: Calendar },
+          { name: "Autopilot Report", href: "/dashboard", icon: LayoutDashboard },
+        ],
+      },
+      {
+        groupTitle: "Brand Guidelines",
+        items: [
+          { name: "Brand Identity Kit", href: "/brand", icon: Palette },
+        ],
+      },
+    ];
+  } else if (dashboardType === "GUEST") {
+    // 3. Guest Client Portal Suite
+    navGroups = [
+      {
+        groupTitle: "Executive Portal",
+        items: [
+          { name: "Performance Briefing", href: "/dashboard", icon: LayoutDashboard },
+          { name: "Scheduled Feed", href: "/calendar", icon: Calendar },
+          { name: "Brand Guidelines", href: "/brand", icon: Palette },
+        ],
+      },
+    ];
+  } else {
+    // 4. Tenant Business Suite (Tenant Admin & Admin Staff)
+    navGroups = [
+      {
+        groupTitle: "Main Menu",
+        items: [
+          { name: "Autopilot Report", href: "/dashboard", icon: LayoutDashboard },
+          { name: "Content Studio", href: "/content", icon: ImageIcon },
+          { name: "Publishing Queue", href: "/calendar", icon: Calendar },
+        ],
+      },
+      {
+        groupTitle: "Channels & Campaigns",
+        items: [
+          { name: "Social Channels", href: "/social", icon: Share2 },
+          { name: "Brand Identity Kit", href: "/brand", icon: Palette },
+        ],
+      },
+      {
+        groupTitle: "CRM & Growth",
+        items: [
+          { name: "WhatsApp Leads", href: "/leads", icon: MessageSquare, badge: "Live" },
+          ...(role !== "STAFF" && role !== "ADMIN_STAFF"
+            ? [{ name: "Billing & Plans", href: "/billing", icon: CreditCard }]
+            : []),
+        ],
+      },
+      {
+        groupTitle: "Administration",
+        items: [
+          { name: "Team & Roles", href: "/team", icon: Users },
+          ...(isSuperAdmin
+            ? [{ name: "Founder Cockpit", href: "/admin/marketing", icon: Rocket, badge: "Admin" }]
+            : []),
+        ],
+      },
+    ];
+
+    // If Admin Staff has restricted allowedPages, filter nav items
+    if ((role === "ADMIN_STAFF" || role === "STAFF") && allowedPages.length > 0) {
+      navGroups = navGroups
+        .map((g) => ({
+          ...g,
+          items: g.items.filter((item) => {
+            const pageKey = item.href.replace("/", "");
+            return allowedPages.includes(pageKey);
+          }),
+        }))
+        .filter((g) => g.items.length > 0);
+    }
+  }
 
   const getRoleBadgeClass = (r: string) => {
     switch (r) {
+      case "DEVELOPER":
+        return "bg-rose-500/10 text-rose-400 border-rose-500/25";
       case "SUPER_ADMIN":
         return "bg-amber-500/10 text-amber-500 border-amber-500/25";
+      case "SUPER_ADMIN_STAFF":
+        return "bg-amber-500/10 text-amber-400 border-amber-500/25";
+      case "TENANT_ADMIN":
       case "OWNER":
         return "bg-primary/10 text-primary border-primary/25";
+      case "ADMIN_STAFF":
       case "STAFF":
         return "bg-sky-500/10 text-sky-500 border-sky-500/25";
+      case "CREATOR":
+        return "bg-emerald-500/10 text-emerald-500 border-emerald-500/25";
+      case "GUEST":
+        return "bg-purple-500/10 text-purple-400 border-purple-500/25";
       default:
         return "bg-muted text-muted-foreground border-border";
+    }
+  };
+
+  const getDashboardSuiteTitle = (suite: DashboardType) => {
+    switch (suite) {
+      case "SUPER_ADMIN":
+        return isDeveloper ? "Developer Cockpit" : "Super Admin Suite";
+      case "CREATOR":
+        return "Creator Studio";
+      case "GUEST":
+        return "Client Portal";
+      case "TENANT":
+      default:
+        return "Business Autopilot";
     }
   };
 
@@ -192,7 +299,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <span className="font-bold text-base tracking-tight text-foreground">
                       ABCD <span className="text-primary">Social</span>
                     </span>
-                    <span className="text-[10px] font-medium text-muted-foreground">Marketing Autopilot</span>
+                    <span className="text-[10px] font-medium text-muted-foreground">
+                      {getDashboardSuiteTitle(dashboardType)}
+                    </span>
                   </div>
                 </Link>
 
@@ -456,7 +565,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Smart Mobile App-Style Bottom Navigation */}
-      <MobileBottomNav userRole={role} isSuperAdmin={isSuperAdmin} />
+      <MobileBottomNav
+        userRole={role}
+        isSuperAdmin={isSuperAdmin}
+        dashboardType={dashboardType}
+        allowedPages={allowedPages}
+      />
     </div>
   );
 }

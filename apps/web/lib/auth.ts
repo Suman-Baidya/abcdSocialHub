@@ -4,9 +4,34 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@abcd/db";
 
+const DEVELOPER_EMAILS = (process.env.DEVELOPER_EMAILS || process.env.DEVELOPER_EMAIL || "suman.baidya.pro@gmail.com")
+  .split(",")
+  .map((e) => e.trim().toLowerCase());
+
 const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "suman.baidya.pro@gmail.com")
   .split(",")
   .map((e) => e.trim().toLowerCase());
+
+export type DashboardType = "SUPER_ADMIN" | "TENANT" | "CREATOR" | "GUEST";
+
+export function resolveDashboardType(role: string): DashboardType {
+  switch (role) {
+    case "DEVELOPER":
+    case "SUPER_ADMIN":
+    case "SUPER_ADMIN_STAFF":
+      return "SUPER_ADMIN";
+    case "CREATOR":
+      return "CREATOR";
+    case "GUEST":
+      return "GUEST";
+    case "TENANT_ADMIN":
+    case "ADMIN_STAFF":
+    case "OWNER":
+    case "STAFF":
+    default:
+      return "TENANT";
+  }
+}
 
 export const authOptions: AuthOptions = {
   session: {
@@ -61,7 +86,8 @@ export const authOptions: AuthOptions = {
     async signIn({ user, account }) {
       if (!user.email) return false;
       const email = user.email.toLowerCase().trim();
-      const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(email);
+      const isDeveloper = DEVELOPER_EMAILS.includes(email);
+      const isSuperAdmin = isDeveloper || SUPER_ADMIN_EMAILS.includes(email);
 
       // Upsert User record in database
       let dbUser = await prisma.user.findUnique({
@@ -99,13 +125,16 @@ export const authOptions: AuthOptions = {
       // Auto-provision initial Organization and Workspace if none exist
       if (!dbUser.memberships || dbUser.memberships.length === 0) {
         const orgSlug = `org-${dbUser.id.slice(-6)}-${Date.now().toString(36)}`;
-        const org = await prisma.organization.create({
+        const initialRole = isDeveloper ? "DEVELOPER" : isSuperAdmin ? "SUPER_ADMIN" : "TENANT_ADMIN";
+
+        await prisma.organization.create({
           data: {
             name: `${dbUser.name || "Default"}'s Business`,
             slug: orgSlug,
             workspaces: {
               create: {
                 name: "Primary Brand",
+                isApproved: true,
                 brandKit: {
                   create: {
                     businessName: dbUser.name || "ABCD Social Hub",
@@ -119,7 +148,8 @@ export const authOptions: AuthOptions = {
             memberships: {
               create: {
                 userId: dbUser.id,
-                role: isSuperAdmin ? "SUPER_ADMIN" : "OWNER",
+                role: initialRole as any,
+                allowedPages: [],
               },
             },
           },
@@ -143,7 +173,8 @@ export const authOptions: AuthOptions = {
 
       if (token.email) {
         const email = token.email as string;
-        const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(email);
+        const isDeveloper = DEVELOPER_EMAILS.includes(email);
+        const isSuperAdmin = isDeveloper || SUPER_ADMIN_EMAILS.includes(email);
 
         const dbUser = await prisma.user.findUnique({
           where: { email },
@@ -160,10 +191,24 @@ export const authOptions: AuthOptions = {
 
         if (dbUser) {
           token.id = dbUser.id;
+          token.isDeveloper = isDeveloper;
           token.isSuperAdmin = isSuperAdmin;
 
           const primaryMembership = dbUser.memberships[0];
-          token.role = isSuperAdmin ? "SUPER_ADMIN" : primaryMembership?.role || "OWNER";
+          let userRole = primaryMembership?.role || "TENANT_ADMIN";
+          
+          if (isDeveloper) {
+            userRole = "DEVELOPER";
+          } else if (isSuperAdmin && (userRole === "SUPER_ADMIN" || userRole === "OWNER" || !primaryMembership)) {
+            userRole = "SUPER_ADMIN";
+          }
+
+          const allowedPages = (primaryMembership as any)?.allowedPages || [];
+          const dashboardType = resolveDashboardType(userRole);
+
+          token.role = userRole;
+          token.dashboardType = dashboardType;
+          token.allowedPages = allowedPages;
           token.organizationId = primaryMembership?.organizationId;
 
           const primaryWorkspace = primaryMembership?.organization?.workspaces[0];
@@ -179,10 +224,13 @@ export const authOptions: AuthOptions = {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).dashboardType = token.dashboardType;
+        (session.user as any).allowedPages = token.allowedPages;
+        (session.user as any).isDeveloper = token.isDeveloper;
+        (session.user as any).isSuperAdmin = token.isSuperAdmin;
         (session.user as any).workspaceId = token.workspaceId;
         (session.user as any).workspaceName = token.workspaceName;
         (session.user as any).organizationId = token.organizationId;
-        (session.user as any).isSuperAdmin = token.isSuperAdmin;
       }
       return session;
     },

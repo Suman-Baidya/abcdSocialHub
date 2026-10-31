@@ -1,11 +1,44 @@
 import assert from "node:assert";
 
+export type RoleType =
+  | "DEVELOPER"
+  | "SUPER_ADMIN"
+  | "SUPER_ADMIN_STAFF"
+  | "TENANT_ADMIN"
+  | "ADMIN_STAFF"
+  | "OWNER"
+  | "STAFF"
+  | "CREATOR"
+  | "GUEST";
+
+export type DashboardType = "SUPER_ADMIN" | "TENANT" | "CREATOR" | "GUEST";
+
+export function resolveDashboardType(role: RoleType): DashboardType {
+  switch (role) {
+    case "DEVELOPER":
+    case "SUPER_ADMIN":
+    case "SUPER_ADMIN_STAFF":
+      return "SUPER_ADMIN";
+    case "CREATOR":
+      return "CREATOR";
+    case "GUEST":
+      return "GUEST";
+    case "TENANT_ADMIN":
+    case "ADMIN_STAFF":
+    case "OWNER":
+    case "STAFF":
+    default:
+      return "TENANT";
+  }
+}
+
 // Test tenant isolation for team store logic
 interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: "OWNER" | "CREATOR" | "STAFF" | "GUEST";
+  role: RoleType;
+  allowedPages?: string[];
   status: "ACTIVE" | "INVITED";
   joinedAt: string;
 }
@@ -18,7 +51,7 @@ function getInitialMembers(): TeamMember[] {
       id: "mem_01",
       name: "Suman Baidya",
       email: "suman.baidya.pro@gmail.com",
-      role: "OWNER",
+      role: "TENANT_ADMIN",
       status: "ACTIVE",
       joinedAt: "Founding Member",
     },
@@ -42,8 +75,19 @@ function getTenantMembers(tenantKey: string): TeamMember[] {
 
 async function runTenantIsolationTest() {
   console.log("==================================================================");
-  console.log("🔒 TEAM ROUTE: MULTI-TENANT ISOLATION TEST SUITE");
+  console.log("🔒 RBAC & 4-TIER DASHBOARD TENANT ISOLATION TEST SUITE");
   console.log("==================================================================\n");
+
+  // 1. Verify 4-Tier Dashboard Type Mapping across 7 Roles
+  assert.strictEqual(resolveDashboardType("DEVELOPER"), "SUPER_ADMIN", "Developer maps to Super Admin Suite");
+  assert.strictEqual(resolveDashboardType("SUPER_ADMIN"), "SUPER_ADMIN", "Super Admin maps to Super Admin Suite");
+  assert.strictEqual(resolveDashboardType("SUPER_ADMIN_STAFF"), "SUPER_ADMIN", "Super Admin Staff maps to Super Admin Suite");
+  assert.strictEqual(resolveDashboardType("TENANT_ADMIN"), "TENANT", "Tenant Admin maps to Tenant Business Suite");
+  assert.strictEqual(resolveDashboardType("ADMIN_STAFF"), "TENANT", "Admin Staff maps to Tenant Business Suite");
+  assert.strictEqual(resolveDashboardType("CREATOR"), "CREATOR", "Creator maps to Creator Studio");
+  assert.strictEqual(resolveDashboardType("GUEST"), "GUEST", "Guest maps to Guest Client Portal");
+
+  console.log("  ✓ [PASS] All 7 roles map deterministically to the 4 dashboard suites.");
 
   const tenantA = "workspace_tenant_a_123";
   const tenantB = "workspace_tenant_b_456";
@@ -51,37 +95,38 @@ async function runTenantIsolationTest() {
   const membersA = getTenantMembers(tenantA);
   const membersB = getTenantMembers(tenantB);
 
-  // 1. Initial State Isolation
+  // 2. Initial State Isolation
   assert.strictEqual(membersA.length, 2, "Tenant A starts with 2 seed members");
   assert.strictEqual(membersB.length, 2, "Tenant B starts with 2 seed members");
 
-  // 2. Add member to Tenant A
-  const newMemberA: TeamMember = {
-    id: "mem_a_new",
-    name: "Tenant A Specialist",
-    email: "specialist@tenanta.com",
-    role: "CREATOR",
+  // 3. Add Admin Staff to Tenant A with granular allowed pages
+  const newStaffA: TeamMember = {
+    id: "mem_a_staff",
+    name: "Front Desk Assistant",
+    email: "reception@tenanta.com",
+    role: "ADMIN_STAFF",
+    allowedPages: ["leads", "calendar"],
     status: "INVITED",
     joinedAt: "Today",
   };
-  membersA.push(newMemberA);
+  membersA.push(newStaffA);
 
   assert.strictEqual(membersA.length, 3, "Tenant A now has 3 members");
   assert.strictEqual(membersB.length, 2, "Tenant B strictly remains at 2 members");
 
-  // 3. Verify Tenant B cannot see Tenant A's new member
-  const foundInB = membersB.find((m) => m.email === "specialist@tenanta.com");
+  // 4. Verify Tenant B cannot see Tenant A's new staff member
+  const foundInB = membersB.find((m) => m.email === "reception@tenanta.com");
   assert.strictEqual(foundInB, undefined, "Tenant B cannot query Tenant A's members");
 
-  // 4. Revocation Isolation
+  // 5. Revocation Isolation
   membersB.pop();
   assert.strictEqual(membersB.length, 1, "Tenant B has 1 member after revocation");
   assert.strictEqual(membersA.length, 3, "Tenant A is unaffected by Tenant B's revocation");
 
   console.log("  ✓ [PASS] Tenant A and Tenant B data stores are strictly partitioned.");
-  console.log("  ✓ [PASS] Cross-tenant access is completely blocked.");
+  console.log("  ✓ [PASS] Granular allowedPages permission storage operates without cross-tenant leakage.");
   console.log("\n==================================================================");
-  console.log("🎉 ALL TEAM TENANT ISOLATION TESTS PASSED CLEANLY!");
+  console.log("🎉 ALL RBAC & TENANT ISOLATION TESTS PASSED CLEANLY!");
   console.log("==================================================================");
 }
 

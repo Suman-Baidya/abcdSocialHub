@@ -34,9 +34,10 @@ export interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: "OWNER" | "CREATOR" | "STAFF" | "GUEST";
+  role: "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
   status: "ACTIVE" | "INVITED";
   joinedAt: string;
+  allowedPages?: string[];
   lastActive?: string;
 }
 
@@ -96,6 +97,7 @@ export default function TeamMembersPage() {
   const [inviteName, setInviteName] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<TeamMember["role"]>("CREATOR");
+  const [inviteAllowedPages, setInviteAllowedPages] = useState<string[]>(["leads", "calendar"]);
 
   // Delete & Revoke State
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
@@ -178,6 +180,7 @@ export default function TeamMembersPage() {
           name: inviteName.trim() || inviteEmail.split("@")[0],
           email: inviteEmail.trim(),
           role: inviteRole,
+          allowedPages: (inviteRole === "ADMIN_STAFF" || inviteRole === "STAFF") ? inviteAllowedPages : [],
         }),
       });
 
@@ -195,6 +198,7 @@ export default function TeamMembersPage() {
       setInviteName("");
       setInviteEmail("");
       setInviteRole("CREATOR");
+      setInviteAllowedPages(["leads", "calendar"]);
       fetchMembers();
     } catch (err: any) {
       toast.error("Invitation Failed", err.message || "Failed to dispatch invitation.");
@@ -259,13 +263,17 @@ export default function TeamMembersPage() {
   // Role Badge Styling via Semantic Tokens
   const getRoleBadgeClasses = (role: TeamMember["role"]) => {
     switch (role) {
+      case "TENANT_ADMIN":
       case "OWNER":
         return "bg-primary/10 text-primary border-primary/30";
       case "CREATOR":
         return "bg-purple-500/10 text-purple-400 border-purple-500/30";
+      case "ADMIN_STAFF":
       case "STAFF":
         return "bg-sky-500/10 text-sky-400 border-sky-500/30";
       case "GUEST":
+        return "bg-muted text-muted-foreground border-border";
+      default:
         return "bg-muted text-muted-foreground border-border";
     }
   };
@@ -806,7 +814,7 @@ export default function TeamMembersPage() {
 
                     {/* Assigned Role Dropdown */}
                     <td className="min-w-[140px] px-3 sm:px-4 py-3.5">
-                      {member.role === "OWNER" ? (
+                      {member.role === "OWNER" || member.role === "TENANT_ADMIN" ? (
                         <span
                           className={`inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full font-bold border ${getRoleBadgeClasses(
                             member.role
@@ -826,6 +834,7 @@ export default function TeamMembersPage() {
                           )}`}
                         >
                           <option value="CREATOR">CREATOR</option>
+                          <option value="ADMIN_STAFF">ADMIN STAFF</option>
                           <option value="STAFF">STAFF</option>
                           <option value="GUEST">GUEST</option>
                         </select>
@@ -979,17 +988,58 @@ export default function TeamMembersPage() {
               className="w-full px-3 py-2 rounded-xl bg-muted/60 border border-border text-xs text-foreground focus:outline-none focus:border-primary/50 transition-colors"
             >
               <option value="CREATOR">CREATOR — Design promotional posters & Bengali/Hindi copy</option>
-              <option value="STAFF">STAFF — Inbound WhatsApp leads CRM & booking scheduling</option>
+              <option value="ADMIN_STAFF">ADMIN STAFF — Inbound WhatsApp CRM & booking schedules</option>
               <option value="GUEST">GUEST — Read-only observation of reports & audits</option>
             </select>
           </div>
+
+          {/* Granular Page Permission Checkboxes for Admin Staff */}
+          {(inviteRole === "ADMIN_STAFF" || inviteRole === "STAFF") && (
+            <div className="space-y-2 p-3 rounded-xl bg-muted/40 border border-border">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-foreground">
+                  Allowed Workspace Pages
+                </label>
+                <span className="text-[10px] text-muted-foreground">Select accessible routes</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "leads", label: "WhatsApp Leads CRM" },
+                  { id: "calendar", label: "Publishing Calendar" },
+                  { id: "content", label: "Content Studio" },
+                  { id: "social", label: "Social Channels" },
+                  { id: "brand", label: "Brand Identity Kit" },
+                ].map((pg) => {
+                  const checked = inviteAllowedPages.includes(pg.id);
+                  return (
+                    <label
+                      key={pg.id}
+                      className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          setInviteAllowedPages((prev) =>
+                            checked ? prev.filter((p) => p !== pg.id) : [...prev, pg.id]
+                          );
+                        }}
+                        className="rounded border-border text-primary focus:ring-primary cursor-pointer w-3.5 h-3.5"
+                      />
+                      <span className="text-[11px]">{pg.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="p-2.5 rounded-xl bg-muted/40 border border-border text-[11px] text-muted-foreground leading-snug">
             {inviteRole === "CREATOR" && (
               <span>Allows drafting posters, content ideas, and scheduling social campaigns. Barred from billing.</span>
             )}
-            {inviteRole === "STAFF" && (
-              <span>Allows managing inbound leads and scheduling bookings. Barred from billing and publishing keys.</span>
+            {(inviteRole === "ADMIN_STAFF" || inviteRole === "STAFF") && (
+              <span>Allows managing assigned workspace pages. Barred from billing, secrets, and role demotion.</span>
             )}
             {inviteRole === "GUEST" && (
               <span>Provides read-only visibility into Autopilot analytics. Cannot edit content or dispatch messages.</span>

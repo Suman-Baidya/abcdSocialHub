@@ -61,7 +61,7 @@ interface TeamStats {
 
 export default function TeamMembersPage() {
   const { toast } = useToast();
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const currentUser = session?.user as any;
   const isSuperAdmin =
     currentUser?.isDeveloper ||
@@ -148,7 +148,9 @@ export default function TeamMembersPage() {
         }
       } catch (err: any) {
         setError(err.message || "Failed to load team data");
-        toast.error("Network Error", err.message || "Could not retrieve team roster.");
+        if (isManualRefresh) {
+          toast.error("Refresh Failed", err.message || "Could not retrieve team roster.");
+        }
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -158,8 +160,10 @@ export default function TeamMembersPage() {
   );
 
   useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
+    if (authStatus === "authenticated") {
+      fetchMembers();
+    }
+  }, [authStatus, fetchMembers]);
 
   // Handle Search Input Debounce
   const handleSearchChange = (val: string) => {

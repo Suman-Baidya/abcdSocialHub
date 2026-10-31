@@ -25,7 +25,9 @@ import {
   Sun,
   Moon,
   Building2,
+  Loader2,
 } from "lucide-react";
+import { AuthRestrictionModal } from "@/components/auth/AuthRestrictionModal";
 import { WorkspaceSwitcher } from "@/components/dashboard/WorkspaceSwitcher";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { RoleSimulatorBanner } from "@/components/dashboard/RoleSimulatorBanner";
@@ -47,7 +49,7 @@ interface NavGroup {
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useSession();
   const pathname = usePathname();
   const { theme, toggleTheme } = useTheme();
 
@@ -279,6 +281,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         return "Business Autopilot";
     }
   };
+
+  // 🔒 Security Guard: If session is loading, show clean minimal verification state
+  if (authStatus === "loading") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/20 animate-pulse">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+            <span>Verifying session security...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 🔒 Security Guard: If unauthenticated, display full-screen blurred restriction overlay (zero data exposure)
+  if (authStatus === "unauthenticated" || !session) {
+    return <AuthRestrictionModal callbackUrl={pathname} />;
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex transition-colors duration-200">

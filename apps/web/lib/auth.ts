@@ -12,26 +12,8 @@ const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "suman.baidya.pro@
   .split(",")
   .map((e) => e.trim().toLowerCase());
 
-export type DashboardType = "SUPER_ADMIN" | "TENANT" | "CREATOR" | "GUEST";
-
-export function resolveDashboardType(role: string): DashboardType {
-  switch (role) {
-    case "DEVELOPER":
-    case "SUPER_ADMIN":
-    case "SUPER_ADMIN_STAFF":
-      return "SUPER_ADMIN";
-    case "CREATOR":
-      return "CREATOR";
-    case "GUEST":
-      return "GUEST";
-    case "TENANT_ADMIN":
-    case "ADMIN_STAFF":
-    case "OWNER":
-    case "STAFF":
-    default:
-      return "TENANT";
-  }
-}
+import { resolveDashboardType, type DashboardType, type RoleType } from "./roles";
+export { resolveDashboardType, type DashboardType, type RoleType };
 
 export const authOptions: AuthOptions = {
   session: {

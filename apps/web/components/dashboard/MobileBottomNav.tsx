@@ -22,7 +22,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
-import type { DashboardType } from "@/lib/auth";
+import type { DashboardType } from "@/lib/roles";
 
 interface MobileBottomNavProps {
   userRole?: string;

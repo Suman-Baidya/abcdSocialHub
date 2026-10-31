@@ -29,7 +29,7 @@ import { WorkspaceSwitcher } from "@/components/dashboard/WorkspaceSwitcher";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
-import { resolveDashboardType, type DashboardType } from "@/lib/auth";
+import { resolveDashboardType, type DashboardType } from "@/lib/roles";
 
 interface NavItem {
   name: string;

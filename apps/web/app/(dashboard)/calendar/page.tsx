@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   Calendar as CalendarIcon,
@@ -35,6 +36,7 @@ import {
   CheckSquare,
   Square,
   AlertTriangle,
+  Lock,
 } from "lucide-react";
 import { useToast, CustomModal } from "@/components/ui/ToastProvider";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
@@ -307,6 +309,12 @@ const SAMPLE_QUEUE_ITEMS: QueueItem[] = [
 
 export default function PublishingQueuePage() {
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const user = session?.user as any;
+  const role = user?.role;
+  const isGuest = role === "GUEST";
+  const allowedPages: string[] = user?.allowedPages || [];
+
   const [items, setItems] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [publishingId, setPublishingId] = useState<string | null>(null);
@@ -665,6 +673,31 @@ export default function PublishingQueuePage() {
     return map;
   }, [filteredItems]);
 
+  // Role Guard: Staff lacking calendar permission
+  if ((role === "ADMIN_STAFF" || role === "STAFF") && allowedPages.length > 0 && !allowedPages.includes("calendar")) {
+    return (
+      <div className="min-h-[500px] flex items-center justify-center p-6 animate-in fade-in">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-card border border-rose-500/30 text-center space-y-4 backdrop-blur-xl shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-500">
+            <AlertCircle className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-bold text-foreground">Access Restricted</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Your team role does not have authorization to access the Publishing Queue & Calendar. Please contact your workspace owner for permission grant.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-accent text-xs font-semibold text-foreground transition-all"
+            >
+              Return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
       {/* ─────────────────────────────────────────────────────────────
@@ -676,43 +709,52 @@ export default function PublishingQueuePage() {
         hideBreadcrumb={true}
       >
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 justify-end">
-          {/* Autopilot Master Switch */}
-          <button
-            type="button"
-            onClick={() => {
-              setAutopilotPaused(!autopilotPaused);
-              toast.info(
-                autopilotPaused ? "Autopilot Resumed" : "Autopilot Paused",
-                autopilotPaused
-                  ? "Automated queue dispatching is active."
-                  : "All automated dispatches temporarily paused."
-              );
-            }}
-            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
-              autopilotPaused
-                ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
-                : "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
-            }`}
-            title="Toggle automated queue pause switch"
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                autopilotPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse"
-              }`}
-            />
-            <span className="text-[11px] sm:text-xs">
-              {autopilotPaused ? "Paused" : "Active"}
+          {isGuest ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/25 text-xs font-semibold">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Client Observer • Read Only Feed</span>
             </span>
-          </button>
+          ) : (
+            <>
+              {/* Autopilot Master Switch */}
+              <button
+                type="button"
+                onClick={() => {
+                  setAutopilotPaused(!autopilotPaused);
+                  toast.info(
+                    autopilotPaused ? "Autopilot Resumed" : "Autopilot Paused",
+                    autopilotPaused
+                      ? "Automated queue dispatching is active."
+                      : "All automated dispatches temporarily paused."
+                  );
+                }}
+                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
+                  autopilotPaused
+                    ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                    : "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
+                }`}
+                title="Toggle automated queue pause switch"
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    autopilotPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse"
+                  }`}
+                />
+                <span className="text-[11px] sm:text-xs">
+                  {autopilotPaused ? "Paused" : "Active"}
+                </span>
+              </button>
 
-          {/* New Campaign Studio Shortcut */}
-          <Link
-            href="/content"
-            className="inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all active:scale-95 shadow-sm cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Create</span>
-          </Link>
+              {/* New Campaign Studio Shortcut */}
+              <Link
+                href="/content"
+                className="inline-flex items-center gap-1 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all active:scale-95 shadow-sm cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create</span>
+              </Link>
+            </>
+          )}
 
           {/* Refresh Queue */}
           <button

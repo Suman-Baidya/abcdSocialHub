@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import {
   Users,
   UserPlus,
@@ -34,7 +35,7 @@ export interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
+  role: "SUPER_ADMIN_STAFF" | "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
   status: "ACTIVE" | "INVITED";
   joinedAt: string;
   allowedPages?: string[];
@@ -60,6 +61,14 @@ interface TeamStats {
 
 export default function TeamMembersPage() {
   const { toast } = useToast();
+  const { data: session } = useSession();
+  const currentUser = session?.user as any;
+  const isSuperAdmin =
+    currentUser?.isDeveloper ||
+    currentUser?.role === "DEVELOPER" ||
+    currentUser?.isSuperAdmin ||
+    currentUser?.role === "SUPER_ADMIN" ||
+    currentUser?.email === "suman.baidya.pro@gmail.com";
 
   // State
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -180,7 +189,7 @@ export default function TeamMembersPage() {
           name: inviteName.trim() || inviteEmail.split("@")[0],
           email: inviteEmail.trim(),
           role: inviteRole,
-          allowedPages: (inviteRole === "ADMIN_STAFF" || inviteRole === "STAFF") ? inviteAllowedPages : [],
+          allowedPages: (inviteRole === "ADMIN_STAFF" || inviteRole === "STAFF" || inviteRole === "SUPER_ADMIN_STAFF") ? inviteAllowedPages : [],
         }),
       });
 
@@ -984,14 +993,66 @@ export default function TeamMembersPage() {
             </label>
             <select
               value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as any)}
+              onChange={(e) => {
+                const r = e.target.value as any;
+                setInviteRole(r);
+                if (r === "SUPER_ADMIN_STAFF") {
+                  setInviteAllowedPages(["tenants", "marketing"]);
+                } else if (r === "ADMIN_STAFF" || r === "STAFF") {
+                  setInviteAllowedPages(["leads", "calendar"]);
+                } else {
+                  setInviteAllowedPages([]);
+                }
+              }}
               className="w-full px-3 py-2 rounded-xl bg-muted/60 border border-border text-xs text-foreground focus:outline-none focus:border-primary/50 transition-colors"
             >
+              {isSuperAdmin && (
+                <option value="SUPER_ADMIN_STAFF">SUPER ADMIN STAFF — Delegated platform operations & tenant management</option>
+              )}
               <option value="CREATOR">CREATOR — Design promotional posters & Bengali/Hindi copy</option>
               <option value="ADMIN_STAFF">ADMIN STAFF — Inbound WhatsApp CRM & booking schedules</option>
               <option value="GUEST">GUEST — Read-only observation of reports & audits</option>
             </select>
           </div>
+
+          {/* Granular Platform Permission Checkboxes for Super Admin Staff */}
+          {inviteRole === "SUPER_ADMIN_STAFF" && (
+            <div className="space-y-2 p-3 rounded-xl bg-muted/40 border border-border">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-foreground">
+                  Allowed Platform Modules
+                </label>
+                <span className="text-[10px] text-muted-foreground">Platform Delegation</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: "tenants", label: "Tenant Workspaces & Approvals" },
+                  { id: "marketing", label: "Founder Cockpit & Leads" },
+                  { id: "billing", label: "Platform Revenue & Invoicing" },
+                ].map((pg) => {
+                  const checked = inviteAllowedPages.includes(pg.id);
+                  return (
+                    <label
+                      key={pg.id}
+                      className="flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          setInviteAllowedPages((prev) =>
+                            checked ? prev.filter((p) => p !== pg.id) : [...prev, pg.id]
+                          );
+                        }}
+                        className="rounded border-border text-primary focus:ring-primary cursor-pointer w-3.5 h-3.5"
+                      />
+                      <span className="text-[11px]">{pg.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Granular Page Permission Checkboxes for Admin Staff */}
           {(inviteRole === "ADMIN_STAFF" || inviteRole === "STAFF") && (

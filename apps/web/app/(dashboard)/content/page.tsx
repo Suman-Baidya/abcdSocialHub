@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   Sparkles,
@@ -41,6 +42,8 @@ import {
   SlidersHorizontal,
   X,
   Settings2,
+  Lock,
+  ShieldAlert,
 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 
@@ -225,10 +228,16 @@ const POSTER_THEMES = {
 type PosterThemeKey = keyof typeof POSTER_THEMES;
 
 function ContentStudioInner() {
+  const { data: session } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Query parameter ingestion for sync with Autopilot report
+  const user = session?.user as any;
+  const role = user?.role;
+  const allowedPages: string[] = user?.allowedPages || [];
+
+  // Query parameter ingestion for sync with Autopilot report and Creator Studio
+  const intentParam = searchParams.get("intent");
   const promptParam = searchParams.get("prompt");
   const modeParam = searchParams.get("mode");
 
@@ -324,6 +333,77 @@ function ContentStudioInner() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [showDirectivesModal]);
+
+  // Handle Intent sync from Creator Studio
+  useEffect(() => {
+    if (intentParam === "bengali-poster") {
+      setFormatType("poster");
+      setLanguage("bengali");
+      setPosterRatio("1:1");
+      setObjective("festive");
+      setBrief("উৎসবের বিশেষ অফার: সব সেলুন সার্ভিসে ফ্ল্যাট ৫০% ছাড়। আজই আপনার স্লট বুকিং করুন। সীমিত অ্যাপয়েন্টমেন্ট উপলব্ধ!");
+    } else if (intentParam === "carousel") {
+      setFormatType("carousel");
+      setLanguage("english");
+      setObjective("reel");
+      setBrief("Top 5 Hair & Skin Care Tips for Festive Season: A multi-slide educational guide on protecting hair texture and achieving radiant glow.");
+    } else if (intentParam === "whatsapp-promo") {
+      setFormatType("whatsapp");
+      setCtaDirective("whatsapp");
+      setDealDirective("Flat 40% Off");
+      setBrief("Festive Flash Deal: Exclusive 40% discount on all premium salon treatments this week. Tap to book your appointment on WhatsApp now.");
+    }
+  }, [intentParam]);
+
+  // Role Guard: Guest is strictly read-only
+  if (role === "GUEST") {
+    return (
+      <div className="min-h-[500px] flex items-center justify-center p-6 animate-in fade-in">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-card border border-purple-500/30 text-center space-y-4 backdrop-blur-xl shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mx-auto text-purple-400">
+            <Lock className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-bold text-foreground">Content Studio Restricted</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Client Observer and Guest accounts have read-only access to published performance briefings and scheduled feeds. Content creation and copywriting are reserved for Content Creators and Workspace Admins.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-accent text-xs font-semibold text-foreground transition-all"
+            >
+              Back to Client Portal
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Role Guard: Staff lacking content permission
+  if ((role === "ADMIN_STAFF" || role === "STAFF") && allowedPages.length > 0 && !allowedPages.includes("content")) {
+    return (
+      <div className="min-h-[500px] flex items-center justify-center p-6 animate-in fade-in">
+        <div className="max-w-md w-full p-8 rounded-2xl bg-card border border-rose-500/30 text-center space-y-4 backdrop-blur-xl shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-500">
+            <ShieldAlert className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-bold text-foreground">Access Restricted</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Your team role does not have authorization to access the Content Studio. Please contact your organization owner for permission grant.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-muted hover:bg-accent text-xs font-semibold text-foreground transition-all"
+            >
+              Return to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Sync with Autopilot Dashboard parameters
   useEffect(() => {

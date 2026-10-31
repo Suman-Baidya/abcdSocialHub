@@ -28,9 +28,10 @@ import {
 } from "lucide-react";
 import { WorkspaceSwitcher } from "@/components/dashboard/WorkspaceSwitcher";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
+import { RoleSimulatorBanner } from "@/components/dashboard/RoleSimulatorBanner";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
-import { resolveDashboardType, type DashboardType } from "@/lib/roles";
+import { resolveDashboardType, type DashboardType, type RoleType } from "@/lib/roles";
 
 interface NavItem {
   name: string;
@@ -73,12 +74,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     });
   };
 
+  // Simulated Persona Role State for Super Admin testing
+  const [simulatedRole, setSimulatedRole] = useState<RoleType | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("abcd_simulated_role") as RoleType | null;
+      if (stored) {
+        setSimulatedRole(stored);
+      }
+    } catch {}
+  }, []);
+
+  const handleSimulateRole = (nextRole: RoleType | null) => {
+    setSimulatedRole(nextRole);
+    try {
+      if (nextRole) {
+        localStorage.setItem("abcd_simulated_role", nextRole);
+      } else {
+        localStorage.removeItem("abcd_simulated_role");
+      }
+    } catch {}
+    window.location.reload();
+  };
+
   // Role and Dashboard Suite extraction
   const user = session?.user as any;
-  const role: string = user?.role || "TENANT_ADMIN";
-  const isDeveloper: boolean = user?.isDeveloper || role === "DEVELOPER";
-  const isSuperAdmin: boolean = user?.isSuperAdmin || isDeveloper || role === "SUPER_ADMIN";
-  const dashboardType: DashboardType = user?.dashboardType || resolveDashboardType(role);
+  const rawRole: string = user?.role || "TENANT_ADMIN";
+  const isDeveloper: boolean = user?.isDeveloper || rawRole === "DEVELOPER" || user?.email === "suman.baidya.pro@gmail.com";
+  const isSuperAdmin: boolean = user?.isSuperAdmin || isDeveloper || rawRole === "SUPER_ADMIN" || user?.email === "suman.baidya.pro@gmail.com";
+
+  // If user is super admin/developer, apply simulation override if active
+  const role: RoleType = (isSuperAdmin && simulatedRole) ? simulatedRole : (rawRole as RoleType);
+  const activeIsDeveloper: boolean = role === "DEVELOPER" || (!simulatedRole && isDeveloper);
+  const dashboardType: DashboardType = resolveDashboardType(role);
   const allowedPages: string[] = user?.allowedPages || [];
 
   // Keyboard shortcut for Command/Ctrl + K search
@@ -120,7 +149,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           { name: "Platform Billing", href: "/billing", icon: CreditCard },
         ],
       },
-      ...(isDeveloper
+      ...(activeIsDeveloper
         ? [
             {
               groupTitle: "Developer Engine",
@@ -559,6 +588,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         </header>
+
+        {/* Role Persona Simulator for Developers and Super Admins */}
+        <RoleSimulatorBanner
+          currentSimulatedRole={simulatedRole}
+          onSimulateRole={handleSimulateRole}
+        />
 
         {/* Page Content Canvas with compact, balanced side spacing */}
         <main className="flex-1 px-4 sm:px-5 lg:px-6 pt-3 sm:pt-4 space-y-4 sm:space-y-5 pb-24 xl:pb-12 w-full min-w-0 max-w-full overflow-x-hidden">

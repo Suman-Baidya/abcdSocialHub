@@ -9,7 +9,7 @@ export interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
+  role: "SUPER_ADMIN_STAFF" | "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
   status: "ACTIVE" | "INVITED";
   joinedAt: string;
   allowedPages?: string[];
@@ -73,13 +73,13 @@ function getTenantMembers(tenantKey: string): TeamMember[] {
 const inviteSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(60),
   email: z.string().trim().email("Invalid email address"),
-  role: z.enum(["TENANT_ADMIN", "OWNER", "ADMIN_STAFF", "STAFF", "CREATOR", "GUEST"]).default("CREATOR"),
+  role: z.enum(["SUPER_ADMIN_STAFF", "TENANT_ADMIN", "OWNER", "ADMIN_STAFF", "STAFF", "CREATOR", "GUEST"]).default("CREATOR"),
   allowedPages: z.array(z.string()).default([]),
 });
 
 const patchRoleSchema = z.object({
   id: z.string().min(1, "Member ID is required"),
-  role: z.enum(["TENANT_ADMIN", "OWNER", "ADMIN_STAFF", "STAFF", "CREATOR", "GUEST"]),
+  role: z.enum(["SUPER_ADMIN_STAFF", "TENANT_ADMIN", "OWNER", "ADMIN_STAFF", "STAFF", "CREATOR", "GUEST"]),
   allowedPages: z.array(z.string()).optional(),
 });
 
@@ -184,6 +184,24 @@ export async function POST(req: Request) {
 
     const { name, email, role, allowedPages } = parseResult.data;
 
+    // Security check: Only Super Admins / Developers can invite SUPER_ADMIN_STAFF
+    if (role === "SUPER_ADMIN_STAFF") {
+      const user = session?.user as any;
+      const isSuperAdmin =
+        user?.isDeveloper ||
+        user?.role === "DEVELOPER" ||
+        user?.isSuperAdmin ||
+        user?.role === "SUPER_ADMIN" ||
+        user?.email === "suman.baidya.pro@gmail.com";
+
+      if (!isSuperAdmin) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: Only Super Admins can invite Super Admin Staff" },
+          { status: 403 }
+        );
+      }
+    }
+
     // Check if email already exists in workspace
     const existing = members.find(
       (m) => m.email.toLowerCase() === email.toLowerCase()
@@ -208,7 +226,7 @@ export async function POST(req: Request) {
       name,
       email,
       role,
-      allowedPages: (role === "ADMIN_STAFF" || role === "STAFF") ? allowedPages : [],
+      allowedPages: (role === "ADMIN_STAFF" || role === "STAFF" || role === "SUPER_ADMIN_STAFF") ? allowedPages : [],
       status: "INVITED",
       joinedAt: "Just invited",
       lastActive: "Never",

@@ -11,6 +11,28 @@ export type RoleType =
 
 export type DashboardType = "SUPER_ADMIN" | "TENANT" | "CREATOR" | "GUEST";
 
+export const ROLE_LABELS: Record<RoleType, string> = {
+  DEVELOPER: "Developer (Hidden Root)",
+  SUPER_ADMIN: "Super Admin (Platform Controller)",
+  SUPER_ADMIN_STAFF: "Super Admin Staff (Delegated Ops)",
+  TENANT_ADMIN: "Tenant Admin (Business Owner)",
+  OWNER: "Tenant Admin (Business Owner)",
+  ADMIN_STAFF: "Admin Staff (Teammate)",
+  STAFF: "Admin Staff (Teammate)",
+  CREATOR: "Content Creator (Creative Studio)",
+  GUEST: "Guest (Client Observer)",
+};
+
+export const SIMULATION_ROLES: RoleType[] = [
+  "DEVELOPER",
+  "SUPER_ADMIN",
+  "SUPER_ADMIN_STAFF",
+  "TENANT_ADMIN",
+  "ADMIN_STAFF",
+  "CREATOR",
+  "GUEST",
+];
+
 export function resolveDashboardType(role?: string): DashboardType {
   switch (role) {
     case "DEVELOPER":

@@ -245,3 +245,4 @@ export function GuestPortalView({ data }: GuestPortalViewProps) {
     </div>
   );
 }
+

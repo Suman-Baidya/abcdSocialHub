@@ -29,6 +29,7 @@ import {
 import { WorkspaceSwitcher } from "@/components/dashboard/WorkspaceSwitcher";
 import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { RoleSimulatorBanner } from "@/components/dashboard/RoleSimulatorBanner";
+import { WorkspaceImpersonationBanner } from "@/components/dashboard/WorkspaceImpersonationBanner";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 import { resolveDashboardType, type DashboardType, type RoleType } from "@/lib/roles";
@@ -588,6 +589,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         </header>
+
+        {/* 1-Click Customer Workspace Impersonation Banner */}
+        <WorkspaceImpersonationBanner />
 
         {/* Role Persona Simulator for Developers and Super Admins */}
         <RoleSimulatorBanner

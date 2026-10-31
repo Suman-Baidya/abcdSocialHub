@@ -18,7 +18,12 @@ import {
   Phone,
   Layers,
   Sparkles,
+  Plus,
+  Eye,
+  Trash2,
+  X,
 } from "lucide-react";
+import { CustomModal } from "@/components/ui/CustomModal";
 
 interface Member {
   id: string;
@@ -63,7 +68,25 @@ export default function TenantManagementPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "APPROVED" | "PENDING">("ALL");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [inspectingId, setInspectingId] = useState<string | null>(null);
   const [expandedTenantId, setExpandedTenantId] = useState<string | null>(null);
+
+  // Tenant Creation Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    businessName: "",
+    ownerName: "",
+    ownerEmail: "",
+    phoneNumber: "",
+    plan: "starter",
+    isApproved: true,
+  });
+
+  // Delete Modal State
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   const [feedbackMessage, setFeedbackMessage] = useState<{
     text: string;
     type: "success" | "error";
@@ -96,6 +119,32 @@ export default function TenantManagementPage() {
   useEffect(() => {
     fetchTenants();
   }, [fetchTenants]);
+
+  // 1-Click Workspace Impersonation ("Inspect Customer Workspace")
+  const handleInspectWorkspace = async (tenantId: string) => {
+    try {
+      setInspectingId(tenantId);
+      const res = await fetch("/api/admin/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId: tenantId }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to start workspace inspection");
+      }
+
+      // Immediately navigate to customer's live dashboard view
+      window.location.href = "/dashboard";
+    } catch (err: any) {
+      setFeedbackMessage({
+        text: err.message || "Failed to inspect workspace",
+        type: "error",
+      });
+      setInspectingId(null);
+    }
+  };
 
   const handleToggleApproval = async (tenantId: string, currentStatus: boolean) => {
     try {
@@ -142,6 +191,84 @@ export default function TenantManagementPage() {
     }
   };
 
+  const handleCreateTenant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setCreating(true);
+      setFeedbackMessage(null);
+
+      const res = await fetch("/api/admin/tenants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createForm),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create tenant workspace");
+      }
+
+      setShowCreateModal(false);
+      setCreateForm({
+        businessName: "",
+        ownerName: "",
+        ownerEmail: "",
+        phoneNumber: "",
+        plan: "starter",
+        isApproved: true,
+      });
+
+      setFeedbackMessage({
+        text: `Tenant workspace "${data.workspace?.name || "New Tenant"}" onboarded successfully!`,
+        type: "success",
+      });
+
+      fetchTenants();
+    } catch (err: any) {
+      setFeedbackMessage({
+        text: err.message || "Tenant onboarding failed",
+        type: "error",
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      const res = await fetch(`/api/admin/tenants?workspaceId=${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete workspace");
+      }
+
+      setTenants((prev) => prev.filter((t) => t.id !== deleteTarget.id));
+      setStats((prev) => ({
+        ...prev,
+        totalWorkspaces: Math.max(0, prev.totalWorkspaces - 1),
+      }));
+
+      setFeedbackMessage({
+        text: `Workspace "${deleteTarget.name}" deleted successfully.`,
+        type: "success",
+      });
+
+      setDeleteTarget(null);
+    } catch (err: any) {
+      setFeedbackMessage({
+        text: err.message || "Failed to delete workspace",
+        type: "error",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const filteredTenants = tenants.filter((t) => {
     const matchesSearch =
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -169,14 +296,24 @@ export default function TenantManagementPage() {
           </p>
         </div>
 
-        <button
-          onClick={fetchTenants}
-          disabled={loading}
-          className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-card border border-border hover:bg-muted text-xs font-semibold text-foreground transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-          <span>Refresh Directory</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-all active:scale-95 shadow-md shadow-primary/20 cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create New Tenant</span>
+          </button>
+
+          <button
+            onClick={fetchTenants}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-card border border-border hover:bg-muted text-xs font-semibold text-foreground transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <span>Refresh Directory</span>
+          </button>
+        </div>
       </div>
 
       {/* Feedback Toast */}
@@ -191,7 +328,7 @@ export default function TenantManagementPage() {
           <span>{feedbackMessage.text}</span>
           <button
             onClick={() => setFeedbackMessage(null)}
-            className="text-xs underline hover:no-underline ml-4"
+            className="text-xs underline hover:no-underline ml-4 cursor-pointer"
           >
             Dismiss
           </button>
@@ -259,94 +396,90 @@ export default function TenantManagementPage() {
 
         <div className="rounded-xl border border-border bg-card p-3 sm:p-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400">
-              <Layers className="w-4 h-4" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 border border-primary/20 text-primary">
+              <Users className="w-4 h-4" />
             </div>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">
-              Content
+            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              Coverage
             </span>
           </div>
           <div className="mt-2.5">
             <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider block">
-              Total Posts Generated
+              Approval Ratio
             </span>
-            <h4 className="mt-0.5 text-xl sm:text-2xl font-bold text-sky-400 tracking-tight">
-              {tenants.reduce((sum, t) => sum + t.totalPosts, 0)}
+            <h4 className="mt-0.5 text-xl sm:text-2xl font-bold text-primary tracking-tight">
+              {stats.totalWorkspaces > 0
+                ? `${Math.round((stats.approvedCount / stats.totalWorkspaces) * 100)}%`
+                : "0%"}
             </h4>
           </div>
         </div>
       </div>
 
-      {/* 3. Search and Status Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      {/* 3. Search and Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-card border border-border shadow-sm">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search by business, workspace, or owner email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl bg-muted border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
+            placeholder="Search by brand name, workspace, or owner email..."
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-muted/60 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
           />
         </div>
 
-        <div className="flex items-center gap-1.5 self-start sm:self-auto">
-          {(["ALL", "APPROVED", "PENDING"] as const).map((tab) => (
+        <div className="flex items-center gap-1.5 self-end sm:self-auto">
+          {(["ALL", "APPROVED", "PENDING"] as const).map((filter) => (
             <button
-              key={tab}
-              onClick={() => setStatusFilter(tab)}
+              key={filter}
+              onClick={() => setStatusFilter(filter)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                statusFilter === tab
-                  ? "bg-amber-500 text-zinc-950 shadow-xs"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
+                statusFilter === filter
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab === "ALL" ? "All Tenants" : tab === "APPROVED" ? "Approved" : "Pending"}
+              {filter === "ALL" ? "All" : filter === "APPROVED" ? "Approved" : "Pending"}
             </button>
           ))}
         </div>
       </div>
 
-      {/* 4. Tenants List Table */}
+      {/* 4. Tenants Roster Cards */}
       {loading ? (
-        <div className="space-y-3 animate-pulse">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-28 rounded-2xl bg-card border border-border" />
-          ))}
-        </div>
-      ) : error ? (
-        <div className="p-8 rounded-2xl bg-card border border-amber-500/30 text-center space-y-3">
-          <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto" />
-          <h3 className="text-sm font-bold text-foreground">Failed to Load Tenants</h3>
-          <p className="text-xs text-muted-foreground">{error}</p>
-          <button
-            onClick={fetchTenants}
-            className="px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold"
-          >
-            Retry
-          </button>
+        <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-border bg-card/40 space-y-3">
+          <Loader2 className="w-7 h-7 text-primary animate-spin" />
+          <p className="text-xs text-muted-foreground">Loading registered business workspaces...</p>
         </div>
       ) : filteredTenants.length === 0 ? (
-        <div className="p-12 rounded-2xl bg-card border border-border text-center space-y-3">
-          <Building2 className="w-10 h-10 text-muted-foreground mx-auto" />
-          <h3 className="text-sm font-bold text-foreground">No Tenants Found</h3>
-          <p className="text-xs text-muted-foreground">
-            No workspaces matched your search and filter criteria.
+        <div className="flex flex-col items-center justify-center py-20 rounded-2xl border border-dashed border-border bg-card/40 text-center px-4 space-y-3">
+          <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground">
+            <Building2 className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-foreground">No matching workspaces</h3>
+          <p className="text-xs text-muted-foreground max-w-sm">
+            {searchQuery
+              ? `No registered tenants matched "${searchQuery}". Try adjusting your search query.`
+              : "No business workspaces enrolled yet. Click 'Create New Tenant' above to add your first client."}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
           {filteredTenants.map((t) => {
-            const isExpanded = expandedTenantId === t.id;
             const isUpdating = updatingId === t.id;
+            const isInspecting = inspectingId === t.id;
+            const isExpanded = expandedTenantId === t.id;
 
             return (
               <div
                 key={t.id}
-                className="rounded-2xl border border-border bg-card p-4 sm:p-5 backdrop-blur-xl shadow-sm transition-all hover:border-amber-500/30 space-y-4"
+                className={`rounded-2xl border bg-card p-4 sm:p-5 shadow-sm transition-all hover:border-primary/30 ${
+                  t.isApproved ? "border-border" : "border-amber-500/30 bg-amber-500/[0.02]"
+                }`}
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  {/* Business & Owner Info */}
+                  {/* Business & Tenant Info */}
                   <div className="space-y-1.5 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm sm:text-base font-bold text-foreground truncate">
@@ -390,8 +523,8 @@ export default function TenantManagementPage() {
                   </div>
 
                   {/* Actions & Metrics */}
-                  <div className="flex items-center gap-3 self-end lg:self-center shrink-0">
-                    <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground border-r border-border pr-4">
+                  <div className="flex items-center gap-2.5 sm:gap-3 self-end lg:self-center shrink-0">
+                    <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground border-r border-border pr-3 sm:pr-4">
                       <span className="flex items-center gap-1" title="Team Members">
                         <Users className="w-3.5 h-3.5 text-primary" />
                         <strong className="text-foreground">{t.totalMembers}</strong>
@@ -402,11 +535,26 @@ export default function TenantManagementPage() {
                       </span>
                     </div>
 
+                    {/* 1-Click Workspace Impersonation ("Inspect") */}
+                    <button
+                      onClick={() => handleInspectWorkspace(t.id)}
+                      disabled={isInspecting}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                      title="Jump into this customer's live workspace view"
+                    >
+                      {isInspecting ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Eye className="w-3.5 h-3.5" />
+                      )}
+                      <span>Inspect</span>
+                    </button>
+
                     {/* Approve / Suspend Toggle Button */}
                     <button
                       onClick={() => handleToggleApproval(t.id, t.isApproved)}
                       disabled={isUpdating}
-                      className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50 ${
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all active:scale-95 cursor-pointer disabled:opacity-50 ${
                         t.isApproved
                           ? "bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/25"
                           : "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/25"
@@ -420,6 +568,15 @@ export default function TenantManagementPage() {
                         <ShieldCheck className="w-3.5 h-3.5" />
                       )}
                       <span>{t.isApproved ? "Suspend" : "Approve"}</span>
+                    </button>
+
+                    {/* Delete Tenant Button */}
+                    <button
+                      onClick={() => setDeleteTarget({ id: t.id, name: t.businessName || t.name })}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      title="Delete Tenant Workspace"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
 
                     {/* Expand Members Button */}
@@ -475,7 +632,125 @@ export default function TenantManagementPage() {
           })}
         </div>
       )}
+
+      {/* Create Tenant Workspace Modal */}
+      <CustomModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Onboard New Tenant Workspace"
+        description="Provision a dedicated business workspace with brand kit, subscription, and owner account."
+        confirmText={creating ? "Creating Workspace..." : "Create Tenant Workspace"}
+        onConfirm={() => {
+          const formElement = document.getElementById("tenant-create-form") as HTMLFormElement;
+          formElement?.requestSubmit();
+        }}
+        isLoading={creating}
+      >
+        <form
+          id="tenant-create-form"
+          onSubmit={handleCreateTenant}
+          className="space-y-4 pt-2"
+        >
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1">
+              Business / Brand Name *
+            </label>
+            <input
+              type="text"
+              required
+              value={createForm.businessName}
+              onChange={(e) => setCreateForm({ ...createForm, businessName: e.target.value })}
+              placeholder="e.g. Salon De Royal"
+              className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Owner Full Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={createForm.ownerName}
+                onChange={(e) => setCreateForm({ ...createForm, ownerName: e.target.value })}
+                placeholder="e.g. Amitav Ghosh"
+                className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Owner Email Address *
+              </label>
+              <input
+                type="email"
+                required
+                value={createForm.ownerEmail}
+                onChange={(e) => setCreateForm({ ...createForm, ownerEmail: e.target.value })}
+                placeholder="amitav@salonderoyal.in"
+                className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Business Phone (WhatsApp)
+              </label>
+              <input
+                type="tel"
+                value={createForm.phoneNumber}
+                onChange={(e) => setCreateForm({ ...createForm, phoneNumber: e.target.value })}
+                placeholder="+91 98300 12345"
+                className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-foreground mb-1">
+                Initial Subscription Plan
+              </label>
+              <select
+                value={createForm.plan}
+                onChange={(e) => setCreateForm({ ...createForm, plan: e.target.value })}
+                className="w-full px-3 py-2 rounded-xl bg-muted/50 border border-border text-xs text-foreground focus:outline-none focus:border-primary/50 transition-colors"
+              >
+                <option value="starter">Starter Plan (₹999 / mo)</option>
+                <option value="growth">Growth Plan (₹2,499 / mo)</option>
+                <option value="agency">Agency Suite (₹6,999 / mo)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="checkbox"
+              id="isApproved"
+              checked={createForm.isApproved}
+              onChange={(e) => setCreateForm({ ...createForm, isApproved: e.target.checked })}
+              className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+            />
+            <label htmlFor="isApproved" className="text-xs text-foreground font-medium cursor-pointer">
+              Automatically activate workspace (skip manual approval review)
+            </label>
+          </div>
+        </form>
+      </CustomModal>
+
+      {/* Delete Workspace Confirmation Modal */}
+      <CustomModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete Tenant Workspace"
+        description={`Are you sure you want to delete "${deleteTarget?.name}"? All content drafts, social tokens, brand identity kits, and usage ledgers for this workspace will be permanently wiped.`}
+        confirmText={deleting ? "Deleting..." : "Permanently Delete"}
+        isDestructive={true}
+        isLoading={deleting}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }
-

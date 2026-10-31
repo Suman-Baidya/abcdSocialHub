@@ -28,6 +28,7 @@ import { GuestPortalView } from "@/components/dashboard/GuestPortalView";
 import { resolveDashboardType, DashboardType, RoleType } from "@/lib/roles";
 
 interface DashboardData {
+  isImpersonating?: boolean;
   workspace: {
     id: string;
     name: string;

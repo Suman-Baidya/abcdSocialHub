@@ -182,12 +182,12 @@ export const authOptions: AuthOptions = {
       }
 
       if (token.email) {
-        const email = token.email as string;
+        const email = (token.email as string).toLowerCase().trim();
         const isDeveloper = DEVELOPER_EMAILS.includes(email);
         const isSuperAdmin = isDeveloper || SUPER_ADMIN_EMAILS.includes(email);
 
-        const dbUser = await prisma.user.findUnique({
-          where: { email },
+        const dbUser = await prisma.user.findFirst({
+          where: { email: { equals: email, mode: "insensitive" } },
           include: {
             memberships: {
               include: {
@@ -202,8 +202,8 @@ export const authOptions: AuthOptions = {
         if (dbUser) {
           token.id = dbUser.id;
           token.name = dbUser.name || token.name;
-          token.picture = dbUser.image || token.picture;
-          token.image = dbUser.image || token.image;
+          token.picture = dbUser.image;
+          token.image = dbUser.image;
           token.phone = dbUser.phone;
           token.isDeveloper = isDeveloper;
           token.isSuperAdmin = isSuperAdmin;
@@ -237,7 +237,7 @@ export const authOptions: AuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.name = (token.name as string) || session.user.name;
-        session.user.image = (token.image as string) || (token.picture as string) || session.user.image;
+        session.user.image = token.image !== undefined ? (token.image as string | null) : session.user.image;
         (session.user as any).phone = token.phone;
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;

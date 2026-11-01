@@ -7,20 +7,28 @@ import { prisma } from "@abcd/db";
 const profileUpdateSchema = z.object({
   name: z.string().trim().min(1, "Name cannot be empty").max(100, "Name is too long").optional(),
   phone: z.string().trim().max(25, "Phone number is too long").optional().nullable(),
-  image: z.string().max(500000, "Avatar payload exceeds maximum size").optional().nullable(),
+  image: z.string().max(10 * 1024 * 1024, "Avatar payload exceeds maximum size").optional().nullable(),
 });
 
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as any)?.id;
+    const email = session?.user?.email?.toLowerCase().trim();
 
-    if (!session?.user?.email || !userId) {
+    if (!email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    const userId = (session?.user as any)?.id;
+
+    // Bulletproof dual-key lookup: by id OR by case-insensitive email
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          ...(userId ? [{ id: userId }] : []),
+          { email: { equals: email, mode: "insensitive" } },
+        ],
+      },
       include: {
         memberships: {
           include: {
@@ -39,7 +47,7 @@ export async function GET(req: NextRequest) {
     const membership = user.memberships[0];
     const organizationName = membership?.organization?.name || "Personal Workspace";
     const workspaceName = membership?.organization?.workspaces[0]?.name || "Primary Brand";
-    const role = (session.user as any)?.role || membership?.role || "TENANT_ADMIN";
+    const role = (session?.user as any)?.role || membership?.role || "TENANT_ADMIN";
 
     return NextResponse.json({
       user: {
@@ -67,10 +75,26 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+    const email = session?.user?.email?.toLowerCase().trim();
+
+    if (!email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const userId = (session?.user as any)?.id;
 
-    if (!session?.user?.email || !userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Bulletproof dual-key lookup: by id OR by case-insensitive email
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          ...(userId ? [{ id: userId }] : []),
+          { email: { equals: email, mode: "insensitive" } },
+        ],
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const body = await req.json();
@@ -91,17 +115,17 @@ export async function PATCH(req: NextRequest) {
     if (image !== undefined) dataToUpdate.image = image || null;
 
     const updatedUser = await prisma.user.update({
-      where: { id: userId },
+      where: { id: user.id },
       data: dataToUpdate,
     });
 
     // Write audit log if workspace exists
-    const workspaceId = (session.user as any)?.workspaceId;
+    const workspaceId = (session?.user as any)?.workspaceId;
     if (workspaceId) {
       await prisma.auditLog.create({
         data: {
           workspaceId,
-          userId,
+          userId: user.id,
           action: "PROFILE_UPDATED",
           details: {
             updatedFields: Object.keys(dataToUpdate),

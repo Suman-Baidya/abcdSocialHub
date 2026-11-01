@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   User,
@@ -103,6 +104,7 @@ const PRESET_AVATARS: PresetAvatar[] = [
 ];
 
 export default function UserProfilePage() {
+  const router = useRouter();
   const { data: session, update: updateSession } = useSession();
   const { toast } = useToast();
 
@@ -157,7 +159,7 @@ export default function UserProfilePage() {
     fetchProfile();
   }, [fetchProfile]);
 
-  // Handle image upload from computer
+  // Handle image upload from computer with canvas compression
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -167,15 +169,50 @@ export default function UserProfilePage() {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("File Too Large", "Profile picture must be under 2 MB.");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File Too Large", "Profile picture must be under 5 MB.");
       return;
     }
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setImage(reader.result as string);
-      toast.success("Image Selected", "Preview updated. Click 'Save Changes' to apply.");
+    reader.onload = (event) => {
+      const rawData = event.target?.result as string;
+      const img = new window.Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement("canvas");
+          const maxDim = 400;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.88);
+            setImage(compressedDataUrl);
+            toast.success("Image Selected", "Preview updated. Click 'Save Profile Changes' to apply.");
+          } else {
+            setImage(rawData);
+          }
+        } catch {
+          setImage(rawData);
+        }
+      };
+      img.src = rawData;
     };
     reader.readAsDataURL(file);
   };
@@ -213,6 +250,9 @@ export default function UserProfilePage() {
         phone: data.user.phone,
         image: data.user.image,
       });
+
+      router.refresh();
+      await fetchProfile();
 
       toast.success("Profile Updated", "Your personal details and avatar have been saved.");
     } catch (err: any) {

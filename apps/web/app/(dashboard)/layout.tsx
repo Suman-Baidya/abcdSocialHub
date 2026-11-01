@@ -26,6 +26,7 @@ import {
   Moon,
   Building2,
   Loader2,
+  User,
 } from "lucide-react";
 import { AuthRestrictionModal } from "@/components/auth/AuthRestrictionModal";
 import { WorkspaceSwitcher } from "@/components/dashboard/WorkspaceSwitcher";
@@ -500,7 +501,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    session?.user?.name ? session.user.name[0].toUpperCase() : "U"
+                    <User className="w-5 h-5 text-primary stroke-[2]" />
                   )}
                 </Link>
               </div>
@@ -515,7 +516,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      session?.user?.name ? session.user.name[0].toUpperCase() : "U"
+                      <User className="w-4 h-4 text-primary stroke-[2]" />
                     )}
                   </div>
                   <div className="flex flex-col truncate">
@@ -630,7 +631,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    session?.user?.name ? session.user.name[0].toUpperCase() : "U"
+                    <User className="w-4 h-4 text-primary stroke-[2]" />
                   )}
                 </div>
 

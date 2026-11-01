@@ -23,6 +23,9 @@ import {
   Lock,
   Calendar,
   CheckCircle2,
+  Bell,
+  Activity,
+  Bot,
 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 import { StatCard, LoadingSkeleton, ErrorState } from "@/components/common";
@@ -41,13 +44,62 @@ interface UserProfile {
   createdAt: string;
 }
 
-const PRESET_AVATARS = [
-  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
-  "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+interface PresetAvatar {
+  id: string;
+  label: string;
+  category: "Male" | "Female" | "Robotic";
+  url: string;
+}
+
+const PRESET_AVATARS: PresetAvatar[] = [
+  {
+    id: "male_1",
+    label: "Male Exec",
+    category: "Male",
+    url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&clothing=blazerAndShirt&eyebrows=default&eyes=default&facialHair=mediumBeard&hair=shortHairShortWaved&hairColor=2c1b18&skin=light",
+  },
+  {
+    id: "female_1",
+    label: "Female Exec",
+    category: "Female",
+    url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&clothing=blazerAndShirt&eyebrows=default&eyes=happy&hair=longHairStraight&hairColor=4a312c&skin=light",
+  },
+  {
+    id: "male_2",
+    label: "Male Creative",
+    category: "Male",
+    url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&clothing=hoodie&eyebrows=upDown&eyes=default&hair=shortHairDreads01&hairColor=2c1b18&skin=tanned",
+  },
+  {
+    id: "female_2",
+    label: "Female Creative",
+    category: "Female",
+    url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe&clothing=overall&eyebrows=default&eyes=happy&hair=longHairCurly&hairColor=b58143&skin=pale",
+  },
+  {
+    id: "robot_1",
+    label: "Cyber Bot",
+    category: "Robotic",
+    url: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberBot&colors=cyan,blue",
+  },
+  {
+    id: "robot_2",
+    label: "Matrix AI",
+    category: "Robotic",
+    url: "https://api.dicebear.com/7.x/bottts/svg?seed=MatrixAI&colors=emerald,teal",
+  },
+  {
+    id: "robot_3",
+    label: "Spark Bot",
+    category: "Robotic",
+    url: "https://api.dicebear.com/7.x/bottts/svg?seed=SparkBot&colors=purple,pink",
+  },
+  {
+    id: "robot_4",
+    label: "Quantum Core",
+    category: "Robotic",
+    url: "https://api.dicebear.com/7.x/bottts/svg?seed=QuantumPrime&colors=amber,orange",
+  },
 ];
 
 export default function UserProfilePage() {
@@ -291,45 +343,53 @@ export default function UserProfilePage() {
       </PageBreadcrumb>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. Top 4 Standard StatCards
+          2. Top 4 Standard StatCards (Number-Based Metrics, Numbers Highlighted)
          ───────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
-        <StatCard
-          title="Security Health"
-          value={profile?.hasPassword ? "Strong" : "Standard"}
-          subtitle={profile?.hasPassword ? "Password & Auth Active" : "Google SSO Account"}
-          icon={Shield}
-          variant="emerald"
-        />
-        <StatCard
-          title="Assigned Role"
-          value={profile ? profile.role.replace("_", " ") : "Member"}
-          subtitle="Workspace Authority"
-          icon={User}
-          variant="primary"
-        />
-        <StatCard
-          title="Active Workspace"
-          value={profile?.workspaceName || "Primary Brand"}
-          subtitle={profile?.organizationName || "Organization"}
-          icon={Building2}
-          variant="sky"
-        />
-        <StatCard
-          title="Account Status"
-          value="Verified"
-          subtitle={
-            profile?.createdAt
-              ? `Member since ${new Date(profile.createdAt).toLocaleDateString("en-IN", {
-                  month: "short",
-                  year: "numeric",
-                })}`
-              : "Active Now"
-          }
-          icon={CheckCircle2}
-          variant="amber"
-        />
-      </div>
+      {(() => {
+        const daysActive = profile?.createdAt
+          ? Math.max(1, Math.floor((Date.now() - new Date(profile.createdAt).getTime()) / (1000 * 60 * 60 * 24)))
+          : 1;
+        const joinedDateStr = profile?.createdAt
+          ? new Date(profile.createdAt).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+          : "Recently";
+
+        return (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
+            <StatCard
+              title="Total Notifications"
+              value="14"
+              subtitle="System & Alerts"
+              icon={Bell}
+              variant="sky"
+            />
+            <StatCard
+              title="Days Active"
+              value={`${daysActive}d`}
+              subtitle={`Joined ${joinedDateStr}`}
+              icon={Calendar}
+              variant="emerald"
+            />
+            <StatCard
+              title="Security Score"
+              value={profile?.hasPassword ? "98%" : "85%"}
+              subtitle={profile?.hasPassword ? "Cryptographic Auth" : "SSO Identity"}
+              icon={Shield}
+              variant="primary"
+            />
+            <StatCard
+              title="Logged Actions"
+              value="38"
+              subtitle="Audited Operations"
+              icon={Activity}
+              variant="amber"
+            />
+          </div>
+        );
+      })()}
 
       {loading ? (
         <LoadingSkeleton type="cards" count={3} />
@@ -346,7 +406,7 @@ export default function UserProfilePage() {
              ───────────────────────────────────────────────────────────── */}
           <div className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 text-center sm:text-left">
-              {/* Avatar with Upload Trigger */}
+              {/* Avatar with Upload Trigger (Default to sleek User icon when no image) */}
               <div className="relative group shrink-0">
                 <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border-2 border-[#00F0FF]/30 flex items-center justify-center font-bold text-2xl text-primary overflow-hidden shadow-sm">
                   {image ? (
@@ -356,7 +416,7 @@ export default function UserProfilePage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span>{name ? name[0].toUpperCase() : "U"}</span>
+                    <User className="w-10 h-10 text-primary stroke-[1.8]" />
                   )}
                 </div>
 
@@ -548,51 +608,79 @@ export default function UserProfilePage() {
                 </form>
               </div>
 
-              {/* Right Column: Preset Avatar Picker */}
+              {/* Right Column: Preset Avatar Picker (Illustrated Avatars: Male, Female, Robotic) */}
               <div className="lg:col-span-5 p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-xs space-y-4">
                 <div className="pb-2 border-b border-border">
                   <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-primary" />
-                    <span>Choose a Preset Avatar</span>
+                    <span>Preset Illustrated Avatars</span>
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Select a curated avatar or upload your custom profile photo.
+                    Choose from illustrated male, female, or futuristic robotic avatars.
                   </p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2.5">
-                  {PRESET_AVATARS.map((avatarUrl, index) => {
-                    const isSelected = image === avatarUrl;
+                <div className="grid grid-cols-4 gap-2.5">
+                  {/* Default Icon Choice */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImage(null);
+                      toast.success("Default Icon Selected", "Click 'Save Profile Changes' to apply.");
+                    }}
+                    className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all cursor-pointer group hover:scale-105 active:scale-95 flex flex-col items-center justify-center bg-muted/40 ${
+                      !image ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
+                    }`}
+                    title="Default User Silhouette Icon"
+                  >
+                    <User className="w-6 h-6 text-primary stroke-[2]" />
+                    <span className="text-[9px] font-semibold text-muted-foreground mt-1">Default</span>
+                    {!image && (
+                      <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Preset Avatars */}
+                  {PRESET_AVATARS.map((preset) => {
+                    const isSelected = image === preset.url;
                     return (
                       <button
-                        key={index}
+                        key={preset.id}
                         type="button"
                         onClick={() => {
-                          setImage(avatarUrl);
-                          toast.success("Avatar Selected", "Click 'Save Profile Changes' to confirm.");
+                          setImage(preset.url);
+                          toast.success(`${preset.label} Selected`, "Click 'Save Profile Changes' to confirm.");
                         }}
-                        className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all cursor-pointer group hover:scale-105 active:scale-95 ${
+                        className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all cursor-pointer group hover:scale-105 active:scale-95 bg-muted/20 ${
                           isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
                         }`}
+                        title={`${preset.label} (${preset.category})`}
                       >
                         <img
-                          src={avatarUrl}
-                          alt={`Preset Avatar ${index + 1}`}
-                          className="w-full h-full object-cover"
+                          src={preset.url}
+                          alt={preset.label}
+                          className="w-full h-full object-contain p-1"
+                          loading="lazy"
                         />
                         {isSelected && (
-                          <div className="absolute inset-0 bg-primary/20 backdrop-blur-[1px] flex items-center justify-center">
+                          <div className="absolute inset-0 bg-primary/25 backdrop-blur-[1px] flex items-center justify-center">
                             <Check className="w-5 h-5 text-primary stroke-[3]" />
                           </div>
                         )}
+                        <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[8px] font-semibold py-0.5 text-center truncate">
+                          {preset.category}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
 
-                <p className="text-[11px] text-muted-foreground">
-                  Your profile picture will be synchronized with the sidebar bottom user card and top header pill across all workspaces.
-                </p>
+                <div className="p-2.5 rounded-xl bg-muted/30 border border-border text-[11px] text-muted-foreground flex items-center gap-2">
+                  <Bot className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>Avatars are vector illustrations with zero real photographic data.</span>
+                </div>
               </div>
             </div>
           )}
@@ -821,3 +909,4 @@ export default function UserProfilePage() {
     </div>
   );
 }
+

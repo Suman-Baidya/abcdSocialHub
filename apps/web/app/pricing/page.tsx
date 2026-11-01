@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@abcd/db";
+import { getSiteSettingByKey } from "@abcd/db";
 import { DEFAULT_SITE_SETTINGS, SiteSettings } from "@/lib/site-settings";
 import { PublicNavbar } from "@/components/public/PublicNavbar";
 import { PublicFooter } from "@/components/public/PublicFooter";
@@ -19,9 +19,7 @@ export const dynamic = "force-dynamic";
 
 async function getSiteSettings(): Promise<SiteSettings> {
   try {
-    const setting = await prisma.siteSetting.findUnique({
-      where: { key: "public_site_cms" },
-    });
+    const setting = await getSiteSettingByKey("public_site_cms");
 
     if (!setting?.data) return DEFAULT_SITE_SETTINGS;
 

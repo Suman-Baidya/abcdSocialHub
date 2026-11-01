@@ -1,11 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { prisma } from "@abcd/db";
+import { getSiteSettingByKey } from "@abcd/db";
 import { DEFAULT_SITE_SETTINGS, SiteSettings } from "@/lib/site-settings";
 import { PublicNavbar } from "@/components/public/PublicNavbar";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
-import { HeroDashboardSlider } from "@/components/public/HeroDashboardSlider";
+import { MacBookShowcase } from "@/components/public/MacBookShowcase";
 import {
   Sparkles,
   Smartphone,
@@ -34,9 +34,7 @@ export const dynamic = "force-dynamic";
 
 async function getSiteSettings(): Promise<SiteSettings> {
   try {
-    const setting = await prisma.siteSetting.findUnique({
-      where: { key: "public_site_cms" },
-    });
+    const setting = await getSiteSettingByKey("public_site_cms");
 
     if (!setting?.data) return DEFAULT_SITE_SETTINGS;
 
@@ -135,11 +133,11 @@ export default async function HomePage() {
           </div>
 
           {/* ========================================================= */}
-          {/* SOCIAL MEDIA SHOWCASE (Single-Line, max-w-6xl matching width) */}
+          {/* SOCIAL MEDIA SHOWCASE (Icons only on mobile, text on desktop) */}
           {/* ========================================================= */}
-          <div className="mt-10 sm:mt-12 max-w-6xl mx-auto rounded-2xl bg-card/75 border border-border/80 backdrop-blur-xl p-3.5 sm:p-4 shadow-sm hover:border-primary/30 transition-all duration-300">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-4">
-              <div className="text-center lg:text-left shrink-0">
+          <div className="mt-10 sm:mt-12 max-w-6xl mx-auto rounded-2xl bg-card/75 border border-border/80 backdrop-blur-xl p-3 sm:p-4 shadow-sm hover:border-primary/30 transition-all duration-300">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+              <div className="text-center sm:text-left shrink-0">
                 <span className="text-[10px] font-mono uppercase tracking-widest text-primary font-bold block">
                   Official Network Integrations
                 </span>
@@ -148,36 +146,65 @@ export default async function HomePage() {
                 </span>
               </div>
 
-              {/* 5 Social Media Badges in ONE neat horizontal line */}
-              <div className="flex items-center justify-center gap-2 sm:gap-3 flex-nowrap overflow-x-auto no-scrollbar max-w-full py-0.5">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-pink-500/10 border border-pink-500/25 text-foreground hover:border-pink-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0">
-                  <Instagram className="w-3.5 h-3.5 text-pink-500 shrink-0" />
-                  <span>Instagram Business</span>
+              {/* 5 Social Media Badges (Icons only on mobile, full label on desktop) */}
+              <div className="flex items-center justify-center gap-2 sm:gap-2.5 flex-nowrap py-0.5">
+                <div
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-pink-500/10 border border-pink-500/25 text-foreground hover:border-pink-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0 cursor-default"
+                  title="Instagram Business"
+                >
+                  <Instagram className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-pink-500 shrink-0" />
+                  <span className="hidden sm:inline">Instagram Business</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/25 text-foreground hover:border-blue-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0">
-                  <Facebook className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                  <span>Facebook Pages</span>
+                <div
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/25 text-foreground hover:border-blue-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0 cursor-default"
+                  title="Facebook Pages"
+                >
+                  <Facebook className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-blue-500 shrink-0" />
+                  <span className="hidden sm:inline">Facebook Pages</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/25 text-foreground hover:border-sky-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0">
-                  <Linkedin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <span>LinkedIn</span>
+                <div
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/25 text-foreground hover:border-sky-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0 cursor-default"
+                  title="LinkedIn"
+                >
+                  <Linkedin className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-sky-400 shrink-0" />
+                  <span className="hidden sm:inline">LinkedIn</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-500/10 border border-zinc-500/25 text-foreground hover:border-zinc-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0">
-                  <Twitter className="w-3.5 h-3.5 text-zinc-300 shrink-0" />
-                  <span>X (Twitter)</span>
+                <div
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-zinc-500/10 border border-zinc-500/25 text-foreground hover:border-zinc-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0 cursor-default"
+                  title="X (Twitter)"
+                >
+                  <Twitter className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-zinc-300 shrink-0" />
+                  <span className="hidden sm:inline">X (Twitter)</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/25 text-foreground hover:border-red-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0">
-                  <Youtube className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                  <span>YouTube Shorts</span>
+                <div
+                  className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/25 text-foreground hover:border-red-500/50 hover:-translate-y-0.5 transition-all text-xs font-semibold shrink-0 cursor-default"
+                  title="YouTube Shorts"
+                >
+                  <Youtube className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-red-500 shrink-0" />
+                  <span className="hidden sm:inline">YouTube Shorts</span>
                 </div>
               </div>
             </div>
           </div>
+        </section>
 
-          {/* ========================================================= */}
-          {/* INTERACTIVE SLIDING DASHBOARD SHOWCASE (Spacious)         */}
-          {/* ========================================================= */}
-          <HeroDashboardSlider />
+        {/* ========================================================= */}
+        {/* DEDICATED SHOWCASE SECTION (MacBook Desktop + Mobile Phone) */}
+        {/* ========================================================= */}
+        <section className="py-12 sm:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+          <div className="max-w-3xl mx-auto mb-8 sm:mb-12">
+            <span className="text-xs font-mono uppercase tracking-widest text-primary font-bold">
+              Full Autopilot Cockpit
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight mt-2">
+              Everything you need to automate your social brand
+            </h2>
+            <p className="text-xs sm:text-base text-muted-foreground mt-2.5">
+              From raw voice idea to approved multi-channel campaign in seconds. Zero design skills required.
+            </p>
+          </div>
+
+          <MacBookShowcase />
         </section>
 
         {/* ========================================================= */}

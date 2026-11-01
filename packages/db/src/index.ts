@@ -273,4 +273,26 @@ export async function submitApprovalDecision(
   }
 }
 
+/**
+ * Public & Global Site Settings Helper
+ */
+export async function getSiteSettingByKey(key: string): Promise<any | null> {
+  try {
+    return await (prisma as any).siteSetting.findUnique({
+      where: { key },
+    });
+  } catch (err) {
+    console.warn(`[getSiteSettingByKey] failed for key: ${key}`, err);
+    return null;
+  }
+}
+
+export async function upsertSiteSetting(key: string, data: any): Promise<any> {
+  return await (prisma as any).siteSetting.upsert({
+    where: { key },
+    update: { data },
+    create: { key, data },
+  });
+}
+
 export * from "@prisma/client";

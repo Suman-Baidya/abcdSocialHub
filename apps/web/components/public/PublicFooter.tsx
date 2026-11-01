@@ -5,7 +5,6 @@ import {
   Facebook,
   Linkedin,
   Twitter,
-  Youtube,
   ShieldCheck,
   CheckCircle2,
   Mail,
@@ -31,9 +30,6 @@ interface PublicFooterProps {
 }
 
 export function PublicFooter({ general }: PublicFooterProps) {
-  const brandName = general?.brandName || "ABCD Social";
-  const tagline =
-    general?.tagline || "Autonomous Multi-Tenant Marketing & Publishing";
   const email = general?.contactEmail || "support@abcd.social";
   const phone = general?.contactPhone || "+91 98300 12345";
   const copyright =
@@ -43,27 +39,31 @@ export function PublicFooter({ general }: PublicFooterProps) {
     <footer className="border-t border-border bg-card/60 backdrop-blur-xl text-muted-foreground text-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 sm:gap-12">
-          {/* Brand Info & Vision */}
-          <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-card border border-border p-1 shadow-sm flex items-center justify-center">
+          {/* Brand Info: Logo first, then "ABCD Social Hub" under it, then short description */}
+          <div className="lg:col-span-2 space-y-3.5">
+            <Link href="/" className="inline-flex flex-col items-start gap-2 group cursor-pointer">
+              {/* 1. Logo First */}
+              <div className="relative h-10 sm:h-12 w-auto transition-transform group-hover:scale-105">
                 <Image
-                  src="/Blue_Logo.png"
-                  alt={`${brandName} Logo`}
-                  width={36}
-                  height={36}
-                  className="object-contain"
+                  src="/logo_blue.png"
+                  alt="ABCD Social Hub Logo"
+                  width={180}
+                  height={48}
+                  className="h-10 sm:h-12 w-auto object-contain"
                 />
               </div>
-              <span className="font-extrabold text-xl text-foreground tracking-tight">
-                ABCD <span className="text-primary">Social</span>
+              {/* 2. Name Under Logo */}
+              <span className="font-extrabold text-lg sm:text-xl text-foreground tracking-tight">
+                ABCD Social Hub
               </span>
             </Link>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-sm">
-              {tagline}. Designed for Indian businesses, creators, and regional agencies to automate 30 days of branded promotional social content in Bengali & English.
+
+            {/* 3. Short Brand Description */}
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+              Autonomous social marketing & Bengali poster automation for regional businesses.
             </p>
 
-            <div className="space-y-1.5 text-xs">
+            <div className="space-y-1 text-xs pt-1">
               <div className="flex items-center gap-2 text-foreground/80">
                 <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
                 <span>{email}</span>
@@ -75,7 +75,7 @@ export function PublicFooter({ general }: PublicFooterProps) {
             </div>
 
             {/* Social Icons */}
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-2.5 pt-2">
               <a
                 href={general?.socialLinks?.instagram || "https://instagram.com"}
                 target="_blank"
@@ -133,7 +133,7 @@ export function PublicFooter({ general }: PublicFooterProps) {
               </li>
               <li>
                 <Link href="/services#mobile-approvals" className="hover:text-foreground transition-colors">
-                  Mobile WhatsApp Approvals
+                  WhatsApp Approvals
                 </Link>
               </li>
               <li>
@@ -167,7 +167,7 @@ export function PublicFooter({ general }: PublicFooterProps) {
               </li>
               <li>
                 <Link href="/services" className="hover:text-foreground transition-colors">
-                  Regional Marketing Agencies
+                  Regional Agencies
                 </Link>
               </li>
             </ul>
@@ -176,12 +176,12 @@ export function PublicFooter({ general }: PublicFooterProps) {
           {/* Column 3: Trust & Platform */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-              Security & Trust
+              Trust & Invoicing
             </h4>
             <ul className="space-y-2 text-xs">
               <li className="flex items-center gap-1.5 text-foreground/80">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Zero-Exposure Credentials</span>
+                <span>Zero-Exposure Tokens</span>
               </li>
               <li className="flex items-center gap-1.5 text-foreground/80">
                 <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
@@ -211,7 +211,7 @@ export function PublicFooter({ general }: PublicFooterProps) {
             </Link>
             <span className="text-muted-foreground/50">|</span>
             <span className="text-[11px] font-mono text-muted-foreground">
-              Built with Next.js & Cairo Python
+              Built for Indian Commerce
             </span>
           </div>
         </div>

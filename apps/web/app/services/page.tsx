@@ -61,7 +61,6 @@ export default async function ServicesPage() {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20 selection:text-primary">
-      <AnnouncementBar announcement={announcement} />
       <PublicNavbar brandName={general?.brandName} />
 
       <main className="flex-1">
@@ -189,3 +188,4 @@ export default async function ServicesPage() {
     </div>
   );
 }
+

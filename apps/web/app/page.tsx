@@ -71,10 +71,7 @@ export default async function HomePage() {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20 selection:text-primary">
-      {/* Dynamic Announcement Ribbon */}
-      <AnnouncementBar announcement={announcement} />
-
-      {/* Auth-Aware Public Navbar with Blue_Logo.png */}
+      {/* Sticky Top Navbar */}
       <PublicNavbar brandName={general?.brandName} />
 
       <main className="flex-1 overflow-hidden">

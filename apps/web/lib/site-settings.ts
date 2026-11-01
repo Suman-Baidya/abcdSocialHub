@@ -252,3 +252,4 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     },
   },
 };
+

@@ -8,18 +8,15 @@ import { useSession } from "next-auth/react";
 import {
   Menu,
   X,
-  ArrowRight,
   LayoutDashboard,
   Sparkles,
-  ShieldCheck,
-  User,
 } from "lucide-react";
 
 interface PublicNavbarProps {
   brandName?: string;
 }
 
-export function PublicNavbar({ brandName = "ABCD Social" }: PublicNavbarProps) {
+export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProps) {
   const pathname = usePathname();
   const { data: session, status: authStatus } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -27,7 +24,7 @@ export function PublicNavbar({ brandName = "ABCD Social" }: PublicNavbarProps) {
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -49,32 +46,28 @@ export function PublicNavbar({ brandName = "ABCD Social" }: PublicNavbarProps) {
 
   return (
     <header
-      className={`sticky top-0 z-40 transition-all duration-300 ${
+      className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-background/90 backdrop-blur-xl border-b border-border shadow-lg shadow-black/5"
-          : "bg-background/60 backdrop-blur-md border-b border-border/40"
+          ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-md shadow-black/10"
+          : "bg-background/80 backdrop-blur-md border-b border-border/50"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
-        {/* Brand Logo & Name */}
-        <Link href="/" className="flex items-center gap-3 group cursor-pointer">
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-card border border-border/80 shadow-md p-1 group-hover:scale-105 transition-transform overflow-hidden">
+        {/* Brand: ONLY logo_blue.png (Zero additional text) */}
+        <Link
+          href="/"
+          className="flex items-center group cursor-pointer"
+          title="ABCD Social Hub"
+        >
+          <div className="relative h-10 sm:h-12 w-auto flex items-center justify-center transition-transform group-hover:scale-105">
             <Image
-              src="/Blue_Logo.png"
+              src="/logo_blue.png"
               alt="ABCD Social Hub Logo"
-              width={40}
-              height={40}
-              className="object-contain"
+              width={180}
+              height={48}
+              className="h-9 sm:h-11 w-auto object-contain"
               priority
             />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold text-lg sm:text-xl tracking-tight text-foreground flex items-center gap-1">
-              ABCD <span className="text-primary">Social</span>
-            </span>
-            <span className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground hidden sm:inline-block">
-              Marketing Hub
-            </span>
           </div>
         </Link>
 
@@ -101,25 +94,37 @@ export function PublicNavbar({ brandName = "ABCD Social" }: PublicNavbarProps) {
           })}
         </nav>
 
-        {/* Desktop Auth Controls (Dynamic Login vs Dashboard) */}
+        {/* Desktop Auth Controls: "Dashboard" + Circular Profile Picture */}
         <div className="hidden md:flex items-center gap-3">
           {authStatus === "loading" ? (
-            <div className="h-9 w-28 rounded-xl bg-muted/40 animate-pulse" />
+            <div className="h-9 w-24 rounded-xl bg-muted/40 animate-pulse" />
           ) : isAuthenticated ? (
             <div className="flex items-center gap-3">
-              <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 border border-border text-xs text-muted-foreground">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-medium text-foreground truncate max-w-[120px]">
-                  {user?.name || user?.email?.split("@")[0] || "Active"}
-                </span>
-              </div>
               <Link
                 href="/dashboard"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs sm:text-sm font-semibold transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
               >
                 <LayoutDashboard className="w-4 h-4" />
-                <span>Go to Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
+              </Link>
+
+              {/* Circular profile avatar (no name text) */}
+              <Link
+                href="/profile"
+                title="Profile Settings"
+                className="relative w-9 h-9 rounded-full border-2 border-border hover:border-primary overflow-hidden transition-all shadow-xs cursor-pointer flex items-center justify-center bg-muted shrink-0"
+              >
+                {user?.image ? (
+                  <img
+                    src={user.image}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-primary/20 text-primary font-bold text-xs flex items-center justify-center">
+                    {user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+                  </div>
+                )}
               </Link>
             </div>
           ) : (
@@ -141,16 +146,30 @@ export function PublicNavbar({ brandName = "ABCD Social" }: PublicNavbarProps) {
           )}
         </div>
 
-        {/* Mobile Hamburger Toggle */}
+        {/* Mobile View: Dashboard + Profile Circle + Menu Toggle */}
         <div className="md:hidden flex items-center gap-2">
           {isAuthenticated && (
-            <Link
-              href="/dashboard"
-              className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1"
-            >
-              <span>Dashboard</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/dashboard"
+                className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span>Dashboard</span>
+              </Link>
+              <Link
+                href="/profile"
+                className="w-8 h-8 rounded-full border border-border overflow-hidden flex items-center justify-center bg-muted shrink-0"
+              >
+                {user?.image ? (
+                  <img src={user.image} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[10px] font-bold text-primary">
+                    {user?.name?.[0]?.toUpperCase() || "U"}
+                  </span>
+                )}
+              </Link>
+            </div>
           )}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -166,7 +185,7 @@ export function PublicNavbar({ brandName = "ABCD Social" }: PublicNavbarProps) {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-border bg-card/95 backdrop-blur-2xl px-6 py-6 space-y-4 animate-in slide-in-from-top-4 duration-200">
-          <nav className="flex flex-col space-y-3">
+          <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -187,14 +206,27 @@ export function PublicNavbar({ brandName = "ABCD Social" }: PublicNavbarProps) {
 
           <div className="pt-4 border-t border-border flex flex-col gap-2.5">
             {isAuthenticated ? (
-              <Link
-                href="/dashboard"
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-md"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>Open Dashboard</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/dashboard"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary text-primary-foreground font-semibold text-sm shadow-md"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </Link>
+                <Link
+                  href="/profile"
+                  className="w-10 h-10 rounded-full border border-border bg-muted flex items-center justify-center overflow-hidden shrink-0"
+                >
+                  {user?.image ? (
+                    <img src={user.image} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold text-primary">
+                      {user?.name?.[0]?.toUpperCase() || "U"}
+                    </span>
+                  )}
+                </Link>
+              </div>
             ) : (
               <>
                 <Link

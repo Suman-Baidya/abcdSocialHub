@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg_ai1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050B14" />
+      <stop offset="100%" stop-color="#0A1E34" />
+    </linearGradient>
+    <linearGradient id="chassis_ai1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="50%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="visor_ai1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00D4E0" />
+      <stop offset="50%" stop-color="#00F0FF" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <linearGradient id="glow_ai1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#00F0FF" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="160" height="160" rx="36" fill="url(#bg_ai1)" />
+  <circle cx="80" cy="70" r="55" fill="url(#glow_ai1)" />
+
+  <!-- Holographic Matrix Grid Lines (Tech) -->
+  <line x1="20" y1="40" x2="140" y2="40" stroke="#00F0FF" stroke-width="0.5" opacity="0.12" />
+  <line x1="20" y1="80" x2="140" y2="80" stroke="#00F0FF" stroke-width="0.5" opacity="0.12" />
+  <line x1="20" y1="120" x2="140" y2="120" stroke="#00F0FF" stroke-width="0.5" opacity="0.12" />
+  <line x1="40" y1="20" x2="40" y2="140" stroke="#00F0FF" stroke-width="0.5" opacity="0.12" />
+  <line x1="80" y1="20" x2="80" y2="140" stroke="#00F0FF" stroke-width="0.5" opacity="0.12" />
+  <line x1="120" y1="20" x2="120" y2="140" stroke="#00F0FF" stroke-width="0.5" opacity="0.12" />
+
+  <!-- Torso & Aerodynamic Collar -->
+  <path d="M30 160 C34 128 54 116 80 116 C106 116 126 128 130 160 Z" fill="url(#chassis_ai1)" />
+  <path d="M56 126 L80 144 L104 126" stroke="#00F0FF" stroke-width="1.8" fill="none" opacity="0.8" />
+  
+  <!-- Neck Strut -->
+  <rect x="74" y="98" width="12" height="18" rx="3" fill="#475569" />
+
+  <!-- Robot Head / Sleek Aerodynamic Pod -->
+  <path d="M48 54 C48 32 62 26 80 26 C98 26 112 32 112 54 C112 76 100 96 80 96 C60 96 48 76 48 54 Z" fill="url(#chassis_ai1)" stroke="#475569" stroke-width="1.5" />
+  
+  <!-- Ear Audio Transceivers -->
+  <rect x="42" y="52" width="6" height="18" rx="2" fill="#00F0FF" opacity="0.8" />
+  <rect x="112" y="52" width="6" height="18" rx="2" fill="#00F0FF" opacity="0.8" />
+
+  <!-- Illuminated Visor -->
+  <path d="M54 50 C54 44 65 42 80 42 C95 42 106 44 106 50 C106 64 96 68 80 68 C64 68 54 64 54 50 Z" fill="#020617" stroke="#00F0FF" stroke-width="1.5" />
+  
+  <!-- Optical Visor Glow Stream -->
+  <ellipse cx="80" cy="54" rx="22" ry="5.5" fill="url(#visor_ai1)" />
+  <circle cx="70" cy="54" r="2.5" fill="#FFFFFF" />
+  <circle cx="90" cy="54" r="2.5" fill="#FFFFFF" />
+
+  <!-- Status Pulse Indicator -->
+  <circle cx="80" cy="82" r="3" fill="#00F0FF" />
+  <path d="M72 82 Q80 86 88 82" stroke="#00F0FF" stroke-width="1" fill="none" opacity="0.6" />
+  
+  <!-- Forehead AI Neural Node -->
+  <polygon points="80,32 83,36 80,40 77,36" fill="#00F0FF" />
+</svg>

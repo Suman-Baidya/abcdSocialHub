@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg_fe1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E1B4B" />
+      <stop offset="100%" stop-color="#312E81" />
+    </linearGradient>
+    <linearGradient id="suit_fe1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4338CA" />
+      <stop offset="100%" stop-color="#312E81" />
+    </linearGradient>
+    <linearGradient id="skin_fe1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FDE2D0" />
+      <stop offset="100%" stop-color="#F4BA98" />
+    </linearGradient>
+    <linearGradient id="hair_fe1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D1A16" />
+      <stop offset="100%" stop-color="#190F0C" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="160" height="160" rx="36" fill="url(#bg_fe1)" />
+  <circle cx="80" cy="55" r="50" fill="#818CF8" opacity="0.18" />
+
+  <!-- Back Hair -->
+  <path d="M46 54 C46 95 50 120 54 130 C58 120 58 80 58 60 Z" fill="url(#hair_fe1)" />
+  <path d="M114 54 C114 95 110 120 106 130 C102 120 102 80 102 60 Z" fill="url(#hair_fe1)" />
+
+  <!-- Shoulders & Blazer -->
+  <path d="M24 160 C28 124 50 114 80 114 C110 114 132 124 136 160 Z" fill="url(#suit_fe1)" />
+  
+  <!-- Blouse & V-Neck -->
+  <polygon points="80,135 68,114 92,114" fill="#EDE9FE" />
+  <!-- Lapels -->
+  <path d="M68 114 L78 142 L66 160" stroke="#312E81" stroke-width="2.5" fill="none" />
+  <path d="M92 114 L82 142 L94 160" stroke="#312E81" stroke-width="2.5" fill="none" />
+  
+  <!-- Subtle Pearl Pendant -->
+  <circle cx="80" cy="128" r="2.5" fill="#FFFFFF" />
+
+  <!-- Neck -->
+  <path d="M72 94 L88 94 L88 116 L72 116 Z" fill="#F4BA98" />
+  
+  <!-- Face -->
+  <path d="M56 56 C56 36 66 30 80 30 C94 30 104 36 104 56 C104 78 94 96 80 96 C66 96 56 78 56 56 Z" fill="url(#skin_fe1)" />
+  
+  <!-- Earrings -->
+  <circle cx="55" cy="65" r="2.2" fill="#FCD34D" />
+  <circle cx="105" cy="65" r="2.2" fill="#FCD34D" />
+
+  <!-- Hair (Polished Executive Cut) -->
+  <path d="M52 46 C50 28 62 20 80 20 C98 20 108 26 108 44 C104 34 94 32 82 32 C68 32 58 38 52 46 Z" fill="url(#hair_fe1)" />
+  <path d="M52 44 C52 58 56 68 59 74 C59 62 56 52 56 44 Z" fill="url(#hair_fe1)" />
+  <path d="M108 44 C108 58 104 68 101 74 C101 62 104 52 104 44 Z" fill="url(#hair_fe1)" />
+  
+  <!-- Eyebrows (Arched, elegant) -->
+  <path d="M63 50 Q69 46 75 49" stroke="#221410" stroke-width="1.8" stroke-linecap="round" fill="none" />
+  <path d="M85 49 Q91 46 97 50" stroke="#221410" stroke-width="1.8" stroke-linecap="round" fill="none" />
+  
+  <!-- Eyes -->
+  <ellipse cx="69" cy="56" rx="2.8" ry="3.2" fill="#1E1B4B" />
+  <ellipse cx="91" cy="56" rx="2.8" ry="3.2" fill="#1E1B4B" />
+  <circle cx="68" cy="55" r="0.8" fill="#FFFFFF" />
+  <circle cx="90" cy="55" r="0.8" fill="#FFFFFF" />
+  
+  <!-- Soft Eyelashes -->
+  <path d="M65 54 Q69 51 73 54" stroke="#1E1B4B" stroke-width="1.2" fill="none" />
+  <path d="M87 54 Q91 51 95 54" stroke="#1E1B4B" stroke-width="1.2" fill="none" />
+
+  <!-- Nose -->
+  <path d="M80 56 L78 66 L82 66" stroke="#E29F78" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  
+  <!-- Smile (Sophisticated) -->
+  <path d="M73 76 Q80 82 87 76" stroke="#9F3647" stroke-width="2.2" stroke-linecap="round" fill="none" />
+</svg>

@@ -54,51 +54,51 @@ interface PresetAvatar {
 const PRESET_AVATARS: PresetAvatar[] = [
   {
     id: "male_1",
-    label: "Male Exec",
+    label: "Exec Suit",
     category: "Male",
-    url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&clothing=blazerAndShirt&eyebrows=default&eyes=default&facialHair=mediumBeard&hair=shortHairShortWaved&hairColor=2c1b18&skin=light",
+    url: "/avatars/male-exec-1.svg",
   },
   {
     id: "female_1",
-    label: "Female Exec",
+    label: "Exec Blazer",
     category: "Female",
-    url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&clothing=blazerAndShirt&eyebrows=default&eyes=happy&hair=longHairStraight&hairColor=4a312c&skin=light",
+    url: "/avatars/female-exec-1.svg",
   },
   {
     id: "male_2",
-    label: "Male Creative",
+    label: "Architect",
     category: "Male",
-    url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex&clothing=hoodie&eyebrows=upDown&eyes=default&hair=shortHairDreads01&hairColor=2c1b18&skin=tanned",
+    url: "/avatars/male-tech-2.svg",
   },
   {
     id: "female_2",
-    label: "Female Creative",
+    label: "Leader",
     category: "Female",
-    url: "https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe&clothing=overall&eyebrows=default&eyes=happy&hair=longHairCurly&hairColor=b58143&skin=pale",
+    url: "/avatars/female-leader-2.svg",
   },
   {
     id: "robot_1",
-    label: "Cyber Bot",
+    label: "AI Copilot",
     category: "Robotic",
-    url: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberBot&colors=cyan,blue",
+    url: "/avatars/ai-copilot-1.svg",
   },
   {
     id: "robot_2",
-    label: "Matrix AI",
+    label: "Quantum",
     category: "Robotic",
-    url: "https://api.dicebear.com/7.x/bottts/svg?seed=MatrixAI&colors=emerald,teal",
+    url: "/avatars/ai-quantum-2.svg",
   },
   {
     id: "robot_3",
-    label: "Spark Bot",
+    label: "Sentinel",
     category: "Robotic",
-    url: "https://api.dicebear.com/7.x/bottts/svg?seed=SparkBot&colors=purple,pink",
+    url: "/avatars/ai-sentinel-3.svg",
   },
   {
     id: "robot_4",
-    label: "Quantum Core",
+    label: "Nexus AI",
     category: "Robotic",
-    url: "https://api.dicebear.com/7.x/bottts/svg?seed=QuantumPrime&colors=amber,orange",
+    url: "/avatars/ai-nexus-4.svg",
   },
 ];
 
@@ -669,8 +669,8 @@ export default function UserProfilePage() {
                             <Check className="w-5 h-5 text-primary stroke-[3]" />
                           </div>
                         )}
-                        <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[8px] font-semibold py-0.5 text-center truncate">
-                          {preset.category}
+                        <span className="absolute bottom-0 inset-x-0 bg-black/65 backdrop-blur-[2px] text-white text-[8px] font-semibold py-0.5 text-center truncate px-1">
+                          {preset.label}
                         </span>
                       </button>
                     );

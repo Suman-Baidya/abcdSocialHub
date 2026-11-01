@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg_me1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#1E3A8A" />
+    </linearGradient>
+    <linearGradient id="suit_me1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="skin_me1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FBD5B5" />
+      <stop offset="100%" stop-color="#EAA678" />
+    </linearGradient>
+    <linearGradient id="hair_me1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#33241A" />
+      <stop offset="100%" stop-color="#1E140E" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="160" height="160" rx="36" fill="url(#bg_me1)" />
+  <circle cx="80" cy="55" r="50" fill="#3B82F6" opacity="0.15" />
+
+  <!-- Shoulders & Suit -->
+  <path d="M22 160 C26 122 50 112 80 112 C110 112 134 122 138 160 Z" fill="url(#suit_me1)" />
+  
+  <!-- Shirt Collar -->
+  <polygon points="80,126 62,112 72,110 80,118 88,110 98,112" fill="#F8FAFC" />
+  
+  <!-- Tie -->
+  <polygon points="80,120 84,124 86,155 80,160 74,155 76,124" fill="#0284C7" />
+  <polygon points="78,118 82,118 83,123 77,123" fill="#0369A1" />
+  
+  <!-- Neck -->
+  <path d="M70 94 L90 94 L90 116 L70 116 Z" fill="#EAA678" />
+  
+  <!-- Face -->
+  <path d="M54 58 C54 36 65 30 80 30 C95 30 106 36 106 58 C106 79 96 98 80 98 C64 98 54 79 54 58 Z" fill="url(#skin_me1)" />
+  
+  <!-- Ears -->
+  <circle cx="53" cy="62" r="6" fill="#EAA678" />
+  <circle cx="107" cy="62" r="6" fill="#EAA678" />
+  
+  <!-- Hair (Executive groomed) -->
+  <path d="M50 48 C49 32 60 22 80 22 C98 22 110 30 110 44 C104 38 94 36 84 36 C72 36 60 40 50 48 Z" fill="url(#hair_me1)" />
+  <path d="M52 48 C52 40 56 34 65 33 C60 38 58 44 58 52 Z" fill="url(#hair_me1)" />
+  
+  <!-- Eyebrows -->
+  <path d="M62 52 Q68 49 74 52" stroke="#261A13" stroke-width="2.2" stroke-linecap="round" fill="none" />
+  <path d="M86 52 Q92 49 98 52" stroke="#261A13" stroke-width="2.2" stroke-linecap="round" fill="none" />
+  
+  <!-- Eyes -->
+  <ellipse cx="68" cy="58" rx="2.8" ry="3.2" fill="#1E293B" />
+  <ellipse cx="92" cy="58" rx="2.8" ry="3.2" fill="#1E293B" />
+  <circle cx="67" cy="57" r="0.8" fill="#FFFFFF" />
+  <circle cx="91" cy="57" r="0.8" fill="#FFFFFF" />
+  
+  <!-- Nose -->
+  <path d="M80 58 L78 68 L83 68" stroke="#D38B5D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+  
+  <!-- Smile -->
+  <path d="M72 77 Q80 83 88 77" stroke="#9A5034" stroke-width="2" stroke-linecap="round" fill="none" />
+</svg>

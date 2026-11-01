@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg_ai3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181202" />
+      <stop offset="100%" stop-color="#331E05" />
+    </linearGradient>
+    <linearGradient id="armor_ai3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#451A03" />
+      <stop offset="50%" stop-color="#291002" />
+      <stop offset="100%" stop-color="#0F0601" />
+    </linearGradient>
+    <linearGradient id="lens_ai3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="160" height="160" rx="36" fill="url(#bg_ai3)" />
+  <circle cx="80" cy="70" r="50" fill="#F59E0B" opacity="0.14" />
+
+  <!-- Shoulder Armor Chassis -->
+  <path d="M26 160 C30 126 52 116 80 116 C108 116 130 126 134 160 Z" fill="url(#armor_ai3)" />
+  <!-- Beveled Chest Ingot -->
+  <polygon points="80,126 100,138 80,154 60,138" fill="#78350F" stroke="#F59E0B" stroke-width="1.5" />
+
+  <!-- Heavy Neck Mount -->
+  <rect x="72" y="100" width="16" height="18" rx="2" fill="#291002" stroke="#451A03" />
+
+  <!-- Angular Aerospace Helmet Chassis -->
+  <polygon points="80,26 114,46 114,84 80,104 46,84 46,46" fill="url(#armor_ai3)" stroke="#F59E0B" stroke-width="2" />
+  
+  <!-- Temporal Armor Plates -->
+  <polygon points="46,46 36,56 36,76 46,84" fill="#291002" stroke="#78350F" stroke-width="1.5" />
+  <polygon points="114,46 124,56 124,76 114,84" fill="#291002" stroke="#78350F" stroke-width="1.5" />
+
+  <!-- Main Optical Sensor Visor (Hexagonal Lens) -->
+  <polygon points="80,48 102,60 102,76 80,88 58,76 58,60" fill="#180A02" stroke="#F59E0B" stroke-width="2" />
+  
+  <!-- Glowing Monocular Lens Core -->
+  <circle cx="80" cy="67" r="13" fill="url(#lens_ai3)" />
+  <circle cx="80" cy="67" r="7" fill="#FFFBEB" />
+  <circle cx="78" cy="65" r="3" fill="#FFFFFF" />
+
+  <!-- HUD Grid Reticle -->
+  <line x1="58" y1="67" x2="67" y2="67" stroke="#F59E0B" stroke-width="1.5" />
+  <line x1="93" y1="67" x2="102" y2="67" stroke="#F59E0B" stroke-width="1.5" />
+  <line x1="80" y1="48" x2="80" y2="54" stroke="#F59E0B" stroke-width="1.5" />
+  <line x1="80" y1="80" x2="80" y2="88" stroke="#F59E0B" stroke-width="1.5" />
+
+  <!-- Status Beacon -->
+  <polygon points="80,26 84,32 80,36 76,32" fill="#F59E0B" />
+</svg>

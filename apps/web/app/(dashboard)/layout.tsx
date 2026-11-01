@@ -485,39 +485,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ))}
           </div>
 
-          {/* Sidebar Bottom: Profile-Related Section (Direct Link to /profile with Avatar) */}
+          {/* Sidebar Bottom: Profile-Related Section (Direct Link to /profile with Universal Avatar) */}
           <div className="p-3 border-t border-border shrink-0 transition-all duration-300">
             {isCollapsed ? (
               <div className="flex items-center justify-center">
                 <Link
                   href="/profile"
                   title={`${session?.user?.name || "My Profile"} (${role.replace("_", " ")})`}
-                  className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary hover:border-primary transition-colors cursor-pointer overflow-hidden"
+                  className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary hover:border-primary transition-colors cursor-pointer overflow-hidden shadow-2xs"
                 >
-                  {session?.user?.image ? (
-                    <img
-                      src={session.user.image}
-                      alt={session?.user?.name || "User Avatar"}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-5 h-5 text-primary stroke-[2]" />
-                  )}
+                  <img
+                    src={session?.user?.image || "/avatars/default-avatar.svg"}
+                    alt={session?.user?.name || "User Avatar"}
+                    className="w-full h-full object-cover"
+                  />
                 </Link>
               </div>
             ) : (
               <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors">
                 <Link href="/profile" className="flex items-center gap-3 overflow-hidden flex-1 group">
                   <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-2xs">
-                    {session?.user?.image ? (
-                      <img
-                        src={session.user.image}
-                        alt={session?.user?.name || "User Avatar"}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-4 h-4 text-primary stroke-[2]" />
-                    )}
+                    <img
+                      src={session?.user?.image || "/avatars/default-avatar.svg"}
+                      alt={session?.user?.name || "User Avatar"}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div className="flex flex-col truncate">
                     <span className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">
@@ -616,7 +608,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
             </button>
 
-            {/* User Profile Pill (Direct Link to /profile with Live Avatar) */}
+            {/* User Profile Pill (Direct Link to /profile with Universal Avatar) */}
             <div className="flex items-center gap-2 pl-1">
               <Link
                 href="/profile"
@@ -624,15 +616,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 title="View My Profile"
               >
                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-blue-600/20 border border-primary/30 flex items-center justify-center font-bold text-xs text-primary shrink-0 overflow-hidden shadow-2xs">
-                  {session?.user?.image ? (
-                    <img
-                      src={session.user.image}
-                      alt={session?.user?.name || "User Avatar"}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-4 h-4 text-primary stroke-[2]" />
-                  )}
+                  <img
+                    src={session?.user?.image || "/avatars/default-avatar.svg"}
+                    alt={session?.user?.name || "User Avatar"}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
                 <div className="hidden md:flex flex-col text-left">

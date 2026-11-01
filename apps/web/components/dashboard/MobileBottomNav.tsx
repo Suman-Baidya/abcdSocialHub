@@ -260,8 +260,12 @@ export function MobileBottomNav({
                 className="flex items-center justify-between p-3 rounded-2xl bg-muted/40 hover:bg-muted border border-border transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary shrink-0">
-                    <User className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary shrink-0 overflow-hidden shadow-2xs">
+                    <img
+                      src="/avatars/default-avatar.svg"
+                      alt="Profile Avatar"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                   <div>
                     <span className="text-sm font-semibold text-foreground block">My Profile</span>

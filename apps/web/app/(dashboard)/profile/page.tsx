@@ -47,11 +47,17 @@ interface UserProfile {
 interface PresetAvatar {
   id: string;
   label: string;
-  category: "Male" | "Female" | "Robotic";
+  category: "Universal" | "Male" | "Female" | "Robotic";
   url: string;
 }
 
 const PRESET_AVATARS: PresetAvatar[] = [
+  {
+    id: "univ_default",
+    label: "Universal",
+    category: "Universal",
+    url: "/avatars/default-avatar.svg",
+  },
   {
     id: "male_1",
     label: "Exec Suit",
@@ -93,12 +99,6 @@ const PRESET_AVATARS: PresetAvatar[] = [
     label: "Sentinel",
     category: "Robotic",
     url: "/avatars/ai-sentinel-3.svg",
-  },
-  {
-    id: "robot_4",
-    label: "Nexus AI",
-    category: "Robotic",
-    url: "/avatars/ai-nexus-4.svg",
   },
 ];
 
@@ -406,18 +406,14 @@ export default function UserProfilePage() {
              ───────────────────────────────────────────────────────────── */}
           <div className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-xs flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
             <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 text-center sm:text-left">
-              {/* Avatar with Upload Trigger (Default to sleek User icon when no image) */}
+              {/* Avatar with Upload Trigger (Universal Default Avatar Fallback) */}
               <div className="relative group shrink-0">
                 <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border-2 border-[#00F0FF]/30 flex items-center justify-center font-bold text-2xl text-primary overflow-hidden shadow-sm">
-                  {image ? (
-                    <img
-                      src={image}
-                      alt={name || profile.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-10 h-10 text-primary stroke-[1.8]" />
-                  )}
+                  <img
+                    src={image || "/avatars/default-avatar.svg"}
+                    alt={name || profile.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
 
                 <label
@@ -608,50 +604,37 @@ export default function UserProfilePage() {
                 </form>
               </div>
 
-              {/* Right Column: Preset Avatar Picker (Illustrated Avatars: Male, Female, Robotic) */}
+              {/* Right Column: Preset Avatar Picker (8 Total: Universal Default, Male, Female, Robotic) */}
               <div className="lg:col-span-5 p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-xs space-y-4">
                 <div className="pb-2 border-b border-border">
                   <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-primary" />
-                    <span>Preset Illustrated Avatars</span>
+                    <span>Choose an Avatar ({PRESET_AVATARS.length} Presets)</span>
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Choose from illustrated male, female, or futuristic robotic avatars.
+                    Universal gender-neutral, executive male/female, and futuristic AI avatars.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-4 gap-2.5">
-                  {/* Default Icon Choice */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImage(null);
-                      toast.success("Default Icon Selected", "Click 'Save Profile Changes' to apply.");
-                    }}
-                    className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all cursor-pointer group hover:scale-105 active:scale-95 flex flex-col items-center justify-center bg-muted/40 ${
-                      !image ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
-                    }`}
-                    title="Default User Silhouette Icon"
-                  >
-                    <User className="w-6 h-6 text-primary stroke-[2]" />
-                    <span className="text-[9px] font-semibold text-muted-foreground mt-1">Default</span>
-                    {!image && (
-                      <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center text-primary-foreground">
-                        <Check className="w-2.5 h-2.5 stroke-[3]" />
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Preset Avatars */}
                   {PRESET_AVATARS.map((preset) => {
-                    const isSelected = image === preset.url;
+                    const isSelected =
+                      preset.id === "univ_default"
+                        ? !image || image === preset.url
+                        : image === preset.url;
+
                     return (
                       <button
                         key={preset.id}
                         type="button"
                         onClick={() => {
-                          setImage(preset.url);
-                          toast.success(`${preset.label} Selected`, "Click 'Save Profile Changes' to confirm.");
+                          if (preset.id === "univ_default") {
+                            setImage(null);
+                            toast.success("Universal Avatar Selected", "Click 'Save Profile Changes' to confirm.");
+                          } else {
+                            setImage(preset.url);
+                            toast.success(`${preset.label} Selected`, "Click 'Save Profile Changes' to confirm.");
+                          }
                         }}
                         className={`relative rounded-xl overflow-hidden aspect-square border-2 transition-all cursor-pointer group hover:scale-105 active:scale-95 bg-muted/20 ${
                           isSelected ? "border-primary ring-2 ring-primary/30" : "border-border hover:border-primary/50"
@@ -661,7 +644,7 @@ export default function UserProfilePage() {
                         <img
                           src={preset.url}
                           alt={preset.label}
-                          className="w-full h-full object-contain p-1"
+                          className="w-full h-full object-cover"
                           loading="lazy"
                         />
                         {isSelected && (
@@ -679,7 +662,7 @@ export default function UserProfilePage() {
 
                 <div className="p-2.5 rounded-xl bg-muted/30 border border-border text-[11px] text-muted-foreground flex items-center gap-2">
                   <Bot className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>Avatars are vector illustrations with zero real photographic data.</span>
+                  <span>Universal vector avatars suitable for all genders, creators, and AI roles.</span>
                 </div>
               </div>
             </div>

@@ -15,6 +15,7 @@ import {
   EyeOff,
   ArrowRight,
   Building2,
+  ShieldCheck,
   Loader2,
 } from "lucide-react";
 
@@ -132,32 +133,45 @@ export function InviteOnboardingClient({ token }: { token: string }) {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-3 sm:p-4 bg-background text-foreground antialiased relative overflow-hidden">
-      {/* Background Ambience */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-background text-foreground antialiased relative overflow-hidden">
+      {/* Decorative Radial Ambient Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 dark:bg-primary/15 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Main Container - Constrained to max 90vh */}
-      <div className="w-full max-w-md max-h-[90vh] flex flex-col justify-center relative z-10 space-y-2.5">
-        {/* Brand Logo Header */}
-        <div className="flex flex-col items-center text-center space-y-1">
-          <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary shadow-xs">
-            <Sparkles className="w-4 h-4 text-primary" />
+      {/* Ultra-Premium Glassmorphism Card (All elements & brand inside the box) */}
+      <div className="relative w-full max-w-md rounded-3xl bg-card/95 border border-border shadow-2xl p-5 sm:p-6 space-y-3.5 overflow-hidden backdrop-blur-xl">
+        {/* Subtle Top Accent Beam */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-80" />
+
+        {/* Brand Logo & Name Header (INSIDE THE BOX) */}
+        <div className="space-y-1.5 text-center pt-1">
+          <div className="relative mx-auto w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent border border-primary/30 flex items-center justify-center shadow-lg shadow-primary/10">
+            <Sparkles className="w-6 h-6 text-primary" />
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-card flex items-center justify-center">
+              <ShieldCheck className="w-2.5 h-2.5 text-white" />
+            </div>
           </div>
-          <h1 className="text-lg font-bold tracking-tight text-foreground leading-tight">ABCD Social Hub</h1>
-          <p className="text-[11px] text-muted-foreground leading-tight">Autonomous Multi-Tenant Marketing & Publishing</p>
+
+          <div>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-foreground leading-tight">
+              ABCD Social Hub
+            </h1>
+            <p className="text-[11px] text-muted-foreground leading-tight">
+              Autonomous Multi-Tenant Marketing & Publishing
+            </p>
+          </div>
         </div>
 
         {/* State 1: Loading Skeleton */}
         {loading && (
-          <div className="p-5 rounded-2xl border border-border bg-card shadow-sm text-center space-y-2.5">
-            <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+          <div className="py-8 text-center space-y-3">
+            <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
             <p className="text-xs text-muted-foreground">Validating your workspace invitation...</p>
           </div>
         )}
 
         {/* State 2: Invalid or Expired Invitation Error */}
         {!loading && error && (
-          <div className="p-5 rounded-2xl border border-destructive/30 bg-card shadow-sm text-center space-y-3">
+          <div className="p-4 rounded-2xl border border-destructive/30 bg-destructive/5 text-center space-y-3">
             <div className="w-10 h-10 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 flex items-center justify-center mx-auto">
               <AlertCircle className="w-5 h-5" />
             </div>
@@ -167,7 +181,7 @@ export function InviteOnboardingClient({ token }: { token: string }) {
             </div>
             <Link
               href="/login"
-              className="inline-flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-all shadow-xs"
+              className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-semibold hover:opacity-90 transition-all shadow-xs"
             >
               <span>Go to Sign In</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -175,11 +189,11 @@ export function InviteOnboardingClient({ token }: { token: string }) {
           </div>
         )}
 
-        {/* State 3: Valid Invitation Form (Fits comfortably under 90vh) */}
+        {/* State 3: Valid Invitation Form */}
         {!loading && !error && inviteData && (
-          <div className="p-4 sm:p-5 rounded-2xl border border-border bg-card shadow-sm space-y-3">
+          <div className="space-y-3">
             {/* Invitation Details Banner */}
-            <div className="p-2.5 rounded-xl bg-primary/5 border border-primary/20 space-y-1.5">
+            <div className="p-2.5 sm:p-3 rounded-xl bg-primary/5 border border-primary/20 space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25 uppercase tracking-wider">
                   Teammate Invitation
@@ -241,7 +255,7 @@ export function InviteOnboardingClient({ token }: { token: string }) {
                 />
               </div>
 
-              {/* Row 2: Full Name & Phone Number (Side by side on sm, stacked on xs) */}
+              {/* Row 2: Full Name & Phone Number (Side-by-side) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-foreground flex items-center justify-between">
@@ -279,7 +293,7 @@ export function InviteOnboardingClient({ token }: { token: string }) {
                 </div>
               </div>
 
-              {/* Row 3: Password & Confirm Password (Side by side on sm, stacked on xs) */}
+              {/* Row 3: Password & Confirm Password (Side-by-side) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <label className="text-[11px] font-semibold text-foreground flex items-center justify-between">
@@ -334,7 +348,7 @@ export function InviteOnboardingClient({ token }: { token: string }) {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all active:scale-95 shadow-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-2.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs font-semibold transition-all active:scale-95 shadow-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {submitting ? (
                     <>
@@ -351,10 +365,16 @@ export function InviteOnboardingClient({ token }: { token: string }) {
               </div>
             </form>
 
-            <div className="text-center pt-0.5">
-              <Link href="/login" className="text-[10.5px] text-muted-foreground hover:text-primary transition-colors">
+            {/* Bottom Links & Trust Strip (Inside the box) */}
+            <div className="pt-1 text-center space-y-2">
+              <Link href="/login" className="text-[11px] text-muted-foreground hover:text-primary transition-colors block">
                 Already have an account? Sign in
               </Link>
+
+              <div className="pt-1 border-t border-border/50 flex items-center justify-center gap-1.5 text-[10px] text-muted-foreground font-mono">
+                <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                <span>ABCD Social Platform • Protected by Edge Auth</span>
+              </div>
             </div>
           </div>
         )}

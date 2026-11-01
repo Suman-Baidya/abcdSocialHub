@@ -69,12 +69,12 @@ export function AuthRestrictionModal({
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/25 text-[11px] font-bold text-primary uppercase tracking-wider shadow-xs">
             <KeyRound className="w-3 h-3" />
-            <span>Enterprise Security Guard</span>
+            <span>Workspace Access</span>
           </div>
 
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight">
-              Authentication Required
+              Sign In to Continue
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-2 leading-relaxed max-w-sm mx-auto">
               {customMessage ||
@@ -83,22 +83,22 @@ export function AuthRestrictionModal({
           </div>
         </div>
 
-        {/* 3-Pillar Security Assurance Strip */}
+        {/* 3-Pillar Workspace Assurance Strip */}
         <div className="grid grid-cols-3 gap-2 py-3.5 border-y border-border/60 bg-muted/30 rounded-2xl text-[11px]">
           <div className="flex flex-col items-center text-center p-1">
             <Shield className="w-4 h-4 text-emerald-500 mb-1" />
-            <span className="font-semibold text-foreground text-[11px]">Zero-Exposure</span>
+            <span className="font-semibold text-foreground text-[11px]">Private Data</span>
             <span className="text-[10px] text-muted-foreground">Tenant Isolated</span>
           </div>
           <div className="flex flex-col items-center text-center p-1 border-x border-border/60">
             <Lock className="w-4 h-4 text-primary mb-1" />
-            <span className="font-semibold text-foreground text-[11px]">AES-256-GCM</span>
-            <span className="text-[10px] text-muted-foreground">Session Token</span>
+            <span className="font-semibold text-foreground text-[11px]">Secure Login</span>
+            <span className="text-[10px] text-muted-foreground">Encrypted Token</span>
           </div>
           <div className="flex flex-col items-center text-center p-1">
             <Sparkles className="w-4 h-4 text-amber-500 mb-1" />
-            <span className="font-semibold text-foreground text-[11px]">4-Tier RBAC</span>
-            <span className="text-[10px] text-muted-foreground">Role Hardened</span>
+            <span className="font-semibold text-foreground text-[11px]">Team Control</span>
+            <span className="text-[10px] text-muted-foreground">Role Protected</span>
           </div>
         </div>
 

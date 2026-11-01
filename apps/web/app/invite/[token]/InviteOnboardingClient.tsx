@@ -165,7 +165,7 @@ export function InviteOnboardingClient({ token }: { token: string }) {
         {loading && (
           <div className="py-8 text-center space-y-3">
             <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
-            <p className="text-xs text-muted-foreground">Validating your workspace invitation...</p>
+            <p className="text-xs text-muted-foreground">Loading workspace invitation...</p>
           </div>
         )}
 

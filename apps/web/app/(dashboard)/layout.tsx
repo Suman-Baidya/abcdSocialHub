@@ -240,7 +240,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {
         groupTitle: "Administration",
         items: [
-          { name: "Team & Roles", href: "/team", icon: Users },
+          ...(role !== "STAFF" && role !== "ADMIN_STAFF"
+            ? [{ name: "Team & Roles", href: "/team", icon: Users }]
+            : []),
           ...(isSuperAdmin
             ? [{ name: "Founder Cockpit", href: "/admin/marketing", icon: Rocket, badge: "Admin" }]
             : []),
@@ -255,7 +257,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ...g,
           items: g.items.filter((item) => {
             const pageKey = item.href.replace("/", "");
-            return allowedPages.includes(pageKey);
+            return allowedPages.includes(pageKey) || pageKey === "dashboard";
           }),
         }))
         .filter((g) => g.items.length > 0);

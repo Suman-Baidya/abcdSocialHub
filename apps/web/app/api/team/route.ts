@@ -2,246 +2,299 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { z } from "zod";
+import crypto from "node:crypto";
 import { prisma } from "@abcd/db";
 
 export const dynamic = "force-dynamic";
 
 export interface TeamMember {
   id: string;
+  userId?: string;
   name: string;
   email: string;
   role: "DEVELOPER" | "SUPER_ADMIN" | "SUPER_ADMIN_STAFF" | "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
   status: "ACTIVE" | "INVITED" | "PAUSED";
   joinedAt: string;
   allowedPages?: string[];
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   lastActive?: string;
+  isOwner?: boolean;
 }
 
-// In-memory tenant store seeded with realistic members
-let TENANT_TEAM_STORE: Record<string, TeamMember[]> = {};
-
-function getInitialMembers(): TeamMember[] {
-  return [
-    {
-      id: "mem_root",
-      name: "Suman Baidya",
-      email: "suman.baidya.pro@gmail.com",
-      role: "DEVELOPER",
-      status: "ACTIVE",
-      joinedAt: "Root Architect",
-      lastActive: "Active now",
-    },
-    {
-      id: "mem_01",
-      name: "ABCD Business Owner",
-      email: "sb.abcd321@gmail.com",
-      role: "TENANT_ADMIN",
-      status: "ACTIVE",
-      joinedAt: "Founding Member",
-      lastActive: "Active now",
-    },
-    {
-      id: "mem_02",
-      name: "Priya Sharma",
-      email: "priya.creative@gmail.com",
-      role: "CREATOR",
-      status: "ACTIVE",
-      joinedAt: "24 Oct 2026",
-      lastActive: "2 hours ago",
-    },
-    {
-      id: "mem_03",
-      name: "Amitav Ghosh",
-      email: "amitav.frontdesk@salonderoyal.in",
-      role: "ADMIN_STAFF",
-      allowedPages: ["leads", "calendar"],
-      status: "INVITED",
-      joinedAt: "Pending acceptance",
-      lastActive: "Never",
-    },
-    {
-      id: "mem_04",
-      name: "Rohan Mukherjee",
-      email: "rohan.analytics@agencyhub.co",
-      role: "GUEST",
-      status: "ACTIVE",
-      joinedAt: "18 Oct 2026",
-      lastActive: "1 day ago",
-    },
-  ];
-}
-
-function getTenantMembers(tenantKey: string): TeamMember[] {
-  if (!TENANT_TEAM_STORE[tenantKey]) {
-    TENANT_TEAM_STORE[tenantKey] = getInitialMembers();
-  }
-  return TENANT_TEAM_STORE[tenantKey];
+export interface PendingInvitation {
+  id: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  allowedPages: string[];
+  token: string;
+  inviteUrl: string;
+  createdAt: string;
+  expiresAt: string;
 }
 
 // Validation schemas
 const inviteSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters").max(60),
-  email: z.string().trim().email("Invalid email address"),
-  role: z.enum([
-    "DEVELOPER",
-    "SUPER_ADMIN",
-    "SUPER_ADMIN_STAFF",
-    "TENANT_ADMIN",
-    "OWNER",
-    "ADMIN_STAFF",
-    "STAFF",
-    "CREATOR",
-    "GUEST",
-  ]).default("CREATOR"),
-  allowedPages: z.array(z.string()).default([]),
+  email: z.string().trim().email("Please provide a valid work email address"),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(60).optional(),
+  // Tenant admin can strictly only invite Staff / Team Mate
+  role: z.enum(["ADMIN_STAFF", "STAFF"]).default("ADMIN_STAFF"),
+  allowedPages: z.array(z.string()).default(["content", "calendar"]),
 });
 
-const patchRoleSchema = z.object({
+const patchMemberSchema = z.object({
   id: z.string().min(1, "Member ID is required"),
-  role: z.enum([
-    "DEVELOPER",
-    "SUPER_ADMIN",
-    "SUPER_ADMIN_STAFF",
-    "TENANT_ADMIN",
-    "OWNER",
-    "ADMIN_STAFF",
-    "STAFF",
-    "CREATOR",
-    "GUEST",
-  ]).optional(),
-  status: z.enum(["ACTIVE", "INVITED", "PAUSED"]).optional(),
   allowedPages: z.array(z.string()).optional(),
+  role: z.enum(["ADMIN_STAFF", "STAFF", "TENANT_ADMIN"]).optional(),
 });
 
-const deleteMemberSchema = z.object({
-  id: z.string().min(1, "Member ID is required"),
-});
+// Helper: Resolve verified user & tenant organization
+async function resolveAuthAndTenant() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return { error: "Unauthorized: Please sign in", status: 401 };
+  }
+
+  const user = session.user as any;
+  const isDeveloper =
+    user?.isDeveloper ||
+    user?.role === "DEVELOPER" ||
+    user?.email === "suman.baidya.pro@gmail.com";
+  const isSuperAdmin =
+    isDeveloper ||
+    user?.isSuperAdmin ||
+    user?.role === "SUPER_ADMIN" ||
+    user?.email === "suman.baidya.pro@gmail.com";
+
+  // Resolve user's database record & primary organization
+  const dbUser = await prisma.user.findUnique({
+    where: { email: user.email?.toLowerCase().trim() },
+    include: {
+      memberships: {
+        include: {
+          organization: {
+            include: { workspaces: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!dbUser) {
+    return { error: "User account not found in database", status: 404 };
+  }
+
+  const primaryMembership = dbUser.memberships[0];
+  const organizationId = primaryMembership?.organizationId || user.organizationId;
+
+  if (!organizationId) {
+    return { error: "No tenant organization assigned to this account", status: 403 };
+  }
+
+  const effectiveRole = (primaryMembership?.role as string) || (user.role as string) || "TENANT_ADMIN";
+  const isCreator = effectiveRole === "CREATOR" || user.dashboardType === "CREATOR";
+
+  return {
+    user: dbUser,
+    sessionUser: user,
+    primaryMembership,
+    organizationId,
+    effectiveRole,
+    isDeveloper,
+    isSuperAdmin,
+    isCreator,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────
-// GET: Query team members with search, role filter & stats
+// GET: Scoped Tenant Teammates & Pending Invitations
 // ─────────────────────────────────────────────────────────────
 export async function GET(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const user = session?.user as any;
-    const isDeveloper =
-      user?.isDeveloper ||
-      user?.role === "DEVELOPER" ||
-      user?.email === "suman.baidya.pro@gmail.com";
+    const auth = await resolveAuthAndTenant();
+    if ("error" in auth) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
 
-    const tenantKey = user?.workspaceId || user?.id || "workspace_demo_default";
-    const allMembers = getTenantMembers(tenantKey);
+    const { organizationId, isDeveloper, isCreator, user: dbUser, primaryMembership } = auth;
 
-    // 🔒 SHADOW DEVELOPER RULE:
-    // If caller is NOT Developer, completely conceal Developer presence & root accounts
-    let members = allMembers;
+    // 🔒 CREATOR SOLO ISOLATION:
+    // Creators are individual solo accounts. No teammate roster or invitation capability.
+    if (isCreator) {
+      return NextResponse.json({
+        success: true,
+        isCreatorSolo: true,
+        members: [
+          {
+            id: primaryMembership?.id || "mem_creator_solo",
+            userId: auth.user.id,
+            name: auth.user.name || "Solo Creator",
+            email: auth.user.email || "",
+            role: "CREATOR",
+            status: "ACTIVE",
+            joinedAt: auth.user.createdAt.toISOString(),
+            avatarUrl: auth.user.image,
+            allowedPages: ["content", "calendar", "dashboard", "brand"],
+            isOwner: true,
+          },
+        ],
+        invitations: [],
+        stats: {
+          totalCount: 1,
+          activeCount: 1,
+          invitedCount: 0,
+          maxSeats: 1,
+          availableSeats: 0,
+        },
+      });
+    }
+
+    // 1. Fetch live active memberships belonging strictly to this organization
+    const dbMemberships = await prisma.membership.findMany({
+      where: { organizationId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+            phone: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // 2. Fetch pending, unexpired invitations for this organization
+    const dbInvitations = await prisma.teamInvitation.findMany({
+      where: {
+        organizationId,
+        status: "PENDING",
+        expiresAt: { gte: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const url = new URL(req.url);
+    const origin = url.origin || process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+    // 3. Format active members
+    let activeMembers: TeamMember[] = dbMemberships.map((m) => {
+      const isOwner = m.role === "OWNER" || m.role === "TENANT_ADMIN";
+      return {
+        id: m.id,
+        userId: m.userId,
+        name: m.user.name || m.user.email?.split("@")[0] || "Teammate",
+        email: m.user.email || "",
+        role: m.role as any,
+        status: "ACTIVE",
+        joinedAt: m.createdAt.toISOString(),
+        allowedPages: m.allowedPages || [],
+        avatarUrl: m.user.image,
+        lastActive: m.user.updatedAt.toISOString(),
+        isOwner,
+      };
+    });
+
+    // 🔒 SHADOW DEVELOPER RULE: Conceal Developer root account from non-developers
     if (!isDeveloper) {
-      members = members.filter(
+      activeMembers = activeMembers.filter(
         (m) =>
           (m.role as string) !== "DEVELOPER" &&
           m.email.toLowerCase() !== "suman.baidya.pro@gmail.com"
       );
     }
 
-    const { searchParams } = new URL(req.url);
-    const search = (searchParams.get("search") || "").toLowerCase().trim();
-    const role = (searchParams.get("role") || "ALL").toUpperCase();
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-    const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "10", 10)));
-
-    // Filtering
-    let filtered = members.filter((member) => {
-      // Role filter
-      if (role !== "ALL" && member.role !== role) {
-        return false;
-      }
-
-      // Search filter (name, email)
-      if (search) {
-        const matchesName = member.name.toLowerCase().includes(search);
-        const matchesEmail = member.email.toLowerCase().includes(search);
-        if (!matchesName && !matchesEmail) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    const totalItems = filtered.length;
-    const totalPages = Math.ceil(totalItems / limit) || 1;
-    const startIndex = (page - 1) * limit;
-    const paginated = filtered.slice(startIndex, startIndex + limit);
-
-    // Enrich roster with avatar image from Prisma User records
-    const userEmails = paginated.map((m) => m.email.toLowerCase());
-    const dbUsers = await prisma.user
-      .findMany({
-        where: { email: { in: userEmails } },
-        select: { email: true, image: true },
-      })
-      .catch(() => []);
-
-    const imageMap = new Map(dbUsers.map((u) => [u.email?.toLowerCase(), u.image]));
-    const enrichedMembers = paginated.map((m) => ({
-      ...m,
-      avatarUrl: imageMap.get(m.email.toLowerCase()) || m.avatarUrl,
+    // 4. Format pending invitations
+    const pendingInvitations: PendingInvitation[] = dbInvitations.map((inv) => ({
+      id: inv.id,
+      email: inv.email,
+      name: inv.name,
+      role: inv.role,
+      allowedPages: inv.allowedPages || [],
+      token: inv.token,
+      inviteUrl: `${origin}/invite/${inv.token}`,
+      createdAt: inv.createdAt.toISOString(),
+      expiresAt: inv.expiresAt.toISOString(),
     }));
 
-    // KPI Metrics calculation (strictly reflecting visible roster)
-    const totalCount = members.length;
-    const activeCount = members.filter((m) => m.status === "ACTIVE").length;
-    const invitedCount = members.filter((m) => m.status === "INVITED").length;
-    const maxSeats = 6; // Standard Growth Tier allocation
+    // 5. Query Filters
+    const search = (url.searchParams.get("search") || "").toLowerCase().trim();
+    const roleFilter = (url.searchParams.get("role") || "ALL").toUpperCase();
+
+    let filteredMembers = activeMembers;
+    if (search) {
+      filteredMembers = filteredMembers.filter(
+        (m) =>
+          m.name.toLowerCase().includes(search) ||
+          m.email.toLowerCase().includes(search)
+      );
+    }
+    if (roleFilter !== "ALL") {
+      filteredMembers = filteredMembers.filter((m) => m.role === roleFilter);
+    }
+
+    const maxSeats = 5;
+    const totalCount = activeMembers.length + pendingInvitations.length;
     const availableSeats = Math.max(0, maxSeats - totalCount);
 
     return NextResponse.json({
       success: true,
-      members: enrichedMembers,
-      pagination: {
-        page,
-        limit,
-        totalItems,
-        totalPages,
-        hasPrev: page > 1,
-        hasNext: page < totalPages,
-      },
+      isCreatorSolo: false,
+      members: filteredMembers,
+      invitations: pendingInvitations,
       stats: {
         totalCount,
-        activeCount,
-        invitedCount,
+        activeCount: activeMembers.length,
+        invitedCount: pendingInvitations.length,
         maxSeats,
         availableSeats,
       },
     });
   } catch (error: any) {
+    console.error("[Team API GET Error]:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to fetch team members" },
+      { success: false, error: error.message || "Failed to load team roster" },
       { status: 500 }
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// POST: Dispatch magic-link invite to new member
+// POST: Dispatch / Create Teammate (Staff) Invitation
 // ─────────────────────────────────────────────────────────────
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const user = session?.user as any;
-    const isDeveloper =
-      user?.isDeveloper ||
-      user?.role === "DEVELOPER" ||
-      user?.email === "suman.baidya.pro@gmail.com";
-    const isSuperAdmin =
-      isDeveloper ||
-      user?.isSuperAdmin ||
-      user?.role === "SUPER_ADMIN" ||
-      user?.email === "suman.baidya.pro@gmail.com";
+    const auth = await resolveAuthAndTenant();
+    if ("error" in auth) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
 
-    const tenantKey = user?.workspaceId || user?.id || "workspace_demo_default";
-    const members = getTenantMembers(tenantKey);
+    const { organizationId, user, isCreator, effectiveRole } = auth;
+
+    // 🔒 CREATOR RESTRICTION
+    if (isCreator) {
+      return NextResponse.json(
+        { success: false, error: "Creator accounts are solo and cannot add teammates." },
+        { status: 403 }
+      );
+    }
+
+    // Role check: Caller must be Tenant Admin or Super Admin/Developer
+    if (
+      effectiveRole !== "TENANT_ADMIN" &&
+      effectiveRole !== "OWNER" &&
+      effectiveRole !== "SUPER_ADMIN" &&
+      effectiveRole !== "DEVELOPER"
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Only Tenant Administrators can invite teammates." },
+        { status: 403 }
+      );
+    }
 
     const body = await req.json();
     const parseResult = inviteSchema.safeParse(body);
@@ -256,80 +309,133 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, role, allowedPages } = parseResult.data;
+    const { email, name, allowedPages } = parseResult.data;
+    const cleanEmail = email.toLowerCase().trim();
 
-    // Security check: Only Developer can invite another Developer
-    if (role === "DEVELOPER" && !isDeveloper) {
-      return NextResponse.json(
-        { success: false, error: "Forbidden: Developer root privilege required" },
-        { status: 403 }
-      );
-    }
+    // 1. Check if user is already an active member in this organization
+    const existingUser = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+      include: {
+        memberships: {
+          where: { organizationId },
+        },
+      },
+    });
 
-    // Security check: Only Super Admins / Developers can invite Super Admin or Super Admin Staff
-    if ((role === "SUPER_ADMIN" || role === "SUPER_ADMIN_STAFF") && !isSuperAdmin) {
+    if (existingUser && existingUser.memberships.length > 0) {
       return NextResponse.json(
-        { success: false, error: "Forbidden: Only Super Admins can invite Super Admin roles" },
-        { status: 403 }
-      );
-    }
-
-    // Check if email already exists in workspace
-    const existing = members.find(
-      (m) => m.email.toLowerCase() === email.toLowerCase()
-    );
-    if (existing) {
-      return NextResponse.json(
-        { success: false, error: "A member with this email already belongs to this workspace." },
+        {
+          success: false,
+          error: "A teammate with this email is already a member of this workspace.",
+        },
         { status: 409 }
       );
     }
 
-    // Check seat limit
-    if (members.length >= 6) {
+    // 2. Check seat capacity
+    const currentMemberCount = await prisma.membership.count({ where: { organizationId } });
+    const currentPendingCount = await prisma.teamInvitation.count({
+      where: {
+        organizationId,
+        status: "PENDING",
+        expiresAt: { gte: new Date() },
+      },
+    });
+
+    if (currentMemberCount + currentPendingCount >= 5) {
       return NextResponse.json(
-        { success: false, error: "Seat quota reached. Upgrade plan to invite additional members." },
+        {
+          success: false,
+          error: "Seat quota reached (5 seats max). Upgrade plan to invite additional teammates.",
+        },
         { status: 403 }
       );
     }
 
-    const newMember: TeamMember = {
-      id: `mem_${Date.now()}`,
-      name,
-      email,
-      role,
-      allowedPages: (role === "ADMIN_STAFF" || role === "STAFF" || role === "SUPER_ADMIN_STAFF") ? allowedPages : [],
-      status: "INVITED",
-      joinedAt: "Just invited",
-      lastActive: "Never",
-    };
+    // 3. Generate Cryptographic 32-Byte Token & Expiration (7 days)
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    members.unshift(newMember);
+    // If there was an old pending invitation for this email, revoke it first
+    await prisma.teamInvitation.deleteMany({
+      where: {
+        organizationId,
+        email: cleanEmail,
+        status: "PENDING",
+      },
+    });
+
+    // 4. Create new TeamInvitation in DB
+    const invitation = await prisma.teamInvitation.create({
+      data: {
+        email: cleanEmail,
+        name: name || cleanEmail.split("@")[0],
+        role: "ADMIN_STAFF", // Strictly Staff / Teammate
+        allowedPages: allowedPages.length > 0 ? allowedPages : ["content", "calendar"],
+        token: rawToken,
+        organizationId,
+        inviterId: user.id,
+        status: "PENDING",
+        expiresAt,
+      },
+      include: {
+        organization: { select: { name: true } },
+      },
+    });
+
+    const url = new URL(req.url);
+    const origin = url.origin || process.env.NEXTAUTH_URL || "http://localhost:3000";
+    const inviteUrl = `${origin}/invite/${rawToken}`;
 
     return NextResponse.json({
       success: true,
-      member: newMember,
-      message: `Invitation dispatched to ${email}`,
+      message: `Invitation link created for ${cleanEmail}`,
+      invitation: {
+        id: invitation.id,
+        email: invitation.email,
+        name: invitation.name,
+        role: invitation.role,
+        allowedPages: invitation.allowedPages,
+        token: invitation.token,
+        inviteUrl,
+        expiresAt: invitation.expiresAt.toISOString(),
+      },
     });
   } catch (error: any) {
+    console.error("[Team API POST Error]:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to invite member" },
+      { success: false, error: error.message || "Failed to create invitation" },
       { status: 500 }
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// PATCH: Update member role
+// PATCH: Update Member Role & Granular Page Permissions
 // ─────────────────────────────────────────────────────────────
 export async function PATCH(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const tenantKey = (session?.user as any)?.workspaceId || (session?.user as any)?.id || "workspace_demo_default";
-    const members = getTenantMembers(tenantKey);
+    const auth = await resolveAuthAndTenant();
+    if ("error" in auth) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+    }
+
+    const { organizationId, effectiveRole } = auth;
+
+    if (
+      effectiveRole !== "TENANT_ADMIN" &&
+      effectiveRole !== "OWNER" &&
+      effectiveRole !== "SUPER_ADMIN" &&
+      effectiveRole !== "DEVELOPER"
+    ) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: Only Tenant Administrators can update teammate permissions." },
+        { status: 403 }
+      );
+    }
 
     const body = await req.json();
-    const parseResult = patchRoleSchema.safeParse(body);
+    const parseResult = patchMemberSchema.safeParse(body);
 
     if (!parseResult.success) {
       return NextResponse.json(
@@ -338,93 +444,161 @@ export async function PATCH(req: Request) {
       );
     }
 
-    const { id, role, status, allowedPages } = parseResult.data;
-    const memberIndex = members.findIndex((m) => m.id === id);
+    const { id, allowedPages, role } = parseResult.data;
 
-    if (memberIndex === -1) {
+    // Verify membership belongs to caller's tenant organization
+    const membership = await prisma.membership.findFirst({
+      where: { id, organizationId },
+      include: { user: true },
+    });
+
+    if (!membership) {
       return NextResponse.json(
-        { success: false, error: "Member not found" },
+        { success: false, error: "Teammate membership not found in this workspace." },
         { status: 404 }
       );
     }
 
-    // Cannot demote Founding Owner
-    if (members[memberIndex].id === "mem_01" && role && role !== "OWNER" && role !== "TENANT_ADMIN") {
+    // Disallow modifying owner
+    if (membership.role === "OWNER" && role) {
       return NextResponse.json(
-        { success: false, error: "Primary Workspace Owner role cannot be reassigned." },
+        { success: false, error: "Primary Workspace Owner role cannot be changed." },
         { status: 403 }
       );
     }
 
-    if (role) {
-      members[memberIndex].role = role;
+    const updateData: any = {};
+    if (allowedPages !== undefined) {
+      updateData.allowedPages = allowedPages;
     }
-    if (status) {
-      members[memberIndex].status = status;
+    if (role !== undefined) {
+      updateData.role = role;
     }
-    if (allowedPages) {
-      members[memberIndex].allowedPages = allowedPages;
-    }
+
+    const updated = await prisma.membership.update({
+      where: { id },
+      data: updateData,
+      include: { user: true },
+    });
 
     return NextResponse.json({
       success: true,
-      member: members[memberIndex],
-      message: `Member updated successfully`,
+      message: "Teammate permissions updated successfully",
+      member: {
+        id: updated.id,
+        name: updated.user.name,
+        email: updated.user.email,
+        role: updated.role,
+        allowedPages: updated.allowedPages,
+      },
     });
   } catch (error: any) {
+    console.error("[Team API PATCH Error]:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to update role" },
+      { success: false, error: error.message || "Failed to update member" },
       { status: 500 }
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// DELETE: Revoke member access
+// DELETE: Revoke Member Access OR Cancel Pending Invitation
 // ─────────────────────────────────────────────────────────────
 export async function DELETE(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    const tenantKey = (session?.user as any)?.workspaceId || (session?.user as any)?.id || "workspace_demo_default";
-    const members = getTenantMembers(tenantKey);
-
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-
-    const parseResult = deleteMemberSchema.safeParse({ id });
-    if (!parseResult.success) {
-      return NextResponse.json(
-        { success: false, error: parseResult.error.issues[0]?.message || "Validation failed" },
-        { status: 400 }
-      );
+    const auth = await resolveAuthAndTenant();
+    if ("error" in auth) {
+      return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
     }
 
-    const memberIndex = members.findIndex((m) => m.id === id);
-    if (memberIndex === -1) {
-      return NextResponse.json(
-        { success: false, error: "Member not found" },
-        { status: 404 }
-      );
-    }
+    const { organizationId, effectiveRole, user } = auth;
 
-    // Protect primary owner
-    if (members[memberIndex].role === "OWNER" || members[memberIndex].id === "mem_01") {
+    if (
+      effectiveRole !== "TENANT_ADMIN" &&
+      effectiveRole !== "OWNER" &&
+      effectiveRole !== "SUPER_ADMIN" &&
+      effectiveRole !== "DEVELOPER"
+    ) {
       return NextResponse.json(
-        { success: false, error: "Primary Workspace Owner access cannot be revoked." },
+        { success: false, error: "Forbidden: Only Tenant Administrators can remove teammates." },
         { status: 403 }
       );
     }
 
-    const [removed] = members.splice(memberIndex, 1);
+    const { searchParams } = new URL(req.url);
+    const invitationId = searchParams.get("invitationId");
+    const memberId = searchParams.get("id");
 
-    return NextResponse.json({
-      success: true,
-      removedId: removed.id,
-      message: `${removed.name} revoked from workspace`,
-    });
-  } catch (error: any) {
+    // Case 1: Cancel/Delete a pending invitation
+    if (invitationId) {
+      const invite = await prisma.teamInvitation.findFirst({
+        where: { id: invitationId, organizationId },
+      });
+
+      if (!invite) {
+        return NextResponse.json(
+          { success: false, error: "Invitation not found in this workspace." },
+          { status: 404 }
+        );
+      }
+
+      await prisma.teamInvitation.delete({
+        where: { id: invitationId },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Invitation for ${invite.email} cancelled successfully.`,
+      });
+    }
+
+    // Case 2: Revoke active membership
+    if (memberId) {
+      const membership = await prisma.membership.findFirst({
+        where: { id: memberId, organizationId },
+        include: { user: true },
+      });
+
+      if (!membership) {
+        return NextResponse.json(
+          { success: false, error: "Teammate not found in this workspace." },
+          { status: 404 }
+        );
+      }
+
+      // Disallow revoking oneself or the workspace owner
+      if (membership.userId === user.id) {
+        return NextResponse.json(
+          { success: false, error: "You cannot revoke your own workspace access." },
+          { status: 403 }
+        );
+      }
+
+      if (membership.role === "OWNER") {
+        return NextResponse.json(
+          { success: false, error: "Primary Workspace Owner access cannot be revoked." },
+          { status: 403 }
+        );
+      }
+
+      await prisma.membership.delete({
+        where: { id: memberId },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `${membership.user.name || membership.user.email} removed from workspace.`,
+      });
+    }
+
     return NextResponse.json(
-      { success: false, error: error.message || "Failed to revoke member" },
+      { success: false, error: "Either 'id' (member) or 'invitationId' parameter is required." },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    console.error("[Team API DELETE Error]:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to remove member" },
       { status: 500 }
     );
   }

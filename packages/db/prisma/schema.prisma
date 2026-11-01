@@ -25,6 +25,7 @@ model User {
 
   memberships   Membership[]
   auditLogs     AuditLog[]
+  sentInvitations TeamInvitation[]
 }
 
 model PasswordResetToken {
@@ -50,6 +51,7 @@ model Organization {
 
   workspaces  Workspace[]
   memberships Membership[]
+  invitations TeamInvitation[]
   subscription Subscription?
 }
 
@@ -78,6 +80,28 @@ model Membership {
 
   @@unique([userId, organizationId])
   @@index([userId])
+  @@index([organizationId])
+}
+
+model TeamInvitation {
+  id             String       @id @default(cuid())
+  email          String
+  name           String?
+  role           Role         @default(ADMIN_STAFF)
+  allowedPages   String[]     @default([])
+  token          String       @unique
+  organizationId String
+  inviterId      String
+  status         String       @default("PENDING") // PENDING, ACCEPTED, REVOKED, EXPIRED
+  expiresAt      DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter        User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
   @@index([organizationId])
 }
 

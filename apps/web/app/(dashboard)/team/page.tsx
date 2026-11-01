@@ -134,6 +134,8 @@ export default function TeamMembersPage() {
 
   // Delete & Revoke State
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
+  const [deleteMode, setDeleteMode] = useState<"PERMANENT" | "REVOKE">("PERMANENT");
+  const [confirmAcknowledge, setConfirmAcknowledge] = useState(false);
   const [inviteToCancel, setInviteToCancel] = useState<PendingInvitation | null>(null);
   const [isRevoking, setIsRevoking] = useState(false);
 
@@ -241,26 +243,40 @@ export default function TeamMembersPage() {
     }
   };
 
-  // Revoke Member Access
-  const handleConfirmRevokeMember = async () => {
+  // Delete or Revoke Member Access
+  const handleConfirmDeleteMember = async () => {
     if (!memberToDelete) return;
 
     try {
       setIsRevoking(true);
-      const res = await fetch(`/api/team?id=${memberToDelete.id}`, {
+      const isPermanent = deleteMode === "PERMANENT";
+      const params = new URLSearchParams();
+      params.set("id", memberToDelete.id);
+      if (memberToDelete.userId) params.set("userId", memberToDelete.userId);
+      if (isPermanent) params.set("permanent", "true");
+
+      const res = await fetch(`/api/team?${params.toString()}`, {
         method: "DELETE",
       });
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Failed to revoke member");
+        throw new Error(data.error || "Failed to delete user");
       }
 
-      toast.info("Member Revoked", `${memberToDelete.name} has been removed.`);
+      if (isPermanent) {
+        toast.success(
+          "User Permanently Deleted",
+          `${memberToDelete.email} has been purged from the database. Email is now released.`
+        );
+      } else {
+        toast.info("Member Revoked", `${memberToDelete.name} has been removed from this workspace.`);
+      }
+
       setMemberToDelete(null);
       fetchMembers();
     } catch (err: any) {
-      toast.error("Revoke Failed", err.message || "Failed to remove member.");
+      toast.error("Deletion Failed", err.message || "Failed to delete member.");
     } finally {
       setIsRevoking(false);
     }
@@ -847,9 +863,13 @@ export default function TeamMembersPage() {
                           {member.role !== "DEVELOPER" && (
                             <button
                               type="button"
-                              onClick={() => setMemberToDelete(member)}
+                              onClick={() => {
+                                setMemberToDelete(member);
+                                setDeleteMode("PERMANENT");
+                                setConfirmAcknowledge(false);
+                              }}
                               className="p-1.5 rounded-lg border border-border bg-card hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-all shadow-xs cursor-pointer"
-                              title="Revoke member access"
+                              title="Delete user permanently or revoke access"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -1195,22 +1215,140 @@ export default function TeamMembersPage() {
       </CustomModal>
 
       {/* ─────────────────────────────────────────────────────────────
-          MODAL 3: Revoke Access Modal
+          MODAL 3: Delete / Revoke User Modal (Proper Delete Alert)
          ───────────────────────────────────────────────────────────── */}
       <CustomModal
         isOpen={!!memberToDelete}
-        onClose={() => setMemberToDelete(null)}
-        title={`Revoke Access: ${memberToDelete?.name}?`}
-        description="This will remove the user from the workspace. Their assigned permissions will be deleted immediately."
-        confirmText="Revoke User"
-        cancelText="Cancel"
+        onClose={() => {
+          setMemberToDelete(null);
+          setConfirmAcknowledge(false);
+        }}
+        title={deleteMode === "PERMANENT" ? "Permanently Delete User Account?" : "Revoke Workspace Access?"}
+        description={
+          deleteMode === "PERMANENT"
+            ? "Purge this user record completely from the platform database so their email can be re-registered."
+            : "Remove this user from the current workspace while keeping their underlying platform account."
+        }
+        confirmText={deleteMode === "PERMANENT" ? "Permanently Delete User" : "Revoke from Workspace"}
+        cancelText="Keep User"
         isDestructive={true}
         isLoading={isRevoking}
-        onConfirm={handleConfirmRevokeMember}
+        onConfirm={() => {
+          if (deleteMode === "PERMANENT" && !confirmAcknowledge) {
+            toast.warning("Confirmation Required", "Please check the confirmation box to authorize permanent deletion.");
+            return;
+          }
+          handleConfirmDeleteMember();
+        }}
       >
-        <p className="text-xs text-muted-foreground">
-          User email: <strong>{memberToDelete?.email}</strong>.
-        </p>
+        <div className="space-y-3.5 py-1 text-xs">
+          {/* User Summary Card */}
+          <div className="p-3 rounded-xl bg-muted/40 border border-border flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary overflow-hidden shrink-0 shadow-2xs">
+              <img
+                src={memberToDelete?.avatarUrl || "/avatars/default-avatar.svg"}
+                alt={memberToDelete?.name || "User"}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-foreground text-xs truncate">{memberToDelete?.name}</p>
+              <p className="text-[11px] font-mono text-muted-foreground truncate">{memberToDelete?.email}</p>
+            </div>
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-muted border border-border uppercase">
+              {memberToDelete?.role?.replace("_", " ")}
+            </span>
+          </div>
+
+          {/* Deletion Mode Selector */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">Select Deletion Type:</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteMode("PERMANENT");
+                  setConfirmAcknowledge(false);
+                }}
+                className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                  deleteMode === "PERMANENT"
+                    ? "border-rose-500/50 bg-rose-500/10 ring-1 ring-rose-500/30"
+                    : "border-border bg-card hover:bg-muted text-muted-foreground"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 font-bold text-rose-600 dark:text-rose-400">
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Permanent Purge</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Erases user from database; frees email for other tenants.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteMode("REVOKE");
+                  setConfirmAcknowledge(true);
+                }}
+                className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${
+                  deleteMode === "REVOKE"
+                    ? "border-amber-500/50 bg-amber-500/10 ring-1 ring-amber-500/30"
+                    : "border-border bg-card hover:bg-muted text-muted-foreground"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 font-bold text-amber-600 dark:text-amber-400">
+                  <X className="w-3.5 h-3.5" />
+                  <span>Revoke Access Only</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Removes workspace seat; retains platform account.
+                </p>
+              </button>
+            </div>
+          </div>
+
+          {/* Proper Delete Alert Banner */}
+          {deleteMode === "PERMANENT" ? (
+            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 space-y-1.5 animate-in fade-in">
+              <div className="flex items-center gap-2 font-bold text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>Permanent Database Account Deletion</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-foreground/90">
+                This will permanently delete <strong>{memberToDelete?.email}</strong>, their password hash, login
+                credentials, and all memberships. The email address will be released immediately so you can invite
+                them as staff in another tenant.
+              </p>
+            </div>
+          ) : (
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 space-y-1 animate-in fade-in">
+              <div className="flex items-center gap-2 font-bold text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>Workspace Access Revocation</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-foreground/90">
+                This removes <strong>{memberToDelete?.name}</strong> from this specific workspace. Their underlying
+                platform login and other tenant memberships will remain active.
+              </p>
+            </div>
+          )}
+
+          {/* Confirmation Checkbox for Permanent Purge */}
+          {deleteMode === "PERMANENT" && (
+            <label className="flex items-start gap-2 pt-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={confirmAcknowledge}
+                onChange={(e) => setConfirmAcknowledge(e.target.checked)}
+                className="rounded border-border text-rose-500 focus:ring-rose-500 mt-0.5"
+              />
+              <span className="text-[11px] text-muted-foreground select-none">
+                I understand this permanently deletes this user account and credentials from the system.
+              </span>
+            </label>
+          )}
+        </div>
       </CustomModal>
 
       {/* ─────────────────────────────────────────────────────────────

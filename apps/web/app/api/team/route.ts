@@ -681,7 +681,7 @@ export async function PATCH(req: Request) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// DELETE: Revoke Member Access OR Cancel Pending Invitation
+// DELETE: Revoke Member Access OR Permanently Delete User
 // ─────────────────────────────────────────────────────────────
 export async function DELETE(req: Request) {
   try {
@@ -694,8 +694,106 @@ export async function DELETE(req: Request) {
     const { searchParams } = new URL(req.url);
     const invitationId = searchParams.get("invitationId");
     const memberId = searchParams.get("id");
+    const targetUserId = searchParams.get("userId");
+    const permanent = searchParams.get("permanent") === "true";
 
-    // Case 1: Cancel invitation
+    // ──────────────────────────────────────────────────────────
+    // CASE 1: PERMANENT USER PURGE (Purge from platform database)
+    // ──────────────────────────────────────────────────────────
+    if (permanent) {
+      let resolvedUser: any = null;
+
+      if (targetUserId) {
+        resolvedUser = await prisma.user.findUnique({
+          where: { id: targetUserId },
+          include: { memberships: true },
+        });
+      } else if (memberId) {
+        const membership = await prisma.membership.findUnique({
+          where: { id: memberId },
+          include: { user: { include: { memberships: true } } },
+        });
+        resolvedUser = membership?.user;
+      }
+
+      if (!resolvedUser) {
+        return NextResponse.json(
+          { success: false, error: "User record not found in database." },
+          { status: 404 }
+        );
+      }
+
+      // Security Check 1: Cannot delete oneself
+      if (resolvedUser.id === user.id) {
+        return NextResponse.json(
+          { success: false, error: "Security Restriction: You cannot delete your own account." },
+          { status: 403 }
+        );
+      }
+
+      const targetEmail = (resolvedUser.email || "").toLowerCase().trim();
+      const isTargetDeveloper = DEVELOPER_EMAILS.includes(targetEmail);
+
+      // Security Check 2: Protect Developer accounts
+      if (isTargetDeveloper && !isDeveloper) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: Developer root account is protected and cannot be deleted." },
+          { status: 403 }
+        );
+      }
+
+      // Security Check 3: Tenant Admin scoping
+      if (!isSuperAdmin) {
+        const belongsToTenant = resolvedUser.memberships.some(
+          (m: any) => m.organizationId === organizationId
+        );
+        if (!belongsToTenant) {
+          return NextResponse.json(
+            { success: false, error: "Forbidden: You can only delete staff members belonging to your organization." },
+            { status: 403 }
+          );
+        }
+
+        const tenantMembership = resolvedUser.memberships.find(
+          (m: any) => m.organizationId === organizationId
+        );
+        if (tenantMembership && (tenantMembership.role === "OWNER" || tenantMembership.role === "TENANT_ADMIN")) {
+          return NextResponse.json(
+            { success: false, error: "Forbidden: Primary Workspace Owner account cannot be deleted." },
+            { status: 403 }
+          );
+        }
+      }
+
+      // 1. Clean up password reset tokens
+      if (targetEmail) {
+        await prisma.passwordResetToken.deleteMany({
+          where: { email: targetEmail },
+        }).catch(() => {});
+
+        // 2. Clean up pending invitations targeting this email
+        await prisma.teamInvitation.deleteMany({
+          where: { email: targetEmail },
+        }).catch(() => {});
+      }
+
+      // 3. Permanently delete User (Cascades memberships, sent invitations; SetNull on auditLogs)
+      await prisma.user.delete({
+        where: { id: resolvedUser.id },
+      });
+
+      return NextResponse.json({
+        success: true,
+        permanent: true,
+        deletedUserId: resolvedUser.id,
+        deletedEmail: targetEmail,
+        message: `User ${targetEmail} has been permanently deleted from the database. Email is now released.`,
+      });
+    }
+
+    // ──────────────────────────────────────────────────────────
+    // CASE 2: CANCEL PENDING INVITATION
+    // ──────────────────────────────────────────────────────────
     if (invitationId) {
       const invite = await prisma.teamInvitation.findUnique({
         where: { id: invitationId },
@@ -713,7 +811,9 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: true, message: `Invitation cancelled.` });
     }
 
-    // Case 2: Revoke active membership
+    // ──────────────────────────────────────────────────────────
+    // CASE 3: SOFT REVOKE MEMBERSHIP FROM WORKSPACE
+    // ──────────────────────────────────────────────────────────
     if (memberId) {
       const membership = await prisma.membership.findUnique({
         where: { id: memberId },
@@ -741,10 +841,10 @@ export async function DELETE(req: Request) {
       }
 
       await prisma.membership.delete({ where: { id: memberId } });
-      return NextResponse.json({ success: true, message: `${membership.user.name || membership.user.email} removed.` });
+      return NextResponse.json({ success: true, message: `${membership.user.name || membership.user.email} removed from workspace.` });
     }
 
-    return NextResponse.json({ success: false, error: "Missing id or invitationId parameter." }, { status: 400 });
+    return NextResponse.json({ success: false, error: "Missing id, userId, or invitationId parameter." }, { status: 400 });
   } catch (error: any) {
     console.error("[Team API DELETE Error]:", error);
     return NextResponse.json(

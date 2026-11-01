@@ -34,6 +34,7 @@ import {
   Palette,
   CreditCard,
   LayoutDashboard,
+  Building2,
   ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -48,6 +49,8 @@ export interface TeamMember {
   role: "DEVELOPER" | "SUPER_ADMIN" | "SUPER_ADMIN_STAFF" | "TENANT_ADMIN" | "OWNER" | "ADMIN_STAFF" | "STAFF" | "CREATOR" | "GUEST";
   status: "ACTIVE" | "INVITED" | "PAUSED";
   joinedAt: string;
+  workspaceName?: string;
+  organizationId?: string;
   allowedPages?: string[];
   avatarUrl?: string | null;
   lastActive?: string;
@@ -62,6 +65,7 @@ export interface PendingInvitation {
   allowedPages: string[];
   token: string;
   inviteUrl: string;
+  workspaceName?: string;
   createdAt: string;
   expiresAt: string;
 }
@@ -72,6 +76,10 @@ interface TeamStats {
   invitedCount: number;
   maxSeats: number;
   availableSeats: number;
+  tenantAdminCount?: number;
+  staffCount?: number;
+  creatorCount?: number;
+  superAdminCount?: number;
 }
 
 const AVAILABLE_PAGES = [
@@ -87,18 +95,13 @@ const AVAILABLE_PAGES = [
 export default function TeamMembersPage() {
   const { toast } = useToast();
   const { data: session, status: authStatus } = useSession();
-  const currentUser = session?.user as any;
-  const isSuperAdmin =
-    currentUser?.isDeveloper ||
-    currentUser?.role === "DEVELOPER" ||
-    currentUser?.isSuperAdmin ||
-    currentUser?.role === "SUPER_ADMIN" ||
-    currentUser?.email === "suman.baidya.pro@gmail.com";
 
   // State
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
   const [isCreatorSolo, setIsCreatorSolo] = useState(false);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+  const [isDeveloper, setIsDeveloper] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,8 +109,6 @@ export default function TeamMembersPage() {
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(10);
 
   const [stats, setStats] = useState<TeamStats>({
     totalCount: 1,
@@ -115,6 +116,10 @@ export default function TeamMembersPage() {
     invitedCount: 0,
     maxSeats: 5,
     availableSeats: 4,
+    tenantAdminCount: 1,
+    staffCount: 0,
+    creatorCount: 0,
+    superAdminCount: 0,
   });
 
   // Modal State for Teammate Invitation
@@ -122,6 +127,7 @@ export default function TeamMembersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
+  const [inviteRole, setInviteRole] = useState<TeamMember["role"]>("ADMIN_STAFF");
   const [inviteAllowedPages, setInviteAllowedPages] = useState<string[]>(["content", "calendar"]);
   const [createdInviteUrl, setCreatedInviteUrl] = useState<string | null>(null);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
@@ -134,6 +140,7 @@ export default function TeamMembersPage() {
   // Edit Teammate Permissions Modal
   const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
   const [editAllowedPages, setEditAllowedPages] = useState<string[]>([]);
+  const [editRole, setEditRole] = useState<TeamMember["role"]>("ADMIN_STAFF");
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Collapsible Role Matrix
@@ -162,6 +169,8 @@ export default function TeamMembersPage() {
         }
 
         setIsCreatorSolo(!!data.isCreatorSolo);
+        setIsPlatformAdmin(!!data.isPlatformAdmin);
+        setIsDeveloper(!!data.isDeveloper);
         setMembers(data.members || []);
         setInvitations(data.invitations || []);
         if (data.stats) setStats(data.stats);
@@ -191,7 +200,6 @@ export default function TeamMembersPage() {
   // Handle Search Input
   const handleSearchChange = (val: string) => {
     setSearchQuery(val);
-    setCurrentPage(1);
   };
 
   // Dispatch Invitation
@@ -210,7 +218,7 @@ export default function TeamMembersPage() {
         body: JSON.stringify({
           email: inviteEmail.trim(),
           name: inviteName.trim() || undefined,
-          role: "ADMIN_STAFF", // Strictly Staff / Teammate
+          role: isPlatformAdmin ? inviteRole : "ADMIN_STAFF",
           allowedPages: inviteAllowedPages,
         }),
       });
@@ -248,7 +256,7 @@ export default function TeamMembersPage() {
         throw new Error(data.error || "Failed to revoke member");
       }
 
-      toast.info("Member Revoked", `${memberToDelete.name} has been removed from this workspace.`);
+      toast.info("Member Revoked", `${memberToDelete.name} has been removed.`);
       setMemberToDelete(null);
       fetchMembers();
     } catch (err: any) {
@@ -286,6 +294,7 @@ export default function TeamMembersPage() {
   // Open Edit Permissions Modal
   const openEditModal = (member: TeamMember) => {
     setMemberToEdit(member);
+    setEditRole(member.role);
     setEditAllowedPages(member.allowedPages || ["content", "calendar"]);
   };
 
@@ -299,6 +308,7 @@ export default function TeamMembersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           id: memberToEdit.id,
+          role: isPlatformAdmin ? editRole : undefined,
           allowedPages: editAllowedPages,
         }),
       });
@@ -306,7 +316,7 @@ export default function TeamMembersPage() {
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Failed to update permissions");
       }
-      toast.success("Permissions Updated", `${memberToEdit.name}'s page access has been updated.`);
+      toast.success("Permissions Updated", `${memberToEdit.name}'s permissions have been updated.`);
       setMemberToEdit(null);
       fetchMembers();
     } catch (err: any) {
@@ -320,7 +330,7 @@ export default function TeamMembersPage() {
   const handleCopyLink = (url: string, key: string) => {
     navigator.clipboard.writeText(url);
     setCopiedToken(key);
-    toast.success("Link Copied", "Invitation link copied to clipboard. Share with your teammate.");
+    toast.success("Link Copied", "Invitation link copied to clipboard.");
     setTimeout(() => setCopiedToken(null), 2500);
   };
 
@@ -329,8 +339,30 @@ export default function TeamMembersPage() {
     setIsInviteModalOpen(false);
     setInviteEmail("");
     setInviteName("");
+    setInviteRole("ADMIN_STAFF");
     setInviteAllowedPages(["content", "calendar"]);
     setCreatedInviteUrl(null);
+  };
+
+  const getRoleBadgeClasses = (role: TeamMember["role"]) => {
+    switch (role) {
+      case "DEVELOPER":
+        return "bg-rose-500/10 text-rose-500 dark:text-rose-400 border-rose-500/30";
+      case "SUPER_ADMIN":
+      case "SUPER_ADMIN_STAFF":
+        return "bg-amber-500/10 text-amber-500 border-amber-500/30";
+      case "TENANT_ADMIN":
+      case "OWNER":
+        return "bg-primary/10 text-primary border-primary/30";
+      case "CREATOR":
+        return "bg-purple-500/10 text-purple-400 border-purple-500/30";
+      case "ADMIN_STAFF":
+      case "STAFF":
+        return "bg-sky-500/10 text-sky-400 border-sky-500/30";
+      case "GUEST":
+      default:
+        return "bg-muted text-muted-foreground border-border";
+    }
   };
 
   // ─────────────────────────────────────────────────────────────
@@ -392,7 +424,7 @@ export default function TeamMembersPage() {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // RENDER CASE 2: Tenant Admin Workspace
+  // RENDER CASE 2: Team Directory (Platform Admin OR Tenant Admin)
   // ─────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-300">
@@ -400,8 +432,12 @@ export default function TeamMembersPage() {
           1. Canonical Page Header (Strictly 2 Words Title, 7 Words Desc)
          ───────────────────────────────────────────────────────────── */}
       <PageBreadcrumb
-        pageTitle="Team & Roles"
-        description="Manage organization members and role-based access permissions."
+        pageTitle={isPlatformAdmin ? "Team & Admins" : "Team & Roles"}
+        description={
+          isPlatformAdmin
+            ? "Platform administrators, tenant owners, staff, and creators."
+            : "Manage organization members and role-based access permissions."
+        }
         hideBreadcrumb={true}
       >
         <div className="flex items-center gap-2">
@@ -411,7 +447,7 @@ export default function TeamMembersPage() {
             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs sm:text-sm font-semibold transition-all shadow-sm active:scale-95 cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Invite Teammate</span>
+            <span>{isPlatformAdmin ? "Add User" : "Invite Teammate"}</span>
           </button>
         </div>
       </PageBreadcrumb>
@@ -436,13 +472,14 @@ export default function TeamMembersPage() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          3. 4 Number-First StatCards (Strictly Numbers Highlighted)
+          3. 4 Number-First StatCards (Numbers Strictly Highlighted)
          ───────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
+        {/* Card 1: Total Users */}
         <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 shadow-sm hover:border-primary/40 transition-colors">
           <div className="flex items-center justify-between pb-1">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Members
+              {isPlatformAdmin ? "Total Users" : "Total Members"}
             </span>
             <div className="w-6 h-6 rounded-md bg-primary/10 border border-primary/25 flex items-center justify-center text-primary">
               <Users className="w-3.5 h-3.5" />
@@ -452,15 +489,20 @@ export default function TeamMembersPage() {
             <h4 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
               {stats.totalCount}
             </h4>
-            <span className="text-[11px] font-semibold text-primary">Assigned</span>
+            <span className="text-[11px] font-semibold text-primary">
+              {isPlatformAdmin ? "Platform" : "Assigned"}
+            </span>
           </div>
-          <span className="text-[10px] text-muted-foreground block mt-2">Active workspace seats</span>
+          <span className="text-[10px] text-muted-foreground block mt-2">
+            {isPlatformAdmin ? "All registered accounts" : "Active workspace seats"}
+          </span>
         </div>
 
+        {/* Card 2: Tenant Admins OR Active Members */}
         <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 shadow-sm hover:border-primary/40 transition-colors">
           <div className="flex items-center justify-between pb-1">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Active Members
+              {isPlatformAdmin ? "Tenant Admins" : "Active Members"}
             </span>
             <div className="w-6 h-6 rounded-md bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-500">
               <UserCheck className="w-3.5 h-3.5" />
@@ -468,52 +510,66 @@ export default function TeamMembersPage() {
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
             <h4 className="text-2xl sm:text-3xl font-extrabold text-emerald-500 tracking-tight">
-              {stats.activeCount}
+              {isPlatformAdmin ? stats.tenantAdminCount ?? 0 : stats.activeCount}
             </h4>
-            <span className="text-[11px] font-semibold text-muted-foreground">Confirmed</span>
+            <span className="text-[11px] font-semibold text-muted-foreground">
+              {isPlatformAdmin ? "Owners" : "Confirmed"}
+            </span>
           </div>
-          <span className="text-[10px] text-muted-foreground block mt-2">Onboarded teammates</span>
+          <span className="text-[10px] text-muted-foreground block mt-2">
+            {isPlatformAdmin ? "Brand administrators" : "Onboarded teammates"}
+          </span>
         </div>
 
+        {/* Card 3: Teammates & Staff OR Pending Invites */}
         <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 shadow-sm hover:border-primary/40 transition-colors">
           <div className="flex items-center justify-between pb-1">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Pending Invites
+              {isPlatformAdmin ? "Teammates / Staff" : "Pending Invites"}
             </span>
-            <div className="w-6 h-6 rounded-md bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-500">
-              <Clock className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 rounded-md bg-sky-500/10 border border-sky-500/25 flex items-center justify-center text-sky-400">
+              {isPlatformAdmin ? <Users className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <h4 className="text-2xl sm:text-3xl font-extrabold text-amber-500 tracking-tight">
-              {stats.invitedCount}
+            <h4 className="text-2xl sm:text-3xl font-extrabold text-sky-400 tracking-tight">
+              {isPlatformAdmin ? stats.staffCount ?? 0 : stats.invitedCount}
             </h4>
-            <span className="text-[11px] font-semibold text-muted-foreground">Awaiting</span>
+            <span className="text-[11px] font-semibold text-muted-foreground">
+              {isPlatformAdmin ? "Delegated" : "Awaiting"}
+            </span>
           </div>
-          <span className="text-[10px] text-muted-foreground block mt-2">Active invitation links</span>
+          <span className="text-[10px] text-muted-foreground block mt-2">
+            {isPlatformAdmin ? "Assigned staff members" : "Active invitation links"}
+          </span>
         </div>
 
+        {/* Card 4: Creators OR Available Seats */}
         <div className="rounded-xl border border-border bg-card p-3 sm:p-3.5 md:p-4 shadow-sm hover:border-primary/40 transition-colors">
           <div className="flex items-center justify-between pb-1">
             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Available Seats
+              {isPlatformAdmin ? "Creators" : "Available Seats"}
             </span>
-            <div className="w-6 h-6 rounded-md bg-sky-500/10 border border-sky-500/25 flex items-center justify-center text-sky-500">
-              <Shield className="w-3.5 h-3.5" />
+            <div className="w-6 h-6 rounded-md bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-400">
+              {isPlatformAdmin ? <Sparkles className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <h4 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              {stats.availableSeats}
+            <h4 className="text-2xl sm:text-3xl font-extrabold text-purple-400 tracking-tight">
+              {isPlatformAdmin ? stats.creatorCount ?? 0 : stats.availableSeats}
             </h4>
-            <span className="text-[11px] font-semibold text-muted-foreground">/ {stats.maxSeats} Max</span>
+            <span className="text-[11px] font-semibold text-muted-foreground">
+              {isPlatformAdmin ? "Solo" : `/ ${stats.maxSeats} Max`}
+            </span>
           </div>
-          <span className="text-[10px] text-muted-foreground block mt-2">Tenant Growth allocation</span>
+          <span className="text-[10px] text-muted-foreground block mt-2">
+            {isPlatformAdmin ? "Creative studio users" : "Tenant Growth allocation"}
+          </span>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          4. Tenant 2-Role Security Policy Banner
+          4. Role-Based Policy Matrix
          ───────────────────────────────────────────────────────────── */}
       <div className="p-3 sm:p-3.5 rounded-2xl bg-card border border-border shadow-xs text-xs space-y-2.5 transition-all">
         <div className="flex items-center justify-between gap-2">
@@ -521,14 +577,16 @@ export default function TeamMembersPage() {
             <div className="w-5 h-5 rounded-md bg-primary/10 border border-primary/25 flex items-center justify-center text-primary shrink-0">
               <ShieldCheck className="w-3.5 h-3.5" />
             </div>
-            <span className="text-xs sm:text-sm font-bold">Tenant 2-Role Access Policy</span>
+            <span className="text-xs sm:text-sm font-bold">
+              {isPlatformAdmin ? "Platform Hierarchy & Role Policy" : "Tenant 2-Role Access Policy"}
+            </span>
           </div>
           <button
             type="button"
             onClick={() => setShowPolicyDetails(!showPolicyDetails)}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-muted/60 hover:bg-muted border border-border text-[11px] font-semibold text-foreground transition-all cursor-pointer shadow-xs shrink-0"
           >
-            <span>{showPolicyDetails ? "Hide matrix" : "View role permissions"}</span>
+            <span>{showPolicyDetails ? "Hide matrix" : "View permissions matrix"}</span>
             {showPolicyDetails ? (
               <ChevronUp className="w-3 h-3 text-muted-foreground" />
             ) : (
@@ -539,59 +597,57 @@ export default function TeamMembersPage() {
 
         {showPolicyDetails && (
           <div className="pt-3 border-t border-border space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Post 1: Tenant Admin */}
-              <div className="p-3.5 rounded-xl bg-muted/30 border border-primary/30 space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
+              {/* Developer / Super Admin */}
+              <div className="p-3 rounded-xl bg-muted/30 border border-border/80 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Crown className="w-4 h-4 text-primary" />
-                    <span className="text-xs font-bold text-foreground">1. Tenant Admin (Owner)</span>
-                  </div>
-                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25">
-                    Full Authority
+                  <span className="text-xs font-bold text-foreground">Platform Admin</span>
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/25">
+                    Controller
                   </span>
                 </div>
-                <ul className="space-y-1 text-[11px] text-foreground">
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span>Connect & decrypt social channels (Meta, YouTube, WhatsApp)</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span>Manage billing, Razorpay subscription, and workspace settings</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span>Invite teammates and assign granular page access permissions</span>
-                  </li>
-                </ul>
+                <p className="text-[11px] text-muted-foreground">
+                  Sees all users across all tenant workspaces. Developer accounts remain concealed from non-developers.
+                </p>
               </div>
 
-              {/* Post 2: Staff / Teammate */}
-              <div className="p-3.5 rounded-xl bg-muted/30 border border-sky-500/30 space-y-2">
+              {/* Tenant Admin */}
+              <div className="p-3 rounded-xl bg-muted/30 border border-primary/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Users className="w-4 h-4 text-sky-400" />
-                    <span className="text-xs font-bold text-foreground">2. Staff (Team Mate)</span>
-                  </div>
-                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/25">
-                    Delegated Access
+                  <span className="text-xs font-bold text-foreground">Tenant Admin</span>
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/25">
+                    Workspace Owner
                   </span>
                 </div>
-                <ul className="space-y-1 text-[11px] text-foreground">
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span>Access only the specific pages granted by Admin (Content, Leads, Calendar)</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                    <span>Strictly barred from inviting other members or viewing other tenants</span>
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                    <span>No access to billing cards or sensitive encrypted platform keys</span>
-                  </li>
-                </ul>
+                <p className="text-[11px] text-muted-foreground">
+                  Full control over tenant brand, social tokens, billing, and staff teammates. Strictly isolated.
+                </p>
+              </div>
+
+              {/* Staff */}
+              <div className="p-3 rounded-xl bg-muted/30 border border-sky-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-foreground">Staff (Teammate)</span>
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/25">
+                    Delegated
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Authorized only for specific pages (Content, Leads, Calendar) chosen by the Tenant Admin.
+                </p>
+              </div>
+
+              {/* Creator */}
+              <div className="p-3 rounded-xl bg-muted/30 border border-purple-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-foreground">Creator</span>
+                  <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/25">
+                    Solo Studio
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Individual creative production account. Multi-seat team management is disabled.
+                </p>
               </div>
             </div>
           </div>
@@ -606,7 +662,7 @@ export default function TeamMembersPage() {
           <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search teammates by name or email..."
+            placeholder={isPlatformAdmin ? "Search all platform users..." : "Search workspace teammates..."}
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             className="w-full pl-8 pr-7 py-1.5 sm:py-2 rounded-xl bg-background border border-border text-foreground text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs"
@@ -622,13 +678,42 @@ export default function TeamMembersPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Role Filter Pills */}
+        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar shrink-0 flex-nowrap">
+          {(isPlatformAdmin
+            ? [
+                { id: "ALL", label: "All Users" },
+                { id: "ADMIN", label: "Admins" },
+                { id: "STAFF", label: "Staff" },
+                { id: "CREATOR", label: "Creators" },
+                ...(isDeveloper ? [{ id: "DEVELOPER", label: "Developers" }] : []),
+              ]
+            : [
+                { id: "ALL", label: "All Members" },
+                { id: "TENANT_ADMIN", label: "Admins" },
+                { id: "ADMIN_STAFF", label: "Staff" },
+              ]
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setRoleFilter(tab.id)}
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                roleFilter === tab.id
+                  ? "bg-primary text-primary-foreground shadow-xs"
+                  : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border border-border/80"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+
           <button
             type="button"
             onClick={() => fetchMembers(true)}
             disabled={refreshing}
-            className="p-2 rounded-xl bg-card hover:bg-muted border border-border text-foreground transition-all cursor-pointer shadow-xs"
-            title="Refresh team roster"
+            className="p-1.5 sm:p-2 rounded-xl bg-card hover:bg-muted border border-border text-foreground transition-all cursor-pointer shadow-xs ml-1"
+            title="Refresh team directory"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin text-primary" : ""}`} />
           </button>
@@ -636,34 +721,36 @@ export default function TeamMembersPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          6. Active Teammates Table
+          6. Users & Teammates Directory Table
          ───────────────────────────────────────────────────────────── */}
       <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
         <div className="px-3.5 py-2.5 border-b border-border bg-muted/30 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-primary" />
-            <h3 className="text-xs sm:text-sm font-bold text-foreground">Workspace Teammates</h3>
+            <h3 className="text-xs sm:text-sm font-bold text-foreground">
+              {isPlatformAdmin ? "Platform User Directory" : "Workspace Teammates"}
+            </h3>
           </div>
           <span className="text-[11px] font-mono text-muted-foreground">
-            {members.length} Active Member{members.length !== 1 ? "s" : ""}
+            {members.length} {isPlatformAdmin ? "User" : "Member"}{members.length !== 1 ? "s" : ""}
           </span>
         </div>
 
         {loading ? (
-          <div className="p-8 text-center text-xs text-muted-foreground">Loading workspace teammates...</div>
+          <div className="p-8 text-center text-xs text-muted-foreground">Loading directory...</div>
         ) : members.length === 0 ? (
           <div className="p-8 text-center text-xs text-muted-foreground space-y-2">
-            <p>No teammates found matching your search.</p>
+            <p>No users found matching your search or filter.</p>
           </div>
         ) : (
           <div className="overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <table className="w-full text-xs text-left">
               <thead className="bg-muted/40 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
                 <tr>
-                  <th className="px-3.5 py-2.5 w-12 text-center">#SL</th>
-                  <th className="px-3.5 py-2.5">Teammate</th>
-                  <th className="px-3 py-2.5">Role</th>
-                  <th className="px-3 py-2.5">Granted Page Access</th>
+                  <th className="px-3.5 py-2.5 w-12 text-center font-mono">#SL</th>
+                  <th className="px-3.5 py-2.5">User Identity</th>
+                  <th className="px-3 py-2.5">Assigned Role</th>
+                  <th className="px-3 py-2.5">{isPlatformAdmin ? "Workspace / Tenant" : "Granted Page Access"}</th>
                   <th className="px-3 py-2.5 hidden sm:table-cell">Joined Date</th>
                   <th className="px-3.5 py-2.5 text-right">Actions</th>
                 </tr>
@@ -683,7 +770,7 @@ export default function TeamMembersPage() {
                         #{index + 1}
                       </td>
 
-                      {/* User Identity */}
+                      {/* User Column */}
                       <td className="px-3.5 py-3">
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary overflow-hidden shrink-0 shadow-2xs">
@@ -708,19 +795,22 @@ export default function TeamMembersPage() {
                       {/* Role Badge */}
                       <td className="px-3 py-3">
                         <span
-                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${
-                            isOwner
-                              ? "bg-primary/10 text-primary border-primary/30"
-                              : "bg-sky-500/10 text-sky-400 border-sky-500/30"
-                          }`}
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${getRoleBadgeClasses(
+                            member.role
+                          )}`}
                         >
-                          {isOwner ? "Admin (Owner)" : "Staff (Teammate)"}
+                          {member.role.replace("_", " ")}
                         </span>
                       </td>
 
-                      {/* Allowed Pages */}
+                      {/* Workspace Name (Platform Admin) OR Allowed Pages (Tenant Admin) */}
                       <td className="px-3 py-3">
-                        {isOwner ? (
+                        {isPlatformAdmin ? (
+                          <div className="flex items-center gap-1.5 text-foreground font-medium">
+                            <Building2 className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate max-w-[180px]">{member.workspaceName || "Global Platform"}</span>
+                          </div>
+                        ) : isOwner ? (
                           <span className="text-[10px] font-mono text-muted-foreground">Full Workspace Access</span>
                         ) : member.allowedPages && member.allowedPages.length > 0 ? (
                           <div className="flex items-center gap-1 flex-wrap max-w-xs">
@@ -745,28 +835,26 @@ export default function TeamMembersPage() {
 
                       {/* Actions */}
                       <td className="px-3.5 py-3 text-right">
-                        {!isOwner ? (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(member)}
-                              className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-xs cursor-pointer"
-                              title="Edit page access permissions"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(member)}
+                            className="p-1.5 rounded-lg border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground transition-all shadow-xs cursor-pointer"
+                            title="Edit permissions or role"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          {member.role !== "DEVELOPER" && (
                             <button
                               type="button"
                               onClick={() => setMemberToDelete(member)}
                               className="p-1.5 rounded-lg border border-border bg-card hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-all shadow-xs cursor-pointer"
-                              title="Revoke teammate access"
+                              title="Revoke member access"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground font-mono">Owner Protected</span>
-                        )}
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -808,8 +896,11 @@ export default function TeamMembersPage() {
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-foreground">{inv.email}</span>
                       <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/25 uppercase">
-                        Staff (Teammate)
+                        {inv.role.replace("_", " ")}
                       </span>
+                      {inv.workspaceName && (
+                        <span className="text-[10px] text-muted-foreground">({inv.workspaceName})</span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -865,13 +956,17 @@ export default function TeamMembersPage() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          MODAL 1: Invite Teammate Modal
+          MODAL 1: Invite Teammate / User Modal
          ───────────────────────────────────────────────────────────── */}
       <CustomModal
         isOpen={isInviteModalOpen}
         onClose={closeInviteModal}
-        title="Invite New Teammate"
-        description="Generate an onboarding magic-link for your tenant staff. Only Staff post can be added."
+        title={isPlatformAdmin ? "Add Platform User" : "Invite New Teammate"}
+        description={
+          isPlatformAdmin
+            ? "Generate an invitation onboarding link for platform administrators, tenant owners, or staff."
+            : "Generate an onboarding magic-link for your tenant staff. Only Staff post can be added."
+        }
         confirmText={createdInviteUrl ? "Done" : "Generate Invitation Link"}
         cancelText="Close"
         onConfirm={() => {
@@ -891,8 +986,8 @@ export default function TeamMembersPage() {
               <div>
                 <p className="font-bold">Invitation Link Created!</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Send this link to <strong>{inviteEmail}</strong>. When opened, they will set their name, avatar, and
-                  password to join your workspace.
+                  Share this link with <strong>{inviteEmail}</strong>. When opened, they will set their name, avatar, and
+                  password to join.
                 </p>
               </div>
             </div>
@@ -922,14 +1017,14 @@ export default function TeamMembersPage() {
             {/* Email Address */}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                <span>Teammate Work Email</span>
+                <span>User Work Email</span>
                 <span className="text-[10px] text-primary">* Required</span>
               </label>
               <input
                 type="email"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="staff@business.com"
+                placeholder="colleague@domain.com"
                 required
                 className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs font-mono focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs"
               />
@@ -945,24 +1040,41 @@ export default function TeamMembersPage() {
                 type="text"
                 value={inviteName}
                 onChange={(e) => setInviteName(e.target.value)}
-                placeholder="e.g. Priya Sharma"
+                placeholder="e.g. John Doe"
                 className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs"
               />
             </div>
 
-            {/* Role (Locked to Staff) */}
+            {/* Role: Selectable for Platform Admin, Locked to Staff for Tenant Admin */}
             <div className="space-y-1">
               <label className="text-xs font-semibold text-foreground flex items-center justify-between">
-                <span>Assigned Workspace Post</span>
-                <span className="text-[10px] text-muted-foreground">Fixed for Tenant</span>
+                <span>Assigned Role</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {isPlatformAdmin ? "Platform Level" : "Fixed for Tenant"}
+                </span>
               </label>
-              <div className="p-2.5 rounded-xl bg-muted/40 border border-border text-xs flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-sky-400" />
-                  <span className="font-bold text-foreground">Staff (Team Mate)</span>
+              {isPlatformAdmin ? (
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs font-medium focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
+                >
+                  {isDeveloper && <option value="DEVELOPER">Developer (Root Architect)</option>}
+                  <option value="SUPER_ADMIN">Super Admin (Platform Controller)</option>
+                  <option value="SUPER_ADMIN_STAFF">Super Admin Staff (Delegated)</option>
+                  <option value="TENANT_ADMIN">Tenant Admin (Business Owner)</option>
+                  <option value="ADMIN_STAFF">Staff (Teammate)</option>
+                  <option value="CREATOR">Content Creator (Solo Studio)</option>
+                </select>
+              ) : (
+                <div className="p-2.5 rounded-xl bg-muted/40 border border-border text-xs flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-sky-400" />
+                    <span className="font-bold text-foreground">Staff (Team Mate)</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-muted-foreground">2-Role Policy Enforced</span>
                 </div>
-                <span className="text-[10px] font-mono text-muted-foreground">2-Role Policy Enforced</span>
-              </div>
+              )}
             </div>
 
             {/* Granular Page Access Checkboxes */}
@@ -1015,14 +1127,33 @@ export default function TeamMembersPage() {
       <CustomModal
         isOpen={!!memberToEdit}
         onClose={() => setMemberToEdit(null)}
-        title={`Edit Permissions: ${memberToEdit?.name}`}
-        description="Update the specific pages and sections this teammate is authorized to access."
-        confirmText="Save Permissions"
+        title={`Edit User: ${memberToEdit?.name}`}
+        description="Update role assignment and authorized pages."
+        confirmText="Save Changes"
         cancelText="Cancel"
         onConfirm={handleSaveEdit}
         isLoading={isSavingEdit}
       >
-        <div className="space-y-3 py-1">
+        <div className="space-y-3.5 py-1">
+          {/* Role selector for platform admin */}
+          {isPlatformAdmin && (
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-foreground">Assigned Role</label>
+              <select
+                value={editRole}
+                onChange={(e) => setEditRole(e.target.value as any)}
+                className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs font-medium focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer"
+              >
+                {isDeveloper && <option value="DEVELOPER">Developer</option>}
+                <option value="SUPER_ADMIN">Super Admin</option>
+                <option value="SUPER_ADMIN_STAFF">Super Admin Staff</option>
+                <option value="TENANT_ADMIN">Tenant Admin</option>
+                <option value="ADMIN_STAFF">Staff (Teammate)</option>
+                <option value="CREATOR">Content Creator</option>
+              </select>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-foreground">Authorized Pages:</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto p-1">
@@ -1064,22 +1195,21 @@ export default function TeamMembersPage() {
       </CustomModal>
 
       {/* ─────────────────────────────────────────────────────────────
-          MODAL 3: Revoke Teammate Access Modal
+          MODAL 3: Revoke Access Modal
          ───────────────────────────────────────────────────────────── */}
       <CustomModal
         isOpen={!!memberToDelete}
         onClose={() => setMemberToDelete(null)}
         title={`Revoke Access: ${memberToDelete?.name}?`}
-        description="This will remove the teammate from your tenant workspace. Their assigned permissions will be deleted immediately."
-        confirmText="Revoke Member"
+        description="This will remove the user from the workspace. Their assigned permissions will be deleted immediately."
+        confirmText="Revoke User"
         cancelText="Cancel"
         isDestructive={true}
         isLoading={isRevoking}
         onConfirm={handleConfirmRevokeMember}
       >
         <p className="text-xs text-muted-foreground">
-          Teammate email: <strong>{memberToDelete?.email}</strong>. They will no longer be able to access your
-          marketing assets, campaigns, or leads.
+          User email: <strong>{memberToDelete?.email}</strong>.
         </p>
       </CustomModal>
 
@@ -1089,7 +1219,7 @@ export default function TeamMembersPage() {
       <CustomModal
         isOpen={!!inviteToCancel}
         onClose={() => setInviteToCancel(null)}
-        title="Cancel Teammate Invitation?"
+        title="Cancel Invitation?"
         description="The magic link will be invalidated immediately. Anyone opening it will not be able to join."
         confirmText="Cancel Invitation"
         cancelText="Keep Invite"
@@ -1098,7 +1228,7 @@ export default function TeamMembersPage() {
         onConfirm={handleConfirmCancelInvite}
       >
         <p className="text-xs text-muted-foreground">
-          Invitation target: <strong>{inviteToCancel?.email}</strong>.
+          Target: <strong>{inviteToCancel?.email}</strong>.
         </p>
       </CustomModal>
     </div>

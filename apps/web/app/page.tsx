@@ -71,7 +71,10 @@ export default async function HomePage() {
 
   return (
     <div className="relative min-h-screen bg-background text-foreground flex flex-col selection:bg-primary/20 selection:text-primary">
-      {/* Sticky Top Navbar */}
+      {/* Top Announcement Bar (scrolls with page) */}
+      <AnnouncementBar announcement={announcement} />
+
+      {/* Sticky Navbar (sticks to top on scroll) */}
       <PublicNavbar brandName={general?.brandName} />
 
       <main className="flex-1 overflow-hidden">

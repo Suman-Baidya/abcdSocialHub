@@ -19,7 +19,7 @@ export function AnnouncementBar({ announcement }: AnnouncementBarProps) {
   return (
     <aside
       aria-label="Announcement"
-      className="relative z-50 bg-gradient-to-r from-primary/10 via-sky-500/10 to-primary/10 border-b border-primary/20 text-xs py-2 px-4 text-center backdrop-blur-md"
+      className="relative z-30 bg-gradient-to-r from-primary/10 via-sky-500/10 to-primary/10 border-b border-primary/20 text-xs py-1.5 px-4 text-center backdrop-blur-md"
     >
       <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 flex-wrap text-muted-foreground">
         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold text-[10px] tracking-wider uppercase border border-primary/30">

@@ -27,6 +27,7 @@ import {
   Building2,
   Loader2,
   User,
+  Globe,
 } from "lucide-react";
 import { AuthRestrictionModal } from "@/components/auth/AuthRestrictionModal";
 import { DashboardSkeletonLoader } from "@/components/dashboard/DashboardSkeletonLoader";
@@ -159,6 +160,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         items: [
           { name: "Platform Overview", href: "/dashboard", icon: LayoutDashboard },
           { name: "Founder Cockpit", href: "/admin/marketing", icon: Rocket, badge: "Admin" },
+          { name: "Site Settings", href: "/admin/site-settings", icon: Globe, badge: "CMS" },
         ],
       },
       {

@@ -303,3 +303,15 @@ model AuditLog {
   @@index([workspaceId])
   @@index([userId])
 }
+
+// ==========================================
+// 9. PUBLIC CMS & SITE SETTINGS
+// ==========================================
+
+model SiteSetting {
+  id        String   @id @default("default")
+  key       String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

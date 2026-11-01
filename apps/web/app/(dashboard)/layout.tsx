@@ -484,23 +484,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             ))}
           </div>
 
-          {/* Sidebar Bottom: Profile-Related Section (Replacing autopilot card) */}
+          {/* Sidebar Bottom: Profile-Related Section (Direct Link to /profile with Avatar) */}
           <div className="p-3 border-t border-border shrink-0 transition-all duration-300">
             {isCollapsed ? (
               <div className="flex items-center justify-center">
                 <Link
-                  href="/team"
-                  title={`${session?.user?.name || "Profile & Team"} (${role.replace("_", " ")})`}
-                  className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary hover:border-primary transition-colors cursor-pointer"
+                  href="/profile"
+                  title={`${session?.user?.name || "My Profile"} (${role.replace("_", " ")})`}
+                  className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary hover:border-primary transition-colors cursor-pointer overflow-hidden"
                 >
-                  {session?.user?.name ? session.user.name[0].toUpperCase() : "U"}
+                  {session?.user?.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session?.user?.name || "User Avatar"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    session?.user?.name ? session.user.name[0].toUpperCase() : "U"
+                  )}
                 </Link>
               </div>
             ) : (
               <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 hover:bg-muted/70 transition-colors">
-                <Link href="/team" className="flex items-center gap-3 overflow-hidden flex-1 group">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary shrink-0 group-hover:scale-105 transition-transform">
-                    {session?.user?.name ? session.user.name[0].toUpperCase() : "U"}
+                <Link href="/profile" className="flex items-center gap-3 overflow-hidden flex-1 group">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary shrink-0 group-hover:scale-105 transition-transform overflow-hidden shadow-2xs">
+                    {session?.user?.image ? (
+                      <img
+                        src={session.user.image}
+                        alt={session?.user?.name || "User Avatar"}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      session?.user?.name ? session.user.name[0].toUpperCase() : "U"
+                    )}
                   </div>
                   <div className="flex flex-col truncate">
                     <span className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">
@@ -599,25 +615,39 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
             </button>
 
-            {/* User Profile Pill */}
+            {/* User Profile Pill (Direct Link to /profile with Live Avatar) */}
             <div className="flex items-center gap-2 pl-1">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-blue-600/20 border border-primary/30 flex items-center justify-center font-bold text-xs text-primary shrink-0">
-                {session?.user?.name ? session.user.name[0].toUpperCase() : "U"}
-              </div>
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 group hover:opacity-90 transition-opacity"
+                title="View My Profile"
+              >
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary/20 to-blue-600/20 border border-primary/30 flex items-center justify-center font-bold text-xs text-primary shrink-0 overflow-hidden shadow-2xs">
+                  {session?.user?.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session?.user?.name || "User Avatar"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    session?.user?.name ? session.user.name[0].toUpperCase() : "U"
+                  )}
+                </div>
 
-              <div className="hidden md:flex flex-col text-left">
-                <span className="text-xs font-semibold text-foreground truncate max-w-[120px]">
-                  {session?.user?.name || session?.user?.email?.split("@")[0]}
-                </span>
-                {/* Refined and smaller SUPER ADMIN badge */}
-                <span
-                  className={`text-[9px] font-semibold tracking-wide px-1.5 py-0.5 rounded border self-start uppercase leading-none mt-0.5 ${getRoleBadgeClass(
-                    role
-                  )}`}
-                >
-                  {role.replace("_", " ")}
-                </span>
-              </div>
+                <div className="hidden md:flex flex-col text-left">
+                  <span className="text-xs font-semibold text-foreground truncate max-w-[120px] group-hover:text-primary transition-colors">
+                    {session?.user?.name || session?.user?.email?.split("@")[0]}
+                  </span>
+                  {/* Refined and smaller role badge */}
+                  <span
+                    className={`text-[9px] font-semibold tracking-wide px-1.5 py-0.5 rounded border self-start uppercase leading-none mt-0.5 ${getRoleBadgeClass(
+                      role
+                    )}`}
+                  >
+                    {role.replace("_", " ")}
+                  </span>
+                </div>
+              </Link>
 
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}

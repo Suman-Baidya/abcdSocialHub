@@ -43,6 +43,7 @@ export interface TeamMember {
   status: "ACTIVE" | "INVITED" | "PAUSED";
   joinedAt: string;
   allowedPages?: string[];
+  avatarUrl?: string;
   lastActive?: string;
 }
 
@@ -877,8 +878,12 @@ export default function TeamMembersPage() {
                     {/* Member & Role (Avatar + Name + Role Badge on Line 1, Email on Line 2) */}
                     <td className="min-w-[240px] sm:w-[38%] px-3 sm:px-4 py-3 align-middle">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center text-primary font-bold text-xs shrink-0 select-none">
-                          {getInitials(member.name)}
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center text-primary font-bold text-xs shrink-0 select-none overflow-hidden">
+                          {member.avatarUrl ? (
+                            <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                          ) : (
+                            getInitials(member.name)
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           {/* Line 1: Name + Role Badge directly beside name */}

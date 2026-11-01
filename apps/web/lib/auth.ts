@@ -162,10 +162,22 @@ export const authOptions: AuthOptions = {
         token.email = user.email.toLowerCase().trim();
       }
 
-      // Allow client-side active workspace switching
-      if (trigger === "update" && session?.activeWorkspaceId) {
-        token.workspaceId = session.activeWorkspaceId;
-        token.workspaceName = session.activeWorkspaceName;
+      // Handle client-side session updates (workspace switch, name/image/phone updates)
+      if (trigger === "update" && session) {
+        if (session.activeWorkspaceId) {
+          token.workspaceId = session.activeWorkspaceId;
+          token.workspaceName = session.activeWorkspaceName;
+        }
+        if (session.name !== undefined) {
+          token.name = session.name;
+        }
+        if (session.image !== undefined) {
+          token.picture = session.image;
+          token.image = session.image;
+        }
+        if (session.phone !== undefined) {
+          token.phone = session.phone;
+        }
         return token;
       }
 
@@ -189,6 +201,10 @@ export const authOptions: AuthOptions = {
 
         if (dbUser) {
           token.id = dbUser.id;
+          token.name = dbUser.name || token.name;
+          token.picture = dbUser.image || token.picture;
+          token.image = dbUser.image || token.image;
+          token.phone = dbUser.phone;
           token.isDeveloper = isDeveloper;
           token.isSuperAdmin = isSuperAdmin;
 
@@ -220,6 +236,9 @@ export const authOptions: AuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
+        session.user.name = (token.name as string) || session.user.name;
+        session.user.image = (token.image as string) || (token.picture as string) || session.user.image;
+        (session.user as any).phone = token.phone;
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
         (session.user as any).dashboardType = token.dashboardType;

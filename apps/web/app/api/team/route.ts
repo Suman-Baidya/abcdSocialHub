@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { z } from "zod";
+import { prisma } from "@abcd/db";
 
 export const dynamic = "force-dynamic";
 
@@ -173,6 +174,21 @@ export async function GET(req: Request) {
     const startIndex = (page - 1) * limit;
     const paginated = filtered.slice(startIndex, startIndex + limit);
 
+    // Enrich roster with avatar image from Prisma User records
+    const userEmails = paginated.map((m) => m.email.toLowerCase());
+    const dbUsers = await prisma.user
+      .findMany({
+        where: { email: { in: userEmails } },
+        select: { email: true, image: true },
+      })
+      .catch(() => []);
+
+    const imageMap = new Map(dbUsers.map((u) => [u.email?.toLowerCase(), u.image]));
+    const enrichedMembers = paginated.map((m) => ({
+      ...m,
+      avatarUrl: imageMap.get(m.email.toLowerCase()) || m.avatarUrl,
+    }));
+
     // KPI Metrics calculation (strictly reflecting visible roster)
     const totalCount = members.length;
     const activeCount = members.filter((m) => m.status === "ACTIVE").length;
@@ -182,7 +198,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       success: true,
-      members: paginated,
+      members: enrichedMembers,
       pagination: {
         page,
         limit,

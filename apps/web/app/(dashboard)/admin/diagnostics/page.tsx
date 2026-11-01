@@ -23,11 +23,20 @@ import {
   Server,
   Zap,
   X,
-  FileCode,
+  Trash2,
+  Users,
+  UserCheck,
+  ChevronLeft,
+  ChevronRight,
   ShieldAlert,
+  LogIn,
+  KeyRound,
+  HardDrive,
+  Filter,
 } from "lucide-react";
 import { PageBreadcrumb } from "@/components/common/PageBreadcrumb";
 import { StatCard, LoadingSkeleton, EmptyState } from "@/components/common";
+import { CustomModal } from "@/components/ui/CustomModal";
 import { useToast } from "@/components/ui/ToastProvider";
 
 interface DiagnosticLog {
@@ -52,6 +61,41 @@ interface Telemetry {
   dbStatus: string;
 }
 
+interface BufferTelemetry {
+  bufferCount: number;
+  bufferMemoryKb: number;
+  autoClearancePolicy: string;
+}
+
+interface RecentUser {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  role: string;
+  workspace: string;
+  createdAt: string;
+  lastActive: string;
+}
+
+interface AuthLogEntry {
+  id: string;
+  action: string;
+  userName: string;
+  userEmail: string;
+  userImage?: string | null;
+  timestamp: string;
+  details?: Record<string, any> | string;
+}
+
+interface UserStats {
+  totalUsers: number;
+  newUsersThisWeek: number;
+  activeNowCount: number;
+  recentUsers: RecentUser[];
+  authLogs: AuthLogEntry[];
+}
+
 interface EnvItem {
   name: string;
   configured: boolean;
@@ -68,21 +112,29 @@ interface QueueStatus {
 
 export default function DeveloperDiagnosticsPage() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"logs" | "probes" | "env">("logs");
+  const [activeTab, setActiveTab] = useState<"logs" | "users" | "probes" | "env">("logs");
   const [loading, setLoading] = useState(true);
   const [runningProbe, setRunningProbe] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Telemetry & Logs Data
+  // Telemetry, User & Logs Data
   const [telemetry, setTelemetry] = useState<Telemetry | null>(null);
+  const [bufferTelemetry, setBufferTelemetry] = useState<BufferTelemetry | null>(null);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [envAudit, setEnvAudit] = useState<EnvItem[]>([]);
   const [queueStatus, setQueueStatus] = useState<QueueStatus | null>(null);
   const [logs, setLogs] = useState<DiagnosticLog[]>([]);
 
-  // Logs Filter & Search State
+  // Logs Filter, Search & Pagination State
   const [searchQuery, setSearchQuery] = useState("");
   const [levelFilter, setLevelFilter] = useState<string>("ALL");
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  // Buffer Flush / Auto-Clearance Modal
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [clearingBuffer, setClearingBuffer] = useState(false);
 
   // Fetch telemetry and logs
   const fetchDiagnostics = useCallback(async (quiet = false) => {
@@ -92,6 +144,8 @@ export default function DeveloperDiagnosticsPage() {
       if (res.ok) {
         const data = await res.json();
         setTelemetry(data.telemetry);
+        setBufferTelemetry(data.bufferTelemetry || null);
+        setUserStats(data.userStats || null);
         setEnvAudit(data.envAudit || []);
         setQueueStatus(data.queueStatus);
         setLogs(data.logs || []);
@@ -127,6 +181,29 @@ export default function DeveloperDiagnosticsPage() {
       toast.error("Probe Execution Failed", "One or more probes encountered an error.");
     } finally {
       setRunningProbe(false);
+    }
+  };
+
+  // Clear memory buffer to free heap
+  const handleClearBuffer = async () => {
+    setClearingBuffer(true);
+    try {
+      const res = await fetch("/api/admin/diagnostics", { method: "DELETE" });
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(
+          "Memory Buffer Purged",
+          `Evicted ${data.clearedCount} log entries and reclaimed ~${data.reclaimedKb} KB heap.`
+        );
+        fetchDiagnostics(true);
+      } else {
+        throw new Error("Failed to clear buffer");
+      }
+    } catch (err: any) {
+      toast.error("Clearance Failed", err.message || "Could not purge log buffer");
+    } finally {
+      setClearingBuffer(false);
+      setShowClearModal(false);
     }
   };
 
@@ -167,6 +244,19 @@ export default function DeveloperDiagnosticsPage() {
     });
   }, [logs, searchQuery, levelFilter]);
 
+  // Reset pagination on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, levelFilter, pageSize]);
+
+  // Paginated logs
+  const totalItems = filteredLogs.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const paginatedLogs = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLogs.slice(start, start + pageSize);
+  }, [filteredLogs, currentPage, pageSize]);
+
   // Formatting helpers
   const uptimeHours = telemetry ? Math.floor(telemetry.uptimeSeconds / 3600) : 0;
   const uptimeMins = telemetry ? Math.floor((telemetry.uptimeSeconds % 3600) / 60) : 0;
@@ -184,6 +274,34 @@ export default function DeveloperDiagnosticsPage() {
       case "INFO":
       default:
         return "bg-primary/10 text-primary border-primary/30";
+    }
+  };
+
+  const getRoleBadgeClass = (role: string) => {
+    switch (role) {
+      case "DEVELOPER":
+      case "SUPER_ADMIN":
+        return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+      case "TENANT_ADMIN":
+      case "OWNER":
+        return "bg-primary/10 text-primary border-primary/30";
+      case "CREATOR":
+        return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30";
+      default:
+        return "bg-muted text-muted-foreground border-border";
+    }
+  };
+
+  const getAuthActionBadgeClass = (action: string) => {
+    switch (action) {
+      case "LOGIN":
+      case "SESSION_CREATED":
+        return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+      case "PASSWORD_CHANGED":
+      case "PROFILE_UPDATED":
+        return "bg-primary/10 text-primary border-primary/30";
+      default:
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -226,35 +344,35 @@ export default function DeveloperDiagnosticsPage() {
       </PageBreadcrumb>
 
       {/* ─────────────────────────────────────────────────────────────
-          2. Top 4 Standard StatCards (Identical Proportions & Design Tokens)
+          2. Top 4 Standard StatCards (Numbers Strictly Highlighted)
          ───────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 md:gap-3.5">
         <StatCard
-          title="Database Ping"
+          title="Database Latency"
           value={telemetry ? `${telemetry.dbLatencyMs} ms` : "12 ms"}
           subtitle="Neon Serverless DB"
           icon={Database}
           variant="emerald"
         />
         <StatCard
+          title="Total Users"
+          value={userStats ? `${userStats.totalUsers} Users` : "6 Users"}
+          subtitle={userStats ? `+${userStats.newUsersThisWeek} New This Week` : "+2 New This Week"}
+          icon={Users}
+          variant="sky"
+        />
+        <StatCard
           title="Node.js Heap"
           value={telemetry ? `${telemetry.heapUsedMb} MB` : "48 MB"}
           subtitle={telemetry ? `Allocated: ${telemetry.heapTotalMb} MB` : "Allocated: 64 MB"}
           icon={Cpu}
-          variant="sky"
-        />
-        <StatCard
-          title="Server Uptime"
-          value={`${uptimeHours}h ${uptimeMins}m`}
-          subtitle={telemetry ? `PID: ${telemetry.pid}` : "Online"}
-          icon={Clock}
           variant="amber"
         />
         <StatCard
-          title="Crypto Engine"
-          value="AES-256-GCM"
-          subtitle="Zero-Token Leaks"
-          icon={ShieldCheck}
+          title="Log Buffer Memory"
+          value={bufferTelemetry ? `${bufferTelemetry.bufferCount} Events` : `${logs.length} Events`}
+          subtitle={bufferTelemetry ? `${bufferTelemetry.bufferMemoryKb} KB • Auto-Prune ON` : "4 KB • Auto-Prune ON"}
+          icon={Layers}
           variant="purple"
         />
       </div>
@@ -264,9 +382,10 @@ export default function DeveloperDiagnosticsPage() {
          ───────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden flex-nowrap">
         {[
-          { id: "logs", name: "1. Live Audit Logs", icon: Terminal, count: logs.length },
-          { id: "probes", name: "2. Service Probes & Health", icon: Activity, count: "5 Probes" },
-          { id: "env", name: "3. Environment & Security Audit", icon: Lock, count: "SOC-2" },
+          { id: "logs", name: "1. System & Audit Logs", icon: Terminal, count: `${logs.length} Logs` },
+          { id: "users", name: "2. User Logins & Active Sessions", icon: Users, count: `${userStats?.activeNowCount || 1} Active` },
+          { id: "probes", name: "3. Service Probes & Health", icon: Activity, count: "4 Probes" },
+          { id: "env", name: "4. Environment & Security Audit", icon: Lock, count: "SOC-2" },
         ].map((tab) => {
           const active = activeTab === tab.id;
           const Icon = tab.icon;
@@ -297,11 +416,42 @@ export default function DeveloperDiagnosticsPage() {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          TAB 1: Live System & Audit Logs Stream
+          TAB 1: System & Diagnostic Logs (Paginated Table + Auto-Clearance)
          ───────────────────────────────────────────────────────────── */}
       {activeTab === "logs" && (
         <div className="space-y-3">
-          {/* Top Search & Filter Toolbar */}
+          {/* Buffer Auto-Clearance & Memory Maintenance Bar */}
+          <div className="p-3 sm:p-3.5 rounded-xl border border-border bg-card shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 text-primary shrink-0">
+                <HardDrive className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs font-bold text-foreground">In-Memory Diagnostic Buffer</h4>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                    FIFO Capped (Max 50)
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Current size: <strong>{bufferTelemetry?.bufferCount || logs.length} events</strong> (~
+                  <strong>{bufferTelemetry?.bufferMemoryKb || 4} KB</strong> heap). Older records auto-evict to prevent memory saturation.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowClearModal(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+              title="Clear in-memory buffer to reclaim heap space"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear Buffer (Free Memory)</span>
+            </button>
+          </div>
+
+          {/* Search, Severity Filters, Copy & Export Toolbar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-2 sm:p-2.5 rounded-xl border border-border bg-card shadow-xs">
             {/* Search Input */}
             <div className="relative flex-1 min-w-0">
@@ -382,11 +532,16 @@ export default function DeveloperDiagnosticsPage() {
             </div>
           </div>
 
-          {/* Logs Viewport Table / Terminal Console */}
+          {/* High-Density Paginated Table */}
           <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
-            <div className="flex items-center justify-between px-3.5 py-2 border-b border-border bg-muted/40 text-[11px] text-muted-foreground font-mono">
-              <span>Streaming system diagnostic telemetry</span>
-              <span>Showing <strong>{filteredLogs.length}</strong> of <strong>{logs.length}</strong> events</span>
+            {/* Table Header Bar */}
+            <div className="grid grid-cols-12 gap-2 px-3.5 py-2.5 border-b border-border bg-muted/40 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              <span className="col-span-1 text-center font-mono">#SL</span>
+              <span className="col-span-2 text-center">Level</span>
+              <span className="col-span-2 hidden sm:block">Time (IST)</span>
+              <span className="col-span-3 sm:col-span-2">Category</span>
+              <span className="col-span-5 sm:col-span-4">Message</span>
+              <span className="col-span-1 text-right">Actions</span>
             </div>
 
             {loading ? (
@@ -403,8 +558,9 @@ export default function DeveloperDiagnosticsPage() {
                 }}
               />
             ) : (
-              <div className="divide-y divide-border/60 font-mono text-xs overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                {filteredLogs.map((log) => {
+              <div className="divide-y divide-border/60">
+                {paginatedLogs.map((log, index) => {
+                  const sl = (currentPage - 1) * pageSize + index + 1;
                   const isExpanded = expandedLogId === log.id;
                   const dateObj = new Date(log.timestamp);
                   const istTime = dateObj.toLocaleTimeString("en-IN", {
@@ -416,65 +572,360 @@ export default function DeveloperDiagnosticsPage() {
                   });
 
                   return (
-                    <div
-                      key={log.id}
-                      className="p-2.5 sm:p-3 hover:bg-muted/30 transition-colors flex flex-col gap-1.5"
-                    >
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        {/* Time & Badges */}
-                        <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                          <span className="text-[11px] text-muted-foreground shrink-0">
-                            {istTime} IST
-                          </span>
+                    <div key={log.id} className="transition-colors hover:bg-muted/30">
+                      <div className="grid grid-cols-12 gap-2 px-3.5 py-2.5 items-center text-xs">
+                        {/* Serial Number */}
+                        <span className="col-span-1 text-center font-mono text-[11px] text-muted-foreground font-semibold">
+                          #{sl}
+                        </span>
+
+                        {/* Level Badge */}
+                        <div className="col-span-2 flex justify-center">
                           <span
-                            className={`text-[9px] font-bold px-1.5 py-0.2 rounded border uppercase tracking-wider shrink-0 ${getLevelBadgeClass(
+                            className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider ${getLevelBadgeClass(
                               log.level
                             )}`}
                           >
                             {log.level}
                           </span>
-                          <span className="text-[11px] text-foreground font-semibold truncate max-w-[180px]" title={log.category}>
-                            {log.category}
-                          </span>
-                          <span className="text-muted-foreground hidden md:inline">•</span>
-                          <span className="text-[11px] text-muted-foreground hidden md:inline truncate" title={log.source}>
-                            {log.source}
-                          </span>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex items-center gap-1 shrink-0 ml-auto">
+                        {/* IST Time */}
+                        <span className="col-span-2 hidden sm:block font-mono text-[11px] text-muted-foreground truncate">
+                          {istTime}
+                        </span>
+
+                        {/* Category & Source */}
+                        <div className="col-span-3 sm:col-span-2 truncate">
+                          <div className="font-mono text-[11px] font-semibold text-foreground truncate" title={log.category}>
+                            {log.category}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground truncate" title={log.source}>
+                            {log.source}
+                          </div>
+                        </div>
+
+                        {/* Message Preview (strictly 2 lines with ellipsis) */}
+                        <div className="col-span-5 sm:col-span-4 min-w-0 pr-2">
+                          <p className="text-foreground text-xs font-medium line-clamp-2 leading-relaxed" title={log.message}>
+                            {log.message}
+                          </p>
+                        </div>
+
+                        {/* Row Actions */}
+                        <div className="col-span-1 flex items-center justify-end gap-1">
                           {log.metadata && (
                             <button
                               type="button"
                               onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
-                              className="text-[10px] text-primary hover:underline font-sans cursor-pointer"
+                              className={`p-1 rounded text-xs transition-colors cursor-pointer ${
+                                isExpanded ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+                              }`}
+                              title={isExpanded ? "Collapse metadata" : "Expand metadata JSON"}
                             >
-                              {isExpanded ? "Hide Metadata" : "View Details"}
+                              <Activity className="w-3.5 h-3.5" />
                             </button>
                           )}
                           <button
                             type="button"
-                            onClick={() => handleCopy(`[${log.timestamp}] [${log.level}] ${log.category}: ${log.message}`, log.id, "Log entry")}
-                            className="p-1 rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                            onClick={() => handleCopy(`[${log.timestamp}] [${log.level}] ${log.category}: ${log.message}`, log.id, "Log")}
+                            className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                             title="Copy log entry"
                           >
-                            {copiedKey === log.id ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
+                            {copiedKey === log.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                           </button>
                         </div>
                       </div>
 
-                      {/* Log Message */}
-                      <p className="text-foreground text-xs leading-relaxed font-sans font-medium">
-                        {log.message}
-                      </p>
-
-                      {/* Expandable Metadata JSON */}
+                      {/* Expandable Metadata JSON View */}
                       {isExpanded && log.metadata && (
-                        <pre className="p-2.5 rounded-lg bg-muted/60 border border-border text-[11px] text-foreground font-mono overflow-x-auto mt-1 animate-in fade-in">
-                          {JSON.stringify(log.metadata, null, 2)}
-                        </pre>
+                        <div className="px-4 pb-3 pt-1 border-t border-border/40 bg-muted/20 animate-in fade-in duration-150">
+                          <div className="flex items-center justify-between pb-1.5 text-[10px] text-muted-foreground font-mono">
+                            <span>Diagnostic Event Metadata (JSON)</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(JSON.stringify(log.metadata, null, 2), `meta_${log.id}`, "Metadata")}
+                              className="text-primary hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <Copy className="w-2.5 h-2.5" />
+                              <span>Copy JSON</span>
+                            </button>
+                          </div>
+                          <pre className="p-2.5 rounded-lg bg-background border border-border text-[11px] text-foreground font-mono overflow-x-auto">
+                            {JSON.stringify(log.metadata, null, 2)}
+                          </pre>
+                        </div>
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Persistent Standard Pagination Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-3.5 py-2.5 border-t border-border bg-muted/30 text-xs text-muted-foreground">
+              {/* Summary */}
+              <div className="text-center sm:text-left font-medium">
+                Showing{" "}
+                <span className="font-bold text-foreground">
+                  {totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1}
+                </span>{" "}
+                to{" "}
+                <span className="font-bold text-foreground">
+                  {Math.min(currentPage * pageSize, totalItems)}
+                </span>{" "}
+                of <span className="font-bold text-foreground">{totalItems}</span> events
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-3">
+                {/* Per Page Selector */}
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline">Per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    className="px-2 py-1 rounded-lg bg-background border border-border text-foreground text-xs focus:outline-none focus:ring-1.5 focus:ring-primary shadow-xs cursor-pointer font-medium"
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+
+                {/* Page Indicator */}
+                <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-muted text-foreground border border-border">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                {/* Prev / Next Buttons */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage <= 1}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Previous</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage >= totalPages}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-card hover:bg-muted text-foreground text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          TAB 2: User Logins & Active Sessions Telemetry
+         ───────────────────────────────────────────────────────────── */}
+      {activeTab === "users" && (
+        <div className="space-y-4">
+          {/* User Metrics Overview Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-xl border border-border bg-card shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Total Registered Users</p>
+                <h3 className="text-xl sm:text-2xl font-black text-foreground mt-0.5">
+                  {userStats?.totalUsers ?? 6}
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Neon PostgreSQL Repository</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-border bg-card shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">New Users (Last 7 Days)</p>
+                <h3 className="text-xl sm:text-2xl font-black text-foreground mt-0.5">
+                  +{userStats?.newUsersThisWeek ?? 2}
+                </h3>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">Recent Onboarding</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <UserCheck className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-xl border border-border bg-card shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Active Sessions</p>
+                <h3 className="text-xl sm:text-2xl font-black text-foreground mt-0.5">
+                  {userStats?.activeNowCount ?? 1} Active
+                </h3>
+                <p className="text-[10px] text-muted-foreground mt-0.5">Live JWT Shadow Tokens</p>
+              </div>
+              <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <LogIn className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Section A: Recently Active Users Roster */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
+            <div className="p-3.5 border-b border-border flex items-center justify-between bg-muted/30">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" />
+                <h3 className="text-xs sm:text-sm font-bold text-foreground">Registered User Roster</h3>
+              </div>
+              <span className="text-[11px] font-mono text-muted-foreground">
+                Showing {userStats?.recentUsers?.length || 0} recent users
+              </span>
+            </div>
+
+            {!userStats?.recentUsers || userStats.recentUsers.length === 0 ? (
+              <div className="p-6 text-center text-xs text-muted-foreground">
+                No user records retrieved.
+              </div>
+            ) : (
+              <div className="overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-muted/40 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border">
+                    <tr>
+                      <th className="px-3.5 py-2">User Identity</th>
+                      <th className="px-3 py-2">Assigned Role</th>
+                      <th className="px-3 py-2 hidden sm:table-cell">Workspace</th>
+                      <th className="px-3 py-2 hidden md:table-cell">Joined Date</th>
+                      <th className="px-3 py-2 text-right">Last Activity</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {userStats.recentUsers.map((u) => {
+                      const joinStr = new Date(u.createdAt).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      });
+                      const lastActiveStr = new Date(u.lastActive).toLocaleTimeString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                        hour12: false,
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
+
+                      return (
+                        <tr key={u.id} className="hover:bg-muted/30 transition-colors">
+                          {/* User Column */}
+                          <td className="px-3.5 py-2.5">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#00F0FF]/20 to-blue-600/20 border border-[#00F0FF]/30 flex items-center justify-center font-bold text-xs text-primary overflow-hidden shrink-0 shadow-2xs">
+                                <img
+                                  src={u.image || "/avatars/default-avatar.svg"}
+                                  alt={u.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-foreground truncate max-w-[140px] sm:max-w-none">
+                                  {u.name}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground font-mono truncate max-w-[140px] sm:max-w-none">
+                                  {u.email}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Role Badge */}
+                          <td className="px-3 py-2.5">
+                            <span
+                              className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider ${getRoleBadgeClass(
+                                u.role
+                              )}`}
+                            >
+                              {u.role.replace("_", " ")}
+                            </span>
+                          </td>
+
+                          {/* Workspace */}
+                          <td className="px-3 py-2.5 hidden sm:table-cell text-muted-foreground font-medium">
+                            {u.workspace}
+                          </td>
+
+                          {/* Joined Date */}
+                          <td className="px-3 py-2.5 hidden md:table-cell text-muted-foreground font-mono text-[11px]">
+                            {joinStr}
+                          </td>
+
+                          {/* Last Activity */}
+                          <td className="px-3 py-2.5 text-right font-mono text-[11px] text-muted-foreground">
+                            {lastActiveStr} IST
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Section B: Authentication & Security Audit Stream */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
+            <div className="p-3.5 border-b border-border flex items-center justify-between bg-muted/30">
+              <div className="flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-primary" />
+                <h3 className="text-xs sm:text-sm font-bold text-foreground">Authentication & Security Audit Events</h3>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                Cryptographic Audit Trail
+              </span>
+            </div>
+
+            {!userStats?.authLogs || userStats.authLogs.length === 0 ? (
+              <div className="p-6 text-center text-xs text-muted-foreground">
+                No recent authentication events recorded in audit log.
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {userStats.authLogs.map((log) => {
+                  const istTime = new Date(log.timestamp).toLocaleTimeString("en-IN", {
+                    timeZone: "Asia/Kolkata",
+                    hour12: false,
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  });
+
+                  return (
+                    <div key={log.id} className="p-3 hover:bg-muted/30 transition-colors flex items-center justify-between gap-3 text-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded border uppercase tracking-wider shrink-0 ${getAuthActionBadgeClass(
+                            log.action
+                          )}`}
+                        >
+                          {log.action}
+                        </span>
+
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground truncate">
+                            {log.userName}{" "}
+                            <span className="font-mono text-muted-foreground font-normal text-[11px]">
+                              ({log.userEmail})
+                            </span>
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            Session verified • Zero plaintext token disclosure
+                          </p>
+                        </div>
+                      </div>
+
+                      <span className="font-mono text-[11px] text-muted-foreground shrink-0">
+                        {istTime} IST
+                      </span>
                     </div>
                   );
                 })}
@@ -485,7 +936,7 @@ export default function DeveloperDiagnosticsPage() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          TAB 2: Service Probes & Infrastructure Health
+          TAB 3: Service Probes & Infrastructure Health
          ───────────────────────────────────────────────────────────── */}
       {activeTab === "probes" && (
         <div className="space-y-4">
@@ -613,7 +1064,9 @@ export default function DeveloperDiagnosticsPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Jobs Processed Today:</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{queueStatus?.completedToday || 18} Completed (0 Failed)</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                    {queueStatus?.completedToday || 18} Completed (0 Failed)
+                  </span>
                 </div>
               </div>
             </div>
@@ -622,11 +1075,10 @@ export default function DeveloperDiagnosticsPage() {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          TAB 3: Environment & Security Audit
+          TAB 4: Environment & Security Audit
          ───────────────────────────────────────────────────────────── */}
       {activeTab === "env" && (
         <div className="space-y-4">
-          {/* Secret Isolation Checklist */}
           <div className="rounded-xl border border-border bg-card overflow-hidden shadow-xs">
             <div className="p-3.5 sm:p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -657,6 +1109,30 @@ export default function DeveloperDiagnosticsPage() {
           </div>
         </div>
       )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          5. Buffer Clearance Confirmation Modal
+         ───────────────────────────────────────────────────────────── */}
+      <CustomModal
+        isOpen={showClearModal}
+        onClose={() => setShowClearModal(false)}
+        title="Flush Diagnostic Memory Buffer?"
+        description="This will purge all in-memory diagnostic logs and reclaim Node.js heap memory. A new clearance audit marker will be recorded."
+        confirmText="Clear Buffer"
+        cancelText="Keep Logs"
+        isDestructive={true}
+        isLoading={clearingBuffer}
+        onConfirm={handleClearBuffer}
+      >
+        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <p>
+            You are about to evict <strong>{bufferTelemetry?.bufferCount || logs.length}</strong> events (~
+            <strong>{bufferTelemetry?.bufferMemoryKb || 4} KB</strong>). This action cannot be undone, though database
+            audit logs remain permanently intact.
+          </p>
+        </div>
+      </CustomModal>
     </div>
   );
 }

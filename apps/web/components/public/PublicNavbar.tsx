@@ -49,30 +49,30 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
       className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
           ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-md shadow-black/10"
-          : "bg-background/80 backdrop-blur-md border-b border-border/50"
+          : "bg-background/85 backdrop-blur-md border-b border-border/50"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
-        {/* Brand: ONLY logo_blue.png (Zero additional text) */}
+        {/* Brand: Increased logo size, zero text */}
         <Link
           href="/"
           className="flex items-center group cursor-pointer"
           title="ABCD Social Hub"
         >
-          <div className="relative h-8 sm:h-9 w-auto flex items-center justify-center transition-transform group-hover:scale-105">
+          <div className="relative h-9 sm:h-11 w-auto flex items-center justify-center transition-transform group-hover:scale-105">
             <Image
               src="/logo_blue.png"
               alt="ABCD Social Hub Logo"
-              width={160}
-              height={40}
-              className="h-8 sm:h-9 w-auto object-contain"
+              width={190}
+              height={48}
+              className="h-9 sm:h-11 w-auto object-contain"
               priority
             />
           </div>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 text-xs sm:text-sm font-medium">
+        {/* Desktop Navigation Links: Increased font size to text-sm sm:text-[15px] */}
+        <nav className="hidden md:flex items-center gap-8 text-sm sm:text-[15px] font-medium">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -94,25 +94,25 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
           })}
         </nav>
 
-        {/* Desktop Auth Controls: "Dashboard" + Circular Profile Picture (No text name) */}
-        <div className="hidden md:flex items-center gap-2.5">
+        {/* Desktop Auth Controls: Increased button & profile avatar size */}
+        <div className="hidden md:flex items-center gap-3">
           {authStatus === "loading" ? (
-            <div className="h-8 w-24 rounded-xl bg-muted/40 animate-pulse" />
+            <div className="h-9 w-28 rounded-xl bg-muted/40 animate-pulse" />
           ) : isAuthenticated ? (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
               <Link
                 href="/dashboard"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs sm:text-sm font-semibold transition-all shadow-sm shadow-primary/20 active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs sm:text-sm font-bold transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
               >
-                <LayoutDashboard className="w-3.5 h-3.5" />
+                <LayoutDashboard className="w-4 h-4" />
                 <span>Dashboard</span>
               </Link>
 
-              {/* Circular profile avatar picture */}
+              {/* Increased size circular profile avatar */}
               <Link
                 href="/profile"
                 title="Profile Settings"
-                className="relative w-8 h-8 rounded-full border border-border hover:border-primary overflow-hidden transition-all shadow-xs cursor-pointer flex items-center justify-center bg-card shrink-0"
+                className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-border hover:border-primary overflow-hidden transition-all shadow-xs cursor-pointer flex items-center justify-center bg-card shrink-0"
               >
                 <img
                   src={user?.image || "/avatars/default-avatar.svg"}
@@ -122,18 +122,18 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
               </Link>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Link
                 href="/login"
-                className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-muted-foreground hover:text-foreground px-3.5 py-2 rounded-xl hover:bg-muted/60 transition-colors cursor-pointer"
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs sm:text-sm font-semibold transition-all shadow-sm shadow-primary/20 active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary hover:opacity-90 text-primary-foreground text-xs sm:text-sm font-bold transition-all shadow-md shadow-primary/20 active:scale-95 cursor-pointer"
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-4 h-4" />
                 <span>Start Free Pilot</span>
               </Link>
             </div>
@@ -143,17 +143,17 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
         {/* Mobile View: Dashboard + Profile Circle + Menu Toggle */}
         <div className="md:hidden flex items-center gap-2">
           {isAuthenticated && (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Link
                 href="/dashboard"
-                className="px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-xs font-semibold flex items-center gap-1 shadow-xs"
+                className="px-3 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold flex items-center gap-1.5 shadow-xs"
               >
-                <LayoutDashboard className="w-3 h-3" />
+                <LayoutDashboard className="w-3.5 h-3.5" />
                 <span>Dashboard</span>
               </Link>
               <Link
                 href="/profile"
-                className="w-7 h-7 rounded-full border border-border overflow-hidden flex items-center justify-center bg-card shrink-0"
+                className="w-8 h-8 rounded-full border-2 border-border overflow-hidden flex items-center justify-center bg-card shrink-0"
               >
                 <img
                   src={user?.image || "/avatars/default-avatar.svg"}
@@ -167,9 +167,9 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             type="button"
             aria-label="Toggle navigation menu"
-            className="p-1.5 rounded-xl bg-card border border-border text-foreground hover:bg-muted transition-colors"
+            className="p-2 rounded-xl bg-card border border-border text-foreground hover:bg-muted transition-colors"
           >
-            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
@@ -177,16 +177,16 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-border bg-card/95 backdrop-blur-2xl px-5 py-4 space-y-3 animate-in slide-in-from-top-4 duration-200">
-          <nav className="flex flex-col space-y-1.5">
+          <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`text-sm font-medium py-1.5 px-2.5 rounded-lg transition-colors ${
+                  className={`text-base font-semibold py-2 px-3 rounded-xl transition-colors ${
                     isActive
-                      ? "bg-primary/10 text-primary font-semibold"
+                      ? "bg-primary/10 text-primary font-bold"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
@@ -196,19 +196,19 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
             })}
           </nav>
 
-          <div className="pt-3 border-t border-border flex flex-col gap-2">
+          <div className="pt-3 border-t border-border flex flex-col gap-2.5">
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 <Link
                   href="/dashboard"
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-primary text-primary-foreground font-semibold text-xs shadow-sm"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-sm"
                 >
-                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <LayoutDashboard className="w-4 h-4" />
                   <span>Dashboard</span>
                 </Link>
                 <Link
                   href="/profile"
-                  className="w-8 h-8 rounded-full border border-border bg-card flex items-center justify-center overflow-hidden shrink-0"
+                  className="w-9 h-9 rounded-full border-2 border-border bg-card flex items-center justify-center overflow-hidden shrink-0"
                 >
                   <img
                     src={user?.image || "/avatars/default-avatar.svg"}
@@ -221,15 +221,15 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
               <>
                 <Link
                   href="/login"
-                  className="w-full inline-flex items-center justify-center py-2 px-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-medium text-xs border border-border"
+                  className="w-full inline-flex items-center justify-center py-2.5 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs border border-border"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/register"
-                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-primary text-primary-foreground font-semibold text-xs shadow-sm"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary text-primary-foreground font-bold text-xs shadow-sm"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-4 h-4" />
                   <span>Start Free Pilot</span>
                 </Link>
               </>

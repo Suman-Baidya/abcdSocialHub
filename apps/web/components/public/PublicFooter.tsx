@@ -9,6 +9,18 @@ import {
   CheckCircle2,
   Mail,
   MessageSquare,
+  LayoutDashboard,
+  Palette,
+  Smartphone,
+  CreditCard,
+  HelpCircle,
+  ShoppingBag,
+  HeartPulse,
+  Sparkles,
+  Zap,
+  Building2,
+  FileText,
+  RefreshCcw,
 } from "lucide-react";
 
 interface PublicFooterProps {
@@ -131,107 +143,162 @@ export function PublicFooter({ general }: PublicFooterProps) {
           </div>
 
           {/* Column 1: Product */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
               Product
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-3.5 text-xs">
               <li>
-                <Link href="/" className="hover:text-foreground transition-colors">
-                  Autopilot Overview
+                <Link
+                  href="/"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Autopilot Overview</span>
                 </Link>
               </li>
               <li>
-                <Link href="/services#poster-studio" className="hover:text-foreground transition-colors">
-                  Graphic Poster Studio
+                <Link
+                  href="/services#poster-studio"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <Palette className="w-3.5 h-3.5 text-pink-500 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Graphic Poster Studio</span>
                 </Link>
               </li>
               <li>
-                <Link href="/services#mobile-approvals" className="hover:text-foreground transition-colors">
-                  WhatsApp 1-Tap Approvals
+                <Link
+                  href="/services#mobile-approvals"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-500 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">WhatsApp 1-Tap Approvals</span>
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="hover:text-foreground transition-colors">
-                  Pricing Plans (₹)
+                <Link
+                  href="/pricing"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <CreditCard className="w-3.5 h-3.5 text-sky-400 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Pricing Plans (₹)</span>
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-foreground transition-colors">
-                  Contact Support
+                <Link
+                  href="/contact"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Contact Support</span>
                 </Link>
               </li>
             </ul>
           </div>
 
           {/* Column 2: Solutions */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
               Solutions
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-3.5 text-xs">
               <li>
-                <Link href="/services" className="hover:text-foreground transition-colors">
-                  Local Retail & Boutiques
+                <Link
+                  href="/services"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <ShoppingBag className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Local Retail & Boutiques</span>
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="hover:text-foreground transition-colors">
-                  Clinics & Healthcare
+                <Link
+                  href="/services"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <HeartPulse className="w-3.5 h-3.5 text-rose-500 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Clinics & Healthcare</span>
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="hover:text-foreground transition-colors">
-                  Gyms, Salons & Spas
+                <Link
+                  href="/services"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Gyms, Salons & Spas</span>
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="hover:text-foreground transition-colors">
-                  Creators & Influencers
+                <Link
+                  href="/services"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <Zap className="w-3.5 h-3.5 text-violet-400 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Creators & Influencers</span>
                 </Link>
               </li>
               <li>
-                <Link href="/services" className="hover:text-foreground transition-colors">
-                  Marketing Agencies
+                <Link
+                  href="/services"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-blue-400 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Marketing Agencies</span>
                 </Link>
               </li>
             </ul>
           </div>
 
           {/* Column 3: Trust & Legal Policies */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
               Trust & Legal
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-3.5 text-xs">
               <li>
-                <Link href="/privacy" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                  <span>Privacy Policy</span>
+                <Link
+                  href="/privacy"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Privacy Policy</span>
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>Terms & Conditions</span>
+                <Link
+                  href="/terms"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <FileText className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Terms & Conditions</span>
                 </Link>
               </li>
               <li>
-                <Link href="/refund-policy" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>Cancellation & Refunds</span>
+                <Link
+                  href="/refund-policy"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <RefreshCcw className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Cancellation & Refunds</span>
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
-                  <span>GST Tax Invoicing</span>
+                <Link
+                  href="/pricing"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">GST Tax Invoicing</span>
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-foreground transition-colors flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                  <span>Help & Contact Desk</span>
+                <Link
+                  href="/contact"
+                  className="hover:text-foreground transition-all flex items-center gap-2.5 group"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0 transition-transform group-hover:scale-110" />
+                  <span className="group-hover:translate-x-0.5 transition-transform">Help & Contact Desk</span>
                 </Link>
               </li>
             </ul>

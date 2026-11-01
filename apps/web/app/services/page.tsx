@@ -80,7 +80,7 @@ export default async function ServicesPage() {
           </h1>
 
           <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Generic Western social media tools fail Indian local businesses. ABCD Social was architected from day one to handle native Bengali font ligatures, WhatsApp approvals, and strict pricing integrity.
+            Generic Western social media tools fail Indian local businesses. ABCD Social was architected from day one to handle automated high-resolution promotional posters, WhatsApp 1-tap mobile review, and strict pricing integrity.
           </p>
         </section>
 
@@ -135,10 +135,10 @@ export default async function ServicesPage() {
                   <div className="p-3.5 rounded-xl bg-card border border-border text-xs space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-foreground">Typography Renderer</span>
-                      <span className="text-[10px] text-emerald-400 font-mono">Noto Sans Bengali</span>
+                      <span className="text-[10px] text-emerald-400 font-mono">High-Res Vector Font</span>
                     </div>
                     <p className="text-[11px] text-muted-foreground">
-                      Handles complexযুক্তাক্ষর (conjuncts) server-side without reliance on browser Canvas glitches.
+                      Handles complex typography and brand assets server-side without reliance on browser Canvas glitches.
                     </p>
                   </div>
 

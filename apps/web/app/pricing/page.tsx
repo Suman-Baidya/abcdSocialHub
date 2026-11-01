@@ -64,8 +64,8 @@ export default async function PricingPage() {
       a: "Yes. Every billing cycle generates an official GST invoice containing your business GSTIN for claiming 100% input tax credit (ITC).",
     },
     {
-      q: "Is there any extra fee for Bengali typography poster rendering?",
-      a: "No. The server-side Python Cairo font rendering engine is fully included in all plans with zero hidden fees.",
+      q: "Is there any extra fee for high-resolution promotional poster rendering?",
+      a: "No. The server-side Python Cairo graphic rendering engine is fully included in all plans with zero hidden fees.",
     },
     {
       q: "How does 1-tap WhatsApp mobile approval work?",
@@ -214,7 +214,7 @@ export default async function PricingPage() {
                       <td className="p-4 text-center text-muted-foreground">150</td>
                     </tr>
                     <tr>
-                      <td className="p-4 font-medium text-foreground">Cairo Bengali Font Studio</td>
+                      <td className="p-4 font-medium text-foreground">Cairo Graphic Poster Studio</td>
                       <td className="p-4 text-center text-emerald-500 font-bold">✓ Included</td>
                       <td className="p-4 text-center text-emerald-500 font-bold bg-primary/5">✓ Included</td>
                       <td className="p-4 text-center text-emerald-500 font-bold">✓ Priority</td>

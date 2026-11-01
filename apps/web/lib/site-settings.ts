@@ -74,10 +74,10 @@ export type SiteSettings = z.infer<typeof siteSettingsSchema>;
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   hero: {
     headline: "Turn Raw Ideas into 30 Days of",
-    highlightedText: "Bengali & English Social Posts",
+    highlightedText: "Branded Social Media Posts",
     subheadline:
-      "Stop struggling with Canva and generic AI slop. Generate pixel-perfect branded promotional posters, approve them in 1 tap from your phone, and publish automatically across all platforms.",
-    badgeText: "AI Marketing Autopilot for Creators & Businesses",
+      "Stop struggling with Canva and generic AI tools. Generate high-converting branded promotional graphics, review drafts in 1 tap from your phone, and publish automatically across Instagram, Facebook, LinkedIn, YouTube, and X.",
+    badgeText: "AI Social Media Autopilot for Businesses & Creators",
     primaryCtaText: "Start Free Pilot",
     primaryCtaLink: "/register",
     secondaryCtaText: "Explore Solutions",
@@ -85,60 +85,60 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   },
   announcement: {
     enabled: true,
-    badge: "NEW",
-    text: "Cairo Bengali Typography Engine v2.4 with 60 FPS Export Released",
+    badge: "OFFICIAL APIS",
+    text: "Meta Graph & Google Multi-Channel Scheduling with 100% Account Safety Active",
     linkText: "Learn more",
     linkUrl: "/services",
   },
   features: [
     {
       id: "poster-studio",
-      title: "Branded Regional Poster Studio",
+      title: "Branded Graphic Poster Studio",
       description:
-        "Native Bengali (যুক্তাক্ষর) and English typography rendered server-side. Burn your logo, phone number, and address footer onto every promotional creative in 0.4s.",
-      badge: "Zero Broken Ligatures",
+        "High-resolution server-side typography engine. Automatically embed your verified business logo, phone number, and address footer onto every promotional creative in 0.4 seconds.",
+      badge: "60 FPS Rasterization",
       icon: "Palette",
     },
     {
       id: "mobile-approvals",
-      title: "1-Tap Mobile Magic-Link Approvals",
+      title: "1-Tap Mobile WhatsApp Approvals",
       description:
-        "Never log into a dashboard from a laptop. Review drafts directly on your phone via secure WhatsApp or Email links and tap Approve in 5 seconds.",
+        "Never log into complex desktop dashboards. Review your monthly post batches directly on your phone via secure WhatsApp or Email links and tap Approve in 5 seconds.",
       badge: "Zero-Password Mobile Review",
       icon: "Smartphone",
     },
     {
       id: "anti-slop",
-      title: "Turnitout Anti-Slop Humanizer",
+      title: "Turnitout Anti-Slop AI Humanizer",
       description:
-        "Purges robotic AI words like 'delve' and 'testament'. Adapts copy natively to each network using tested hook and retention formulas.",
-      badge: "4-Platform Custom Formats",
+        "Purges robotic AI buzzwords like 'delve' and 'testament'. Tailors hooks natively for Indian retail, clinics, salons, gyms, and professional services.",
+      badge: "5-Platform Custom Copy",
       icon: "Zap",
     },
   ],
   services: [
     {
-      id: "cairo-poster-engine",
-      title: "Server-Side Typography & Poster Engine",
-      subtitle: "Zero distorted glyphs or broken ligatures",
+      id: "graphic-poster-engine",
+      title: "Server-Side Promotional Graphic Engine",
+      subtitle: "High-resolution branded posters in sub-400ms",
       description:
-        "Built on Python Cairo and Noto Sans Bengali. Every generated promotional poster accurately renders complex Bengali conjuncts with pixel precision, crisp brand colors, and dynamic footer banners.",
+        "Built on Python Cairo vector rendering. Every generated promotional poster accurately renders with crisp typography, exact brand hex colors, and dynamic contact banners.",
       points: [
         "Instant rasterization under 400ms",
         "Auto-embedded business phone, address, and logo watermark",
         "Supports 1:1 Square, 4:5 Portrait, and 9:16 Story formats",
-        "Pre-approved Bengali festive and promotional templates",
+        "Curated festive and promotional business templates",
       ],
       icon: "Palette",
     },
     {
       id: "ai-copywriter",
-      title: "Turnitout Anti-Slop Regional AI",
-      subtitle: "Authentic Bengali, English, and Banglish hooks",
+      title: "Turnitout Anti-Slop Social Copywriter",
+      subtitle: "High-converting hooks tailored for Indian commerce",
       description:
-        "Trained on high-converting Indian retail, clinic, salon, and hospitality copy. Formats distinct captions for Instagram, Facebook, LinkedIn, and Twitter with proper hashtag hygiene.",
+        "Trained on top-performing retail, clinic, salon, and hospitality social campaigns. Formats tailored captions for Instagram, Facebook, LinkedIn, YouTube, and Twitter with proper hashtag hygiene.",
       points: [
-        "Bilingual tone adapting to your brand voice kit",
+        "Authentic tone adapting to your unique brand voice kit",
         "Eliminates AI jargon and robotic sentence patterns",
         "Automatic call-to-action with WhatsApp click-to-chat links",
         "Strict pricing guardrails—never hallucinates discounts",
@@ -161,7 +161,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     },
     {
       id: "magic-link-onboarding",
-      title: "Mobile-First WhatsApp & Magic-Link Review",
+      title: "Mobile-First WhatsApp Review System",
       subtitle: "Approve 30 days of posts from your phone in 5 minutes",
       description:
         "Busy business owners don't want complex dashboards. Whenever the AI generates a post batch, you receive a single secure link on WhatsApp or Email.",
@@ -188,7 +188,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
         "20 Branded Posters / month",
         "Facebook & Instagram Direct Publishing",
         "WhatsApp Mobile Magic-Link Approvals",
-        "Standard Bengali & English AI Copywriting",
+        "Standard AI Marketing Copywriter",
         "Razorpay UPI Autopay Support",
       ],
       ctaText: "Choose Starter",
@@ -200,15 +200,15 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       price: 1499,
       currency: "INR",
       period: "mo",
-      description: "For active clinics, salons, gyms, and growing local brands.",
+      description: "For active clinics, salons, gyms, and growing business brands.",
       popular: true,
       badge: "Most Popular",
       features: [
         "2 Brand Workspaces",
         "50 Branded Posters / month",
-        "4-Platform Copy Multiplexer (FB, IG, LI, X)",
+        "5-Platform Copy Multiplexer (FB, IG, LI, X, YT)",
         "WhatsApp Lead Click-to-Chat Integration",
-        "Priority Cairo Typography Render Queue",
+        "Priority High-Speed Poster Render Queue",
         "Live Autopilot Campaign Insights",
         "Instant Email & WhatsApp Notifications",
       ],
@@ -221,7 +221,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
       price: 2499,
       currency: "INR",
       period: "mo",
-      description: "For local marketing consultants and franchise owners.",
+      description: "For marketing agencies, multi-location franchises, and consultants.",
       popular: false,
       features: [
         "5 Client Workspaces",
@@ -237,11 +237,11 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     },
   ],
   general: {
-    brandName: "ABCD Social",
+    brandName: "ABCD Social Hub",
     tagline: "Autonomous Multi-Tenant Marketing & Publishing",
-    contactEmail: "support@abcd.social",
-    contactPhone: "+91 98300 12345",
-    supportWhatsapp: "+91 98300 12345",
+    contactEmail: "sb.abcd321@gmail.com",
+    contactPhone: "+91 8167685731",
+    supportWhatsapp: "+91 8167685731",
     copyrightText: "© 2026 ABCD Social Hub. All rights reserved.",
     socialLinks: {
       instagram: "https://instagram.com",
@@ -252,4 +252,3 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     },
   },
 };
-

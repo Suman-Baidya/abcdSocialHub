@@ -8,7 +8,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Mail,
-  Phone,
+  MessageSquare,
 } from "lucide-react";
 
 interface PublicFooterProps {
@@ -30,8 +30,8 @@ interface PublicFooterProps {
 }
 
 export function PublicFooter({ general }: PublicFooterProps) {
-  const email = general?.contactEmail || "support@abcd.social";
-  const phone = general?.contactPhone || "+91 98300 12345";
+  const email = general?.contactEmail || "sb.abcd321@gmail.com";
+  const whatsappNumber = general?.supportWhatsapp || "+91 8167685731";
   const copyright =
     general?.copyrightText || "© 2026 ABCD Social Hub. All rights reserved.";
 
@@ -60,17 +60,32 @@ export function PublicFooter({ general }: PublicFooterProps) {
 
             {/* 3. Short Brand Description */}
             <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-              Autonomous social marketing & Bengali poster automation for regional businesses.
+              Autonomous social media marketing & promotional graphic automation for businesses across India.
             </p>
 
-            <div className="space-y-1 text-xs pt-1">
-              <div className="flex items-center gap-2 text-foreground/80">
+            <div className="space-y-1.5 text-xs pt-1">
+              <div className="flex items-center gap-2 text-foreground/90">
                 <Mail className="w-3.5 h-3.5 text-primary shrink-0" />
-                <span>{email}</span>
+                <a
+                  href={`mailto:${email}`}
+                  className="hover:text-primary transition-colors"
+                >
+                  {email}
+                </a>
               </div>
-              <div className="flex items-center gap-2 text-foreground/80">
-                <Phone className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>{phone} (Mon–Sat, 10 AM–7 PM IST)</span>
+              <div className="flex items-center gap-2 text-foreground/90">
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                <a
+                  href="https://wa.me/918167685731"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-emerald-400 transition-colors"
+                >
+                  WhatsApp: {whatsappNumber}{" "}
+                  <span className="text-[11px] text-muted-foreground font-normal">
+                    (WhatsApp Only, No Calls)
+                  </span>
+                </a>
               </div>
             </div>
 
@@ -127,18 +142,23 @@ export function PublicFooter({ general }: PublicFooterProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/services#cairo-engine" className="hover:text-foreground transition-colors">
-                  Regional Poster Studio
+                <Link href="/services#poster-studio" className="hover:text-foreground transition-colors">
+                  Graphic Poster Studio
                 </Link>
               </li>
               <li>
                 <Link href="/services#mobile-approvals" className="hover:text-foreground transition-colors">
-                  WhatsApp Approvals
+                  WhatsApp 1-Tap Approvals
                 </Link>
               </li>
               <li>
                 <Link href="/pricing" className="hover:text-foreground transition-colors">
-                  Pricing & Plans (₹)
+                  Pricing Plans (₹)
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-foreground transition-colors">
+                  Contact Support
                 </Link>
               </li>
             </ul>
@@ -167,33 +187,52 @@ export function PublicFooter({ general }: PublicFooterProps) {
               </li>
               <li>
                 <Link href="/services" className="hover:text-foreground transition-colors">
-                  Regional Agencies
+                  Creators & Influencers
+                </Link>
+              </li>
+              <li>
+                <Link href="/services" className="hover:text-foreground transition-colors">
+                  Marketing Agencies
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Trust & Platform */}
+          {/* Column 3: Trust & Legal Policies */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-              Trust & Invoicing
+              Trust & Legal
             </h4>
             <ul className="space-y-2 text-xs">
-              <li className="flex items-center gap-1.5 text-foreground/80">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Zero-Exposure Tokens</span>
+              <li>
+                <Link href="/privacy" className="hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Privacy Policy</span>
+                </Link>
               </li>
-              <li className="flex items-center gap-1.5 text-foreground/80">
-                <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                <span>Strict Tenant Isolation</span>
+              <li>
+                <Link href="/terms" className="hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>Terms & Conditions</span>
+                </Link>
               </li>
-              <li className="flex items-center gap-1.5 text-foreground/80">
-                <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                <span>Razorpay UPI Autopay</span>
+              <li>
+                <Link href="/refund-policy" className="hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>Cancellation & Refunds</span>
+                </Link>
               </li>
-              <li className="flex items-center gap-1.5 text-foreground/80">
-                <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                <span>GST Tax Invoices</span>
+              <li>
+                <Link href="/pricing" className="hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>GST Tax Invoicing</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Help & Contact Desk</span>
+                </Link>
               </li>
             </ul>
           </div>
@@ -202,16 +241,22 @@ export function PublicFooter({ general }: PublicFooterProps) {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <p>{copyright}</p>
-          <div className="flex items-center gap-6">
-            <Link href="/login" className="hover:text-foreground transition-colors">
-              Staff Portal
+          <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">
+              Privacy
             </Link>
-            <Link href="/register" className="hover:text-foreground transition-colors">
-              Register Business
+            <Link href="/terms" className="hover:text-foreground transition-colors">
+              Terms
             </Link>
-            <span className="text-muted-foreground/50">|</span>
-            <span className="text-[11px] font-mono text-muted-foreground">
-              Built for Indian Commerce
+            <Link href="/refund-policy" className="hover:text-foreground transition-colors">
+              Refund Policy
+            </Link>
+            <Link href="/contact" className="hover:text-foreground transition-colors">
+              Contact
+            </Link>
+            <span className="text-muted-foreground/40 hidden sm:inline">|</span>
+            <span className="text-[11px] font-mono text-muted-foreground hidden sm:inline">
+              Made for Indian Commerce
             </span>
           </div>
         </div>

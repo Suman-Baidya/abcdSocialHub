@@ -25,7 +25,7 @@ export async function GET(
       return NextResponse.json({ valid: false, error: "Invalid invitation token." }, { status: 400 });
     }
 
-    const invitation = await prisma.teamInvitation.findUnique({
+    const invitation = await (prisma as any).teamInvitation.findUnique({
       where: { token },
       include: {
         organization: {
@@ -97,7 +97,7 @@ export async function POST(
       return NextResponse.json({ success: false, error: "Missing invitation token." }, { status: 400 });
     }
 
-    const invitation = await prisma.teamInvitation.findUnique({
+    const invitation = await (prisma as any).teamInvitation.findUnique({
       where: { token },
       include: {
         organization: {
@@ -175,7 +175,7 @@ export async function POST(
     });
 
     // 3. Mark invitation as accepted
-    await prisma.teamInvitation.update({
+    await (prisma as any).teamInvitation.update({
       where: { id: invitation.id },
       data: { status: "ACCEPTED" },
     });

@@ -212,7 +212,7 @@ export async function GET(req: Request) {
           },
           orderBy: { createdAt: "desc" },
         }),
-        prisma.teamInvitation.findMany({
+        (prisma as any).teamInvitation.findMany({
           where: {
             status: "PENDING",
             expiresAt: { gte: new Date() },
@@ -224,7 +224,7 @@ export async function GET(req: Request) {
         }),
       ]);
 
-      let platformMembers: TeamMember[] = allDbUsers.map((u) => {
+      let platformMembers: TeamMember[] = allDbUsers.map((u: any) => {
         const primaryMem = u.memberships[0];
         const isUserDev = DEVELOPER_EMAILS.includes((u.email || "").toLowerCase().trim());
         let calculatedRole: TeamMember["role"] = (primaryMem?.role as any) || "TENANT_ADMIN";
@@ -269,7 +269,7 @@ export async function GET(req: Request) {
       }
 
       // Map pending platform invitations
-      const pendingInvitations: PendingInvitation[] = allDbInvitations.map((inv) => ({
+      const pendingInvitations: PendingInvitation[] = allDbInvitations.map((inv: any) => ({
         id: inv.id,
         email: inv.email,
         name: inv.name,
@@ -354,7 +354,7 @@ export async function GET(req: Request) {
         },
         orderBy: { createdAt: "asc" },
       }),
-      prisma.teamInvitation.findMany({
+      (prisma as any).teamInvitation.findMany({
         where: {
           organizationId,
           status: "PENDING",
@@ -364,7 +364,7 @@ export async function GET(req: Request) {
       }),
     ]);
 
-    let activeMembers: TeamMember[] = dbMemberships.map((m) => {
+    let activeMembers: TeamMember[] = dbMemberships.map((m: any) => {
       const isOwner = m.role === "OWNER" || m.role === "TENANT_ADMIN";
       return {
         id: m.id,
@@ -388,7 +388,7 @@ export async function GET(req: Request) {
         !DEVELOPER_EMAILS.includes(m.email.toLowerCase().trim())
     );
 
-    const pendingInvitations: PendingInvitation[] = dbInvitations.map((inv) => ({
+    const pendingInvitations: PendingInvitation[] = dbInvitations.map((inv: any) => ({
       id: inv.id,
       email: inv.email,
       name: inv.name,
@@ -535,7 +535,7 @@ export async function POST(req: Request) {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     // Remove any previous pending invitation for this email in this org
-    await prisma.teamInvitation.deleteMany({
+    await (prisma as any).teamInvitation.deleteMany({
       where: {
         organizationId: orgId,
         email: cleanEmail,
@@ -543,7 +543,7 @@ export async function POST(req: Request) {
       },
     });
 
-    const invitation = await prisma.teamInvitation.create({
+    const invitation = await (prisma as any).teamInvitation.create({
       data: {
         email: cleanEmail,
         name: name || cleanEmail.split("@")[0],
@@ -772,7 +772,7 @@ export async function DELETE(req: Request) {
         }).catch(() => {});
 
         // 2. Clean up pending invitations targeting this email
-        await prisma.teamInvitation.deleteMany({
+        await (prisma as any).teamInvitation.deleteMany({
           where: { email: targetEmail },
         }).catch(() => {});
       }
@@ -795,7 +795,7 @@ export async function DELETE(req: Request) {
     // CASE 2: CANCEL PENDING INVITATION
     // ──────────────────────────────────────────────────────────
     if (invitationId) {
-      const invite = await prisma.teamInvitation.findUnique({
+      const invite = await (prisma as any).teamInvitation.findUnique({
         where: { id: invitationId },
       });
 
@@ -807,7 +807,7 @@ export async function DELETE(req: Request) {
         return NextResponse.json({ success: false, error: "Forbidden." }, { status: 403 });
       }
 
-      await prisma.teamInvitation.delete({ where: { id: invitationId } });
+      await (prisma as any).teamInvitation.delete({ where: { id: invitationId } });
       return NextResponse.json({ success: true, message: `Invitation cancelled.` });
     }
 

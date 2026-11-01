@@ -18,7 +18,7 @@ function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState(
     urlError === "OAuthCallback" || urlError === "OAuthSignin"
-      ? "Google Sign-In returned an authorization error. Please check that http://localhost:3000/api/auth/callback/google is authorized in your Google Cloud Console, or use the 1-Click Developer Sign In below."
+      ? "Google Sign-In returned an authorization error. Please check that http://localhost:3000/api/auth/callback/google is authorized in your Google Cloud Console, or sign in with your email and password below."
       : urlError === "OAuthAccountNotLinked"
       ? "An account with this email already exists with password authentication. Account linking is now enabled—please try signing in with Google again or use your password below."
       : urlError === "Configuration"
@@ -35,7 +35,7 @@ function LoginForm() {
 
     try {
       const res = await signIn("credentials", {
-        email,
+        email: email.toLowerCase().trim(),
         password,
         redirect: false,
         callbackUrl,
@@ -60,59 +60,25 @@ function LoginForm() {
   };
 
   return (
-    <div className="bg-[#121722]/80 backdrop-blur-xl py-8 px-6 shadow-2xl rounded-2xl border border-zinc-800/80 sm:px-10">
+    <div className="bg-[#121722]/80 backdrop-blur-xl py-7 px-6 shadow-2xl rounded-2xl border border-zinc-800/80 sm:px-10">
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm flex items-center gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0" />
+        <div className="mb-5 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs sm:text-sm flex items-center gap-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
-
-      {/* 1-Click Developer Instant Sign In */}
-      <button
-        onClick={async () => {
-          setEmail("suman.baidya.pro@gmail.com");
-          setPassword("Password123!");
-          setLoading(true);
-          setError("");
-          try {
-            const res = await signIn("credentials", {
-              email: "suman.baidya.pro@gmail.com",
-              password: "Password123!",
-              redirect: false,
-              callbackUrl,
-            });
-            if (res?.error) {
-              setError(res.error);
-              setLoading(false);
-            } else {
-              router.push(callbackUrl);
-              router.refresh();
-            }
-          } catch (err: any) {
-            setError(err?.message || "Sign in failed");
-            setLoading(false);
-          }
-        }}
-        disabled={loading || googleLoading}
-        type="button"
-        className="w-full mb-3 flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold text-sm transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
-      >
-        <Sparkles className="w-4 h-4 text-amber-400" />
-        <span>1-Click Developer Sign In</span>
-      </button>
 
       {/* 1-Click Google Sign In */}
       <button
         onClick={handleGoogleSignIn}
         disabled={googleLoading || loading}
         type="button"
-        className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-zinc-700 hover:border-zinc-500 bg-zinc-900/60 hover:bg-zinc-800/80 text-white font-medium text-sm transition-all shadow-sm hover:shadow-md disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-zinc-700 hover:border-zinc-500 bg-zinc-900/60 hover:bg-zinc-800/80 text-white font-medium text-sm transition-all shadow-sm hover:shadow-md disabled:opacity-50 cursor-pointer"
       >
         {googleLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin text-zinc-400" />
+          <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
         ) : (
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
             <path
               fill="#4285F4"
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -134,17 +100,17 @@ function LoginForm() {
         <span>Continue with Google</span>
       </button>
 
-      <div className="relative my-6">
+      <div className="relative my-5">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-zinc-800" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
+        <div className="relative flex justify-center text-[11px] uppercase">
           <span className="bg-[#121722] px-3 text-zinc-500 font-medium">Or continue with email</span>
         </div>
       </div>
 
       {/* Credentials Form */}
-      <form onSubmit={handleCredentialsSubmit} className="space-y-4">
+      <form onSubmit={handleCredentialsSubmit} className="space-y-3.5">
         <div>
           <label className="block text-xs font-medium text-zinc-300 uppercase tracking-wider mb-1.5">
             Email Address
@@ -155,7 +121,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@company.com"
-            className="w-full px-4 py-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#00F0FF] focus:ring-1 focus:ring-[#00F0FF] text-sm transition-all"
+            className="w-full px-3.5 py-2 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#00F0FF] focus:ring-1 focus:ring-[#00F0FF] text-sm transition-all"
           />
         </div>
 
@@ -177,17 +143,17 @@ function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full px-4 py-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#00F0FF] focus:ring-1 focus:ring-[#00F0FF] text-sm transition-all"
+            className="w-full px-3.5 py-2 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:border-[#00F0FF] focus:ring-1 focus:ring-[#00F0FF] text-sm transition-all"
           />
         </div>
 
         <button
           type="submit"
           disabled={loading || googleLoading}
-          className="w-full mt-2 flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#00F0FF] hover:bg-[#00D5E5] text-[#0A0D14] font-semibold text-sm transition-all shadow-lg shadow-[#00F0FF]/20 hover:shadow-[#00F0FF]/30 disabled:opacity-50"
+          className="w-full mt-1.5 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#00F0FF] hover:bg-[#00D5E5] text-[#0A0D14] font-semibold text-sm transition-all shadow-lg shadow-[#00F0FF]/20 hover:shadow-[#00F0FF]/30 disabled:opacity-50 cursor-pointer active:scale-95"
         >
           {loading ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <>
               <span>Sign In</span>
@@ -197,7 +163,7 @@ function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-zinc-400">
+      <div className="mt-5 text-center text-xs text-zinc-400">
         Don&apos;t have an account?{" "}
         <Link
           href="/register"
@@ -212,30 +178,30 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-[#0A0D14] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0A0D14] flex flex-col justify-center py-8 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Ambient background glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#00F0FF]/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <Link href="/" className="flex items-center justify-center gap-2 mb-6 group">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#00F0FF] to-blue-600 flex items-center justify-center shadow-lg shadow-[#00F0FF]/20 group-hover:scale-105 transition-transform">
-            <Sparkles className="w-5 h-5 text-[#0A0D14]" />
+        <Link href="/" className="flex items-center justify-center gap-2 mb-4 group">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#00F0FF] to-blue-600 flex items-center justify-center shadow-lg shadow-[#00F0FF]/20 group-hover:scale-105 transition-transform">
+            <Sparkles className="w-4 h-4 text-[#0A0D14]" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-white">
+          <span className="text-xl sm:text-2xl font-bold tracking-tight text-white">
             ABCD <span className="text-[#00F0FF]">Social</span>
           </span>
         </Link>
-        <h2 className="text-center text-3xl font-extrabold tracking-tight text-white">
+        <h2 className="text-center text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
           Welcome back
         </h2>
-        <p className="mt-2 text-center text-sm text-zinc-400">
+        <p className="mt-1 text-center text-xs sm:text-sm text-zinc-400">
           Sign in to access your marketing autopilot dashboard
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
-        <Suspense fallback={<div className="h-96 rounded-2xl bg-[#121722]/80 animate-pulse border border-zinc-800" />}>
+      <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4">
+        <Suspense fallback={<div className="h-80 rounded-2xl bg-[#121722]/80 animate-pulse border border-zinc-800" />}>
           <LoginForm />
         </Suspense>
       </div>

@@ -68,7 +68,6 @@ export default function DashboardOverviewPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [loggingIn, setLoggingIn] = useState(false);
   const [simulatedRole, setSimulatedRole] = useState<RoleType | null>(null);
 
   useEffect(() => {
@@ -109,26 +108,6 @@ export default function DashboardOverviewPage() {
       setError("Please sign in to view your dashboard");
     }
   }, [authStatus, fetchSummary]);
-
-  const handleQuickDemoLogin = async () => {
-    try {
-      setLoggingIn(true);
-      const res = await signIn("credentials", {
-        email: "suman.baidya.pro@gmail.com",
-        password: "Password123!",
-        redirect: false,
-      });
-      if (res?.ok) {
-        window.location.reload();
-      } else {
-        setError(res?.error || "Login failed");
-      }
-    } catch (err: any) {
-      setError(err.message || "Quick demo login failed");
-    } finally {
-      setLoggingIn(false);
-    }
-  };
 
   // STATE 1: PERMISSION-DENIED
   if (error === "PERMISSION_DENIED") {

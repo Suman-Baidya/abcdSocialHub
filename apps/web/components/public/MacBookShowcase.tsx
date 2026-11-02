@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Sparkles,
   Bot,
@@ -41,6 +42,14 @@ import {
 export function MacBookShowcase() {
   const [activeSlide, setActiveSlide] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [realOrigin, setRealOrigin] = useState<string>("http://localhost:3000");
+
+  // Sync address bar dynamically with the real application domain
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.origin) {
+      setRealOrigin(window.location.origin);
+    }
+  }, []);
 
   const tabs = [
     {
@@ -211,7 +220,7 @@ export function MacBookShowcase() {
                 <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-muted/40 border border-border/80 shadow-2xs text-xs font-mono text-muted-foreground">
                   <div className="flex items-center gap-2 truncate">
                     <Lock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                    <span className="text-foreground font-semibold">https://abcd-social.app</span>
+                    <span className="text-foreground font-semibold">{realOrigin}</span>
                     <span className="text-muted-foreground/80">/{currentTab.urlPath}</span>
                   </div>
 
@@ -744,8 +753,22 @@ export function MacBookShowcase() {
             </div>
           </div>
 
-          {/* MacBook Bottom Base Stand Bevel */}
-          <div className="mt-1 h-3.5 mx-auto max-w-[420px] rounded-b-xl bg-gradient-to-b from-muted to-border/70 border-x border-b border-border/80 shadow-md" />
+          {/* Apple-Style Monitor Bottom Chin with Centered Brand Logo */}
+          <div className="relative pt-2 pb-0.5 flex flex-col items-center justify-center">
+            {/* Centered Brand Emblem (like Apple logo on iMac / Studio Display) */}
+            <div className="flex items-center justify-center py-1 px-3.5 rounded-full bg-card/60 border border-border/50 backdrop-blur-xs shadow-2xs group cursor-pointer hover:border-primary/50 transition-all">
+              <Image
+                src="/logo_blue.png"
+                alt="ABCD Display Brand Emblem"
+                width={80}
+                height={20}
+                className="h-3.5 sm:h-4 w-auto object-contain filter grayscale contrast-125 opacity-75 group-hover:filter-none group-hover:opacity-100 transition-all duration-300"
+              />
+            </div>
+
+            {/* Aluminum Monitor Stand Base Notch */}
+            <div className="mt-1 h-3 w-40 sm:w-56 rounded-b-xl bg-gradient-to-b from-muted to-border/70 border-x border-b border-border/80 shadow-md" />
+          </div>
         </div>
       </div>
 

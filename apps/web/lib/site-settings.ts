@@ -73,11 +73,11 @@ export type SiteSettings = z.infer<typeof siteSettingsSchema>;
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   hero: {
-    headline: "Turn Raw Ideas into 30 Days of",
-    highlightedText: "Branded Social Media Posts",
+    headline: "Social Media On Autopilot",
+    highlightedText: "Autopilot",
     subheadline:
-      "Stop struggling with Canva and generic AI tools. Generate high-converting branded promotional graphics, review drafts in 1 tap from your phone, and publish automatically across Instagram, Facebook, LinkedIn, YouTube, and X.",
-    badgeText: "AI Social Media Autopilot for Businesses & Creators",
+      "Turn raw ideas into branded promotional graphics in seconds.\nReview from WhatsApp and auto-publish across 5 official networks.",
+    badgeText: "AI Social Media Autopilot",
     primaryCtaText: "Start Free Pilot",
     primaryCtaLink: "/register",
     secondaryCtaText: "Explore Solutions",

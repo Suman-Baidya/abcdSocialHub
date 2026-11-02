@@ -6,7 +6,6 @@ import { PublicNavbar } from "@/components/public/PublicNavbar";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { MacBookShowcase } from "@/components/public/MacBookShowcase";
-import { HeroTypewriterHeadline } from "@/components/public/HeroTypewriterHeadline";
 import {
   Sparkles,
   Smartphone,
@@ -90,15 +89,21 @@ export default async function HomePage() {
             <span>{hero.badgeText}</span>
           </div>
 
-          {/* Dynamic Typewriter Main Headline */}
-          <HeroTypewriterHeadline
-            headline={hero.headline}
-            defaultHighlight={hero.highlightedText}
-          />
+          {/* 4-Word Title */}
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] max-w-4xl mx-auto text-foreground">
+            Social Media On{" "}
+            <span className="bg-gradient-to-r from-primary via-sky-400 to-blue-500 bg-clip-text text-transparent">
+              Autopilot
+            </span>
+          </h1>
 
-          {/* Subheadline */}
-          <p className="mt-4 sm:mt-5 text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            {hero.subheadline}
+          {/* 2-Line Description */}
+          <p className="mt-4 sm:mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <span>Turn raw ideas into branded promotional graphics in seconds.</span>
+            <br className="hidden sm:inline" />
+            <span className="sm:mt-0.5 inline-block">
+              Review from WhatsApp and auto-publish across 5 official networks.
+            </span>
           </p>
 
           {/* CTAs */}

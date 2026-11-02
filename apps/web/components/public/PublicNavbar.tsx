@@ -48,8 +48,8 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
     <header
       className={`sticky top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/90 shadow-lg shadow-black/30 text-zinc-100"
-          : "bg-zinc-950/85 backdrop-blur-md border-b border-zinc-850/70 text-zinc-100"
+          ? "bg-background/95 backdrop-blur-xl border-b border-border shadow-xs text-foreground"
+          : "bg-background/85 backdrop-blur-md border-b border-border/50 text-foreground"
       }`}
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between flex-nowrap gap-2">
@@ -81,13 +81,13 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
                 href={link.href}
                 className={`transition-colors py-1 relative ${
                   isActive
-                    ? "text-sky-400 font-bold"
-                    : "text-zinc-400 hover:text-zinc-100"
+                    ? "text-primary font-bold"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {link.name}
                 {isActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-400 rounded-full animate-in fade-in" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full animate-in fade-in" />
                 )}
               </Link>
             );
@@ -97,7 +97,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
         {/* Desktop Auth Controls */}
         <div className="hidden md:flex items-center gap-3">
           {authStatus === "loading" ? (
-            <div className="h-9 w-28 rounded-xl bg-zinc-800/60 animate-pulse" />
+            <div className="h-9 w-28 rounded-xl bg-muted/40 animate-pulse" />
           ) : isAuthenticated ? (
             <div className="flex items-center gap-3">
               <Link
@@ -112,7 +112,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
               <Link
                 href="/profile"
                 title="Profile Settings"
-                className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-zinc-700 hover:border-sky-400 overflow-hidden transition-all shadow-xs cursor-pointer flex items-center justify-center bg-zinc-900 shrink-0"
+                className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full border-2 border-border hover:border-primary overflow-hidden transition-all shadow-xs cursor-pointer flex items-center justify-center bg-card shrink-0"
               >
                 <img
                   src={user?.image || "/avatars/default-avatar.svg"}
@@ -125,7 +125,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
             <div className="flex items-center gap-2.5">
               <Link
                 href="/login"
-                className="text-xs sm:text-sm font-semibold text-zinc-300 hover:text-white px-3.5 py-2 rounded-xl hover:bg-zinc-900 transition-colors cursor-pointer"
+                className="text-xs sm:text-sm font-semibold text-muted-foreground hover:text-foreground px-3.5 py-2 rounded-xl hover:bg-muted/60 transition-colors cursor-pointer"
               >
                 Sign In
               </Link>
@@ -156,7 +156,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
               <Link
                 href="/profile"
                 title="Profile Settings"
-                className="w-8 h-8 rounded-full border border-zinc-700 overflow-hidden flex items-center justify-center bg-zinc-900 shrink-0"
+                className="w-8 h-8 rounded-full border border-border overflow-hidden flex items-center justify-center bg-card shrink-0"
               >
                 <img
                   src={user?.image || "/avatars/default-avatar.svg"}
@@ -168,7 +168,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
           ) : (
             <Link
               href="/login"
-              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-white transition-colors"
+              className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-card border border-border text-foreground hover:bg-muted transition-colors"
             >
               Sign In
             </Link>
@@ -179,7 +179,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             type="button"
             aria-label="Toggle navigation menu"
-            className="w-8 h-8 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-200 hover:text-white flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-xl bg-card border border-border text-foreground hover:bg-muted flex items-center justify-center transition-colors"
           >
             {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
@@ -188,7 +188,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-zinc-800 bg-zinc-950/98 backdrop-blur-2xl px-5 py-4 space-y-3 animate-in slide-in-from-top-4 duration-200 text-zinc-100">
+        <div className="md:hidden border-b border-border bg-card/98 backdrop-blur-2xl px-5 py-4 space-y-3 animate-in slide-in-from-top-4 duration-200 text-foreground">
           <nav className="flex flex-col space-y-2">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
@@ -198,8 +198,8 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
                   href={link.href}
                   className={`text-base font-semibold py-2 px-3 rounded-xl transition-colors ${
                     isActive
-                      ? "bg-sky-500/15 text-sky-400 font-bold"
-                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
+                      ? "bg-primary/10 text-primary font-bold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
                   }`}
                 >
                   {link.name}
@@ -208,7 +208,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
             })}
           </nav>
 
-          <div className="pt-3 border-t border-zinc-800 flex flex-col gap-2.5">
+          <div className="pt-3 border-t border-border flex flex-col gap-2.5">
             {isAuthenticated ? (
               <div className="flex items-center gap-2">
                 <Link
@@ -220,7 +220,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
                 </Link>
                 <Link
                   href="/profile"
-                  className="w-9 h-9 rounded-full border border-zinc-700 bg-zinc-900 flex items-center justify-center overflow-hidden shrink-0"
+                  className="w-9 h-9 rounded-full border border-border bg-card flex items-center justify-center overflow-hidden shrink-0"
                 >
                   <img
                     src={user?.image || "/avatars/default-avatar.svg"}
@@ -233,7 +233,7 @@ export function PublicNavbar({ brandName = "ABCD Social Hub" }: PublicNavbarProp
               <>
                 <Link
                   href="/login"
-                  className="w-full inline-flex items-center justify-center py-2.5 px-4 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-200 font-semibold text-xs border border-zinc-800"
+                  className="w-full inline-flex items-center justify-center py-2.5 px-4 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-xs border border-border"
                 >
                   Sign In
                 </Link>

@@ -76,3 +76,4 @@ export function HeroTypewriterHeadline({
     </div>
   );
 }
+

@@ -6,6 +6,7 @@ import { PublicNavbar } from "@/components/public/PublicNavbar";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { MacBookShowcase } from "@/components/public/MacBookShowcase";
+import { HeroTypingText } from "@/components/public/HeroTypingText";
 import {
   Sparkles,
   Smartphone,
@@ -96,6 +97,9 @@ export default async function HomePage() {
               Autopilot
             </span>
           </h1>
+
+          {/* Dynamic Typing Line Under Main Title */}
+          <HeroTypingText />
 
           {/* 2-Line Description */}
           <p className="mt-4 sm:mt-5 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">

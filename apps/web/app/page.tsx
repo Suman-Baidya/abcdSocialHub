@@ -6,6 +6,7 @@ import { PublicNavbar } from "@/components/public/PublicNavbar";
 import { PublicFooter } from "@/components/public/PublicFooter";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { MacBookShowcase } from "@/components/public/MacBookShowcase";
+import { HeroTypewriterHeadline } from "@/components/public/HeroTypewriterHeadline";
 import {
   Sparkles,
   Smartphone,
@@ -89,13 +90,11 @@ export default async function HomePage() {
             <span>{hero.badgeText}</span>
           </div>
 
-          {/* Main Headline */}
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.15] max-w-4xl mx-auto text-foreground">
-            {hero.headline} <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-primary via-sky-400 to-blue-500 bg-clip-text text-transparent">
-              {hero.highlightedText}
-            </span>
-          </h1>
+          {/* Dynamic Typewriter Main Headline */}
+          <HeroTypewriterHeadline
+            headline={hero.headline}
+            defaultHighlight={hero.highlightedText}
+          />
 
           {/* Subheadline */}
           <p className="mt-4 sm:mt-5 text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
